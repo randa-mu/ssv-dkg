@@ -5,9 +5,15 @@ import (
 	"fmt"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/crypto"
 	"os"
+	"path/filepath"
 )
 
 func StoreKeypair(kp crypto.Keypair, path string) error {
+	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create dir at for path %s: %v", path, err)
+	}
+
 	file, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create a file at path %s for the keypair: %v", path, err)
