@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/cli/cmd"
+	"github.com/randa-mu/ssv-dkg/cli/internal/cmd"
 )
 
 func main() {

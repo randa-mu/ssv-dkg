@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/sidecar/cmd"
+	"github.com/randa-mu/ssv-dkg/sidecar/internal/cmd"
 )
 
 func main() {
