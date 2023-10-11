@@ -1,0 +1,32 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v2
+
+      - name: 🏗️ Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.20
+
+      - name: 🧹 Lint
+        uses: golangci/golangci-lint-action@v3.7.0
+        with:
+          version: v1.54
+
+      - name: 🛠️ Build CLI
+        run: go build -o ssv-dkg ./cli
+
+      - name: 🛠️ Build sidecar
+        run: go build -o ssv-sidecar ./sidecar
