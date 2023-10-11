@@ -5,17 +5,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	rootCmd = &cobra.Command{
-		Use:   "ssv-sidecar",
-		Short: "A CLI for running a distributed validator sidecar for SSV",
-		Long:  "A CLI for running a distributed validator sidecar for SSV",
-	}
-)
+var DirectoryFlag string
+
+var rootCmd = &cobra.Command{
+	Use:   "ssv-sidecar",
+	Short: "A CLI for running a distributed validator sidecar for SSV",
+	Long:  "A CLI for running a distributed validator sidecar for SSV",
+}
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(keyCmd)
+
+	rootCmd.PersistentFlags().StringVarP(&DirectoryFlag, "directory", "d", "~/.ssv", "directory to store node state")
 }
 
 func Execute() error {

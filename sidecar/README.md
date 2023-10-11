@@ -11,15 +11,15 @@ This module contains an implementation of the distributed key generation sidecar
 ## example commands
 - generate a keypair (won't be needed after connection with SSV node)
 ```shell
-$ ssv-sidecar key create --directory ~/.ssv
+$ ssv-sidecar key create --directory ~/.ssv 
 ```
 
 - sign your key for uploading it to GitHub
 ```shell
 $ ssv-sidecar key sign --directory ~/.ssv --url https://example.org
 Address: https://example.org
-PublicKey: deadbeefdeadbeefcafebabecafebabe
-Signature: deadbeefdeadbeefcafebabecafebabe
+PublicKey: Som3bas364stRing==
+Signature: Som3bas364stRing==
 ```
 
 - start your node
