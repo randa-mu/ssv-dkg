@@ -24,6 +24,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3.7.0
         with:
           version: v1.54
+          args: ./cli ./sidecar
 
       - name: 🛠️ Build CLI
         run: go build -o ssv-dkg ./cli
