@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
@@ -15,7 +14,7 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(versionCmd, createCmd, operatorsCmd)
+	rootCmd.AddCommand(versionCmd, operatorsCmd, signCmd)
 }
 
 func Execute() error {
@@ -28,9 +27,4 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(VERSION)
 	},
-}
-
-func exit(message string) {
-	fmt.Println(message)
-	os.Exit(1)
 }

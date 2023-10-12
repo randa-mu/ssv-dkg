@@ -26,8 +26,8 @@ $ ssv-dkg operators list
 
 - Start a DKG and sign your deposit data
 ```shell
-$ ssv-dkg sign --data /path/to/deposit/data \
-      --folder /path/to/storing/permanent/data/for/reshares/etc \
+$ ssv-dkg sign --input /path/to/deposit/data \
+      --output /path/to/storing/permanent/data/for/reshares/etc \
       --operator https://example.org \
       --operator https://muster.de \
       --operator https://exemple.fr
@@ -44,5 +44,5 @@ $ ssv-dkg sign --data /path/to/deposit/data \
 
 - combine both in a single command
 ```shell
-$ ssv-dkg operators list --short | head --lines 3 | ssv-dkg sign --data /path/to/deposit --folder /perm/data/folder --quiet > signed_deposit.json 
+$ ssv-dkg operators list --short | head --lines 3 | ssv-dkg sign --input /path/to/deposit --quiet > signed_deposit.json 
 ```

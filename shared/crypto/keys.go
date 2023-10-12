@@ -33,7 +33,7 @@ type Identity struct {
 	Signature []byte `json:"signature"`
 }
 
-func (k Keypair) Sign(address string) (Identity, error) {
+func (k Keypair) SelfSign(address string) (Identity, error) {
 	privateKey, err := x509.ParsePKCS1PrivateKey(k.Private)
 	if err != nil {
 		return Identity{}, err
@@ -54,6 +54,19 @@ func (k Keypair) Sign(address string) (Identity, error) {
 		Public:    k.Public,
 		Signature: signature,
 	}, nil
+}
+
+func (k Keypair) Sign(message []byte) ([]byte, error) {
+	privateKey, err := x509.ParsePKCS1PrivateKey(k.Private)
+	if err != nil {
+		return nil, err
+	}
+
+	sha := sha256.New()
+	sha.Write(message)
+	digest := sha.Sum(nil)
+
+	return privateKey.Sign(rand.Reader, digest, crypto.SHA256)
 }
 
 func (i Identity) Verify() error {

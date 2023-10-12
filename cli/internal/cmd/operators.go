@@ -27,12 +27,4 @@ func init() {
 		"",
 		"A local toml file listing operators and their signed public keys",
 	)
-
-	operatorsListCmd.PersistentFlags().BoolVarP(
-		&ShortFlag,
-		"short",
-		"s",
-		false,
-		"With short enabled, the stdout input is simpler and machine readable",
-	)
 }
