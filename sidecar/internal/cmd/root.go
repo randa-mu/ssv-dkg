@@ -14,10 +14,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(startCmd)
-	rootCmd.AddCommand(keyCmd)
-
+	rootCmd.AddCommand(versionCmd, startCmd, keyCmd)
 	rootCmd.PersistentFlags().StringVarP(&DirectoryFlag, "directory", "d", "~/.ssv", "directory to store node state")
 }
 

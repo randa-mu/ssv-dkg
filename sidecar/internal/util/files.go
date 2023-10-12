@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/sidecar/internal/crypto"
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"os"
 	"path/filepath"
 )
