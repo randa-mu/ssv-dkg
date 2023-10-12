@@ -26,7 +26,7 @@ $ ssv-sidecar key sign --directory ~/.ssv --url https://example.org | jq
 
 - start your node
 ```shell
-$ ssv-sidecar start --public-port 443 --directory ~/.ssv
+$ ssv-sidecar start --port 443 --directory ~/.ssv
 SSV sidecar started, serving on port 443
 Keypair loaded from ~/.ssv
 ```

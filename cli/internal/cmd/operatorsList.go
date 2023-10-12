@@ -38,7 +38,7 @@ var operatorsListCmd = &cobra.Command{
 		var addresses []string
 		for _, op := range operators {
 			if err := op.Verify(); err != nil {
-				fmt.Println(fmt.Sprintf("error verifying key for %s: %v", op.Address, err))
+				fmt.Println(fmt.Sprintf("🔒 error verifying key for %s", op.Address))
 				continue
 			}
 			addresses = append(addresses, op.Address)
