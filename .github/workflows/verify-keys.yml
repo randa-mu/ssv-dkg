@@ -23,5 +23,5 @@ jobs:
       - name: 🛠️ Build verifier tool
         run: go build -o key-verifier ./tools/key-verifier.go
 
-      - name: Verify operator keys
+      - name: 🔍 Verify operator keys
         run: ./key-verifier ./nodes/operators.json
