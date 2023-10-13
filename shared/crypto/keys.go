@@ -69,16 +69,20 @@ func (k Keypair) Sign(message []byte) ([]byte, error) {
 	return privateKey.Sign(rand.Reader, digest, crypto.SHA256)
 }
 
-func (i Identity) Verify() error {
-	pk, err := x509.ParsePKCS1PublicKey(i.Public)
+func VerifySignature(message []byte, publicKey []byte, signature []byte) error {
+	pk, err := x509.ParsePKCS1PublicKey(publicKey)
 	if err != nil {
 		return err
 	}
 
-	message := append(i.Public, []byte(i.Address)...)
 	sha := sha256.New()
 	sha.Write(message)
 	digest := sha.Sum(nil)
 
-	return rsa.VerifyPKCS1v15(pk, crypto.SHA256, digest, i.Signature)
+	return rsa.VerifyPKCS1v15(pk, crypto.SHA256, digest, signature)
+}
+
+func (i Identity) Verify() error {
+	message := append(i.Public, []byte(i.Address)...)
+	return VerifySignature(message, i.Public, i.Signature)
 }
