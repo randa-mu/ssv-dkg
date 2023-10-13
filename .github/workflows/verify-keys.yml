@@ -21,7 +21,7 @@ jobs:
           go-version: "1.20.5"
 
       - name: 🛠️ Build verifier tool
-        run: go build -o key-verifier ./tools/key-verifier.go
+        run: go build -o key-verifier ./tools/key_verifier.go
 
       - name: 🔍 Verify operator keys
         run: ./key-verifier ./nodes/operators.json
