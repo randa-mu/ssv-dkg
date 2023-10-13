@@ -26,6 +26,9 @@ jobs:
           version: v1.54
           args: ./cli ./sidecar
 
+      - name: 🧑‍🔬 Run tests
+        run: find . -name go.mod -execdir go test ./... \;
+
       - name: 🛠️ Build CLI
         run: go build -o ssv-dkg ./cli
 
