@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var sourceUrlFlag = "https://github.com/randa-mu/ssv-dkg/blob/master/nodes/operators.toml"
+var sourceUrlFlag = "https://raw.githubusercontent.com/randa-mu/ssv-dkg/master/nodes/operators.json"
 var sourceFileFlag string
 var operatorsCmd = &cobra.Command{
 	Use:   "operators",

@@ -1,3 +1,5 @@
 ./ssv-sidecar
 ./ssv-dkg
 ./key-verifier
+./cli/cli
+./sidecar/sidecar
