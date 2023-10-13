@@ -28,8 +28,8 @@ func CreateKeypair() (Keypair, error) {
 }
 
 type Identity struct {
-	Public    []byte `json:"public"`
 	Address   string `json:"address"`
+	Public    []byte `json:"public"`
 	Signature []byte `json:"signature"`
 }
 
