@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var sourceUrlFlag = "https://raw.githubusercontent.com/randa-mu/ssv-dkg/master/nodes/operators.json"
+var sourceUrlFlag string
 var sourceFileFlag string
 var operatorsCmd = &cobra.Command{
 	Use:   "operators",
@@ -17,7 +17,7 @@ func init() {
 		&sourceUrlFlag,
 		"source-url",
 		"u",
-		"https://github.com/randa-mu/ssv-dkg/blob/master/nodes/operators.toml",
+		"https://raw.githubusercontent.com/randa-mu/ssv-dkg/master/nodes/operators.json",
 		"The location of a toml file listing operators and their signed public keys",
 	)
 	operatorsCmd.PersistentFlags().StringVarP(
