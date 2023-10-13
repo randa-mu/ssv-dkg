@@ -8,6 +8,8 @@ import (
 )
 
 func TestValidKeyValidates(t *testing.T) {
+	t.Parallel()
+
 	valid := `
 {
   "operators": [
@@ -24,7 +26,7 @@ func TestValidKeyValidates(t *testing.T) {
   ]
 }`
 
-	p := path.Join(t.TempDir(), "somekeys.json")
+	p := path.Join(t.TempDir(), "keys.json")
 	f, err := os.Create(p)
 	if err != nil {
 		t.Fatal(err)
@@ -39,6 +41,8 @@ func TestValidKeyValidates(t *testing.T) {
 }
 
 func TestInvalidAddressReturnsError(t *testing.T) {
+	t.Parallel()
+
 	invalid := `
 {
   "operators": [
@@ -50,7 +54,7 @@ func TestInvalidAddressReturnsError(t *testing.T) {
   ]
 }`
 
-	p := path.Join(t.TempDir(), "somekeys.json")
+	p := path.Join(t.TempDir(), "keys.json")
 	f, err := os.Create(p)
 	if err != nil {
 		t.Fatal(err)
@@ -65,6 +69,8 @@ func TestInvalidAddressReturnsError(t *testing.T) {
 }
 
 func TestInvalidSignatureReturnsError(t *testing.T) {
+	t.Parallel()
+
 	invalid := `
 {
   "operators": [
@@ -76,7 +82,7 @@ func TestInvalidSignatureReturnsError(t *testing.T) {
   ]
 }`
 
-	p := path.Join(t.TempDir(), "somekeys.json")
+	p := path.Join(t.TempDir(), "keys.json")
 	f, err := os.Create(p)
 	if err != nil {
 		t.Fatal(err)
@@ -91,6 +97,8 @@ func TestInvalidSignatureReturnsError(t *testing.T) {
 }
 
 func TestInvalidJsonReturnsError(t *testing.T) {
+	t.Parallel()
+
 	// missing closing [
 	invalid := `
 {
@@ -102,7 +110,7 @@ func TestInvalidJsonReturnsError(t *testing.T) {
     }
 }`
 
-	p := path.Join(t.TempDir(), "somekeys.json")
+	p := path.Join(t.TempDir(), "keys.json")
 	f, err := os.Create(p)
 	if err != nil {
 		t.Fatal(err)
@@ -117,5 +125,7 @@ func TestInvalidJsonReturnsError(t *testing.T) {
 }
 
 func TestNonExistentFileReturnsError(t *testing.T) {
+	t.Parallel()
+
 	require.Error(t, verifyKeys("somenonsensepath"))
 }
