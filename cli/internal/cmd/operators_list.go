@@ -43,8 +43,10 @@ func listOperators(_ *cobra.Command, _ []string) {
 	// read the list of operators from file or URL
 	var operators []crypto.Identity
 	if sourceFileFlag != "" {
+		fmt.Println("📂 reading operators from a local file")
 		operators = readSourceFile(sourceFileFlag)
 	} else {
+		fmt.Println("🌐 reading operators from the internet")
 		operators = readSourceUrl(sourceUrlFlag)
 	}
 

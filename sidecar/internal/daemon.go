@@ -41,6 +41,7 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 	})
 
 	router.Post("/sign", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Println("Received signing request")
 		bytes, err := io.ReadAll(request.Body)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)

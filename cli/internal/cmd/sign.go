@@ -38,17 +38,22 @@ func init() {
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
-	stdin, err := io.ReadAll(cmd.InOrStdin())
-	if err != nil {
-		shared.Exit("error reading from stdin")
-	}
+	// if the operator flag isn't passed, we consume them from stdin
+	var args []string
+	if len(operatorFlag) == 0 {
+		stdin, err := io.ReadAll(cmd.InOrStdin())
+		if err != nil {
+			shared.Exit("error reading from stdin")
+		}
 
-	args := strings.Split(strings.Trim(string(stdin), "\n"), " ")
+		args = strings.Split(strings.Trim(string(stdin), "\n"), " ")
+	}
 
 	if inputPathFlag == "" {
 		shared.Exit("you must provide ETH deposit data to be signed")
 	}
 
+	// read in the deposit data and unmarshal it from JSON
 	contents, err := os.ReadFile(inputPathFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("error reading the deposit data file: %v", err))
@@ -61,21 +66,22 @@ func Sign(cmd *cobra.Command, _ []string) {
 		shared.Exit("couldn't marshal deposit data to JSON")
 	}
 
+	// parse and validate the operators provided
 	operators := shared.Uniq(append(args, operatorFlag...))
-	// let's turn this check off for testing :)
-	//if len(operators)%3 != 0 && len(operators)%5 != 0 && len(operators)%7 != 0 {
-	//	shared.Exit("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
-	//}
+	numOfNodes := len(operators)
+	if numOfNodes != 3 && numOfNodes != 5 && numOfNodes != 7 {
+		shared.Exit("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
+	}
 
 	// let's first health-check everything
 	fmt.Println("⏳ contacting nodes")
 	for _, operator := range operators {
 		res, err := http.Get(fmt.Sprintf("%s/health", operator))
 		if err != nil {
-			shared.Exit(fmt.Sprintf("☹️\tthere was an error healthchecking %s: %v", operator, err))
+			shared.Exit(fmt.Sprintf("☹️\tthere was an error health-checking %s: %v", operator, err))
 		}
 		if res.StatusCode != http.StatusOK {
-			shared.Exit(fmt.Sprintf("☹️\tthere was an error healthchecking %s: status %d", operator, res.StatusCode))
+			shared.Exit(fmt.Sprintf("☹️\tthere was an error health-checking %s: status %d", operator, res.StatusCode))
 		}
 	}
 
@@ -104,7 +110,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 		responses = append(responses, signResponse)
 	}
 
-	// we write the deposit data to stdout
+	// we write the signed deposit data to stdout
 	fmt.Println("✅ received signed deposit data!")
 	fmt.Println(base64.StdEncoding.EncodeToString(responses[0].Signature))
 
