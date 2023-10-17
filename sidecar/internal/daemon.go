@@ -16,6 +16,7 @@ type Daemon struct {
 	port   uint
 	router chi.Router
 	key    crypto.Keypair
+	suite  crypto.Suite
 }
 
 func NewDaemon(port uint, keyPath string) (Daemon, error) {
@@ -37,7 +38,29 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 
 	suite := crypto.NewBLSSuite()
 
+	daemon := Daemon{
+		port:  port,
+		key:   keypair,
+		suite: suite,
+	}
+	router := createAPI(daemon)
+	daemon.router = router
+
+	return daemon, nil
+}
+
+func (d Daemon) Start() chan error {
+	errs := make(chan error, 1)
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%d", d.port), d.router)
+		errs <- err
+	}()
+	return errs
+}
+
+func createAPI(d Daemon) *chi.Mux {
 	router := chi.NewMux()
+
 	router.Get("/health", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusOK)
 	})
@@ -57,7 +80,7 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 			return
 		}
 
-		signature, err := suite.Sign(keypair, requestBody.Data)
+		signature, err := d.suite.Sign(d.key, requestBody.Data)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -65,7 +88,7 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 
 		response := api.SignResponse{
 			Signature: signature,
-			PublicKey: keypair.Public,
+			PublicKey: d.key.Public,
 		}
 
 		j, err := json.Marshal(response)
@@ -80,18 +103,5 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 		}
 	})
 
-	return Daemon{
-		port:   port,
-		router: router,
-		key:    keypair,
-	}, nil
-}
-
-func (d Daemon) Start() chan error {
-	errs := make(chan error, 1)
-	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", d.port), d.router)
-		errs <- err
-	}()
-	return errs
+	return router
 }

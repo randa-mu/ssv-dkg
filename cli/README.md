@@ -44,5 +44,5 @@ $ ssv-dkg sign --input /path/to/deposit/data \
 
 - combine both in a single command
 ```shell
-$ ssv-dkg operators list --short | head --lines 3 | ssv-dkg sign --input /path/to/deposit --quiet > signed_deposit.json 
+$ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/to/deposit --quiet > signed_deposit.json 
 ```

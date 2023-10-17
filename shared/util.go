@@ -7,7 +7,7 @@ import (
 
 // Exit is a helper function for bombing out of the process in CLI commands
 func Exit(message string) {
-	fmt.Println(message)
+	_, _ = fmt.Fprintln(os.Stderr, message)
 	os.Exit(1)
 }
 
@@ -24,4 +24,18 @@ func Uniq[T comparable](input []T) []T {
 	}
 
 	return out
+}
+
+type QuietLogger struct {
+	Quiet bool
+}
+
+func (q QuietLogger) MaybeLog(message string) {
+	if !q.Quiet {
+		fmt.Println(message)
+	}
+}
+
+func (q QuietLogger) Log(message string) {
+	fmt.Println(message)
 }

@@ -17,6 +17,7 @@ import (
 
 var operatorFlag []string
 var inputPathFlag string
+var shortFlag bool
 var stateDirectory string
 var signCmd = &cobra.Command{
 	Use:   "sign",
@@ -36,6 +37,7 @@ func init() {
 
 	signCmd.PersistentFlags().StringVarP(&inputPathFlag, "input", "i", "", "The filepath of the ETH deposit data")
 	signCmd.PersistentFlags().StringVarP(&stateDirectory, "output", "d", "~/.ssv", "Where you wish the CLI to store its state")
+	signCmd.PersistentFlags().BoolVarP(&shortFlag, "quiet", "q", false, "Only print out the signed deposit data")
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
@@ -74,8 +76,10 @@ func Sign(cmd *cobra.Command, _ []string) {
 		shared.Exit("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
 	}
 
+	log := shared.QuietLogger{Quiet: shortFlag}
+
 	// let's first health-check everything
-	fmt.Println("⏳ contacting nodes")
+	log.MaybeLog("⏳ contacting nodes")
 	for _, operator := range operators {
 		res, err := http.Get(fmt.Sprintf("%s/health", operator))
 		if err != nil {
@@ -87,7 +91,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 
 	// then let's actually kick off the DKG
-	fmt.Println("⏳ starting distributed key generation")
+	log.MaybeLog("⏳ starting distributed key generation")
 	suite := crypto.NewBLSSuite()
 	var responses []api.SignResponse
 	for _, operator := range operators {
@@ -122,7 +126,6 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 
 	// we write the signed deposit data to stdout
-	fmt.Println("✅ received signed deposit data!")
-	fmt.Println(base64.StdEncoding.EncodeToString(responses[0].Signature))
-
+	log.MaybeLog("✅ received signed deposit data!")
+	log.Log(base64.StdEncoding.EncodeToString(responses[0].Signature))
 }

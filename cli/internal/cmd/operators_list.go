@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var ShortFlag bool
+var quietFlag bool
 
 type operatorsJsonResponse struct {
 	Operators []crypto.Identity `json:"operators"`
@@ -27,9 +27,9 @@ var operatorsListCmd = &cobra.Command{
 
 func init() {
 	operatorsListCmd.PersistentFlags().BoolVarP(
-		&ShortFlag,
-		"short",
-		"s",
+		&quietFlag,
+		"quiet",
+		"q",
 		false,
 		"With short enabled, the stdout input is simpler and machine readable",
 	)
@@ -40,13 +40,15 @@ func listOperators(_ *cobra.Command, _ []string) {
 		shared.Exit("you must provide either a `source-url` or `source-file`!")
 	}
 
+	log := shared.QuietLogger{Quiet: quietFlag}
+
 	// read the list of operators from file or URL
 	var operators []crypto.Identity
 	if sourceFileFlag != "" {
-		fmt.Println("📂 reading operators from a local file")
+		log.MaybeLog("📂 reading operators from a local file")
 		operators = readSourceFile(sourceFileFlag)
 	} else {
-		fmt.Println("🌐 reading operators from the internet")
+		log.MaybeLog("🌐 reading operators from the internet")
 		operators = readSourceUrl(sourceUrlFlag)
 	}
 
@@ -56,17 +58,17 @@ func listOperators(_ *cobra.Command, _ []string) {
 
 	for _, op := range operators {
 		if err := op.Verify(suite); err != nil {
-			fmt.Println(fmt.Sprintf("🔒 error verifying key for %s", op.Address))
+			log.MaybeLog(fmt.Sprintf("🔒 error verifying key for %s", op.Address))
 			continue
 		}
 		addresses = append(addresses, op.Address)
 	}
 
 	// print out the pretty or machine-readable results
-	if ShortFlag {
-		printOperatorsShort(addresses)
+	if quietFlag {
+		log.Log(strings.Join(addresses, " "))
 	} else {
-		printOperatorsPretty(addresses)
+		printOperatorsPretty(log, addresses)
 	}
 }
 
@@ -105,16 +107,12 @@ func readSourceUrl(url string) []crypto.Identity {
 	return j.Operators
 }
 
-func printOperatorsShort(addresses []string) {
-	fmt.Println(strings.Join(addresses, " "))
-}
-
-func printOperatorsPretty(addresses []string) {
+func printOperatorsPretty(log shared.QuietLogger, addresses []string) {
 	if len(addresses) == 0 {
 		shared.Exit("Operator list was empty!")
 	}
 
-	fmt.Println("⏳\tchecking health of operators")
+	log.Log("⏳\tchecking health of operators")
 
 	var success []string
 	var failure []string
@@ -128,9 +126,9 @@ func printOperatorsPretty(addresses []string) {
 	}
 
 	for _, s := range success {
-		fmt.Println(fmt.Sprintf("✅\t%s", s))
+		log.Log(fmt.Sprintf("✅\t%s", s))
 	}
 	for _, f := range failure {
-		fmt.Println(fmt.Sprintf("❌\t%s", f))
+		log.Log(fmt.Sprintf("❌\t%s", f))
 	}
 }
