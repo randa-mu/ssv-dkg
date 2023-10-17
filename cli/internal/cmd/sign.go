@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/spf13/cobra"
 	"io"
 	"net/http"
@@ -54,12 +55,12 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 
 	// read in the deposit data and unmarshal it from JSON
-	contents, err := os.ReadFile(inputPathFlag)
+	depositData, err := os.ReadFile(inputPathFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("error reading the deposit data file: %v", err))
 	}
 	data := api.SignRequest{
-		Data: contents,
+		Data: depositData,
 	}
 	requestJson, err := json.Marshal(data)
 	if err != nil {
@@ -87,8 +88,11 @@ func Sign(cmd *cobra.Command, _ []string) {
 
 	// then let's actually kick off the DKG
 	fmt.Println("⏳ starting distributed key generation")
+	suite := crypto.NewBLSSuite()
 	var responses []api.SignResponse
 	for _, operator := range operators {
+
+		// send the signing request to the node
 		response, err := http.Post(fmt.Sprintf("%s/sign", operator), "application/json", bytes.NewBuffer(requestJson))
 		if err != nil {
 			shared.Exit(fmt.Sprintf("error creating cluster: %v", err))
@@ -97,6 +101,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 			shared.Exit(fmt.Sprintf("error creation cluster. Node return status code %d", response.StatusCode))
 		}
 
+		// unmarshal the response as JSON
 		responseBytes, err := io.ReadAll(response.Body)
 		if err != nil {
 			shared.Exit("error reading response bytes")
@@ -105,6 +110,12 @@ func Sign(cmd *cobra.Command, _ []string) {
 		err = json.Unmarshal(responseBytes, &signResponse)
 		if err != nil {
 			shared.Exit(fmt.Sprintf("error unmarshalling json response: %v", err))
+		}
+
+		// verify that the signature over the deposit data verifies for the reported public key
+		err = suite.Verify(depositData, signResponse.PublicKey, signResponse.Signature)
+		if err != nil {
+			shared.Exit(fmt.Sprintf("signature did not verify for the signed deposit data for node %s: %v", operator, err))
 		}
 
 		responses = append(responses, signResponse)

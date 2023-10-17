@@ -5,5 +5,6 @@ type SignRequest struct {
 }
 
 type SignResponse struct {
-	Signature []byte `json:"data"`
+	PublicKey []byte `json:"publicKey"`
+	Signature []byte `json:"signature"`
 }

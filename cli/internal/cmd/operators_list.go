@@ -52,8 +52,10 @@ func listOperators(_ *cobra.Command, _ []string) {
 
 	// verify the signatures of all the operators
 	var addresses []string
+	suite := crypto.NewBLSSuite()
+
 	for _, op := range operators {
-		if err := op.Verify(); err != nil {
+		if err := op.Verify(suite); err != nil {
 			fmt.Println(fmt.Sprintf("🔒 error verifying key for %s", op.Address))
 			continue
 		}

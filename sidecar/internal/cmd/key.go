@@ -52,7 +52,8 @@ func createKey(_ *cobra.Command, args []string) {
 		dir = DirectoryFlag
 	}
 
-	kp, err := crypto.CreateKeypair()
+	suite := crypto.NewBLSSuite()
+	kp, err := suite.CreateKeypair()
 	if err != nil {
 		shared.Exit(fmt.Sprintf("failed to create keypair: %v", err))
 	}
@@ -77,7 +78,8 @@ func signKey(_ *cobra.Command, _ []string) {
 		shared.Exit(fmt.Sprintf("failed to load keypair from %s: %v", keyPath, err))
 	}
 
-	identity, err := keypair.SelfSign(UrlFlag)
+	suite := crypto.NewBLSSuite()
+	identity, err := keypair.SelfSign(suite, UrlFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("failed to sign address: %v", err))
 	}

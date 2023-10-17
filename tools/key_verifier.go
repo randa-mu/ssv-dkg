@@ -25,6 +25,7 @@ func main() {
 }
 
 func verifyKeys(filepath string) error {
+	suite := crypto.NewBLSSuite()
 	file, err := os.ReadFile(filepath)
 	if err != nil {
 		return fmt.Errorf("error opening file for verification: %v", err)
@@ -36,7 +37,7 @@ func verifyKeys(filepath string) error {
 		return fmt.Errorf("error unmarshalling JSON in file: %v", err)
 	}
 	for _, identity := range f.Operators {
-		if err := identity.Verify(); err != nil {
+		if err := identity.Verify(suite); err != nil {
 			return fmt.Errorf("❌ key verification failed for %s", identity.Address)
 		}
 	}

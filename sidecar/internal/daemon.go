@@ -35,6 +35,8 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 
 	fmt.Println(fmt.Sprintf("Keypair loaded from %s", keyPath))
 
+	suite := crypto.NewBLSSuite()
+
 	router := chi.NewMux()
 	router.Get("/health", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusOK)
@@ -55,7 +57,7 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 			return
 		}
 
-		signature, err := keypair.Sign(requestBody.Data)
+		signature, err := suite.Sign(keypair, requestBody.Data)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -63,6 +65,7 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 
 		response := api.SignResponse{
 			Signature: signature,
+			PublicKey: keypair.Public,
 		}
 
 		j, err := json.Marshal(response)

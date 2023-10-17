@@ -1,50 +1,22 @@
 package crypto
 
-import (
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
-)
+// Suite represents a cryptographic scheme used for signing and verification operations
+type Suite interface {
+	CreateKeypair() (Keypair, error)
+	Sign(keypair Keypair, message []byte) ([]byte, error)
+	Verify(message []byte, publicKey []byte, signature []byte) error
+}
 
 type Keypair struct {
 	Private []byte `json:"private"`
 	Public  []byte `json:"public"`
 }
 
-func CreateKeypair() (Keypair, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		return Keypair{}, err
-	}
-
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	pubKeyBytes := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
-	return Keypair{
-		Private: privateKeyBytes,
-		Public:  pubKeyBytes,
-	}, nil
-}
-
-type Identity struct {
-	Address   string `json:"address"`
-	Public    []byte `json:"public"`
-	Signature []byte `json:"signature"`
-}
-
-func (k Keypair) SelfSign(address string) (Identity, error) {
-	privateKey, err := x509.ParsePKCS1PrivateKey(k.Private)
-	if err != nil {
-		return Identity{}, err
-	}
-
+// SelfSign signs an address to attribute it to a given public key and returns an Identity
+func (k Keypair) SelfSign(suite Suite, address string) (Identity, error) {
 	message := append(k.Public, []byte(address)...)
-	sha := sha256.New()
-	sha.Write(message)
-	digest := sha.Sum(nil)
 
-	signature, err := privateKey.Sign(rand.Reader, digest, crypto.SHA256)
+	signature, err := suite.Sign(k, message)
 	if err != nil {
 		return Identity{}, err
 	}
@@ -56,33 +28,14 @@ func (k Keypair) SelfSign(address string) (Identity, error) {
 	}, nil
 }
 
-func (k Keypair) Sign(message []byte) ([]byte, error) {
-	privateKey, err := x509.ParsePKCS1PrivateKey(k.Private)
-	if err != nil {
-		return nil, err
-	}
-
-	sha := sha256.New()
-	sha.Write(message)
-	digest := sha.Sum(nil)
-
-	return privateKey.Sign(rand.Reader, digest, crypto.SHA256)
+type Identity struct {
+	Address   string `json:"address"`
+	Public    []byte `json:"public"`
+	Signature []byte `json:"signature"`
 }
 
-func VerifySignature(message []byte, publicKey []byte, signature []byte) error {
-	pk, err := x509.ParsePKCS1PublicKey(publicKey)
-	if err != nil {
-		return err
-	}
-
-	sha := sha256.New()
-	sha.Write(message)
-	digest := sha.Sum(nil)
-
-	return rsa.VerifyPKCS1v15(pk, crypto.SHA256, digest, signature)
-}
-
-func (i Identity) Verify() error {
-	message := append(i.Public, []byte(i.Address)...)
-	return VerifySignature(message, i.Public, i.Signature)
+// Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file
+func (i Identity) Verify(suite Suite) error {
+	m := append(i.Public, []byte(i.Address)...)
+	return suite.Verify(m, i.Public, i.Signature)
 }
