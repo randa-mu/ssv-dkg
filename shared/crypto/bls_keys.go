@@ -6,6 +6,7 @@ import (
 	"github.com/drand/kyber/pairing"
 
 	"github.com/drand/kyber/sign"
+	//nolint:staticcheck //only a rogue key attack if used wrong
 	signing "github.com/drand/kyber/sign/bls"
 	"github.com/drand/kyber/util/random"
 )

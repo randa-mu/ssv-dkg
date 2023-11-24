@@ -20,6 +20,9 @@ jobs:
         with:
           go-version: "1.20.5"
 
+      - name: 🛠 Build packages
+        run: go build ./...
+
       - name: 🧹 Lint
         uses: golangci/golangci-lint-action@v3.7.0
         with:
@@ -27,10 +30,10 @@ jobs:
           args: ./cli ./sidecar
 
       - name: 🧑‍🔬 Run tests
-        run: find . -name go.mod -execdir go test ./... \;
+        run: go test ./...
 
       - name: 🛠️ Build CLI
-        run: go build -o ssv-dkg ./cli
+        run: go build -o ssv-dkg ./cli/main.go
 
       - name: 🛠️ Build sidecar
-        run: go build -o ssv-sidecar ./sidecar
+        run: go build -o ssv-sidecar ./sidecar/main.go

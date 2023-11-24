@@ -35,12 +35,9 @@ func Start(_ *cobra.Command, _ []string) {
 	}
 
 	errs := daemon.Start()
-	fmt.Println(fmt.Sprintf("SSV sidecar started, serving on port %d", PortFlag))
+	fmt.Printf("SSV sidecar started, serving on port %d\n", PortFlag)
 	for {
-		select {
-		case err := <-errs:
-			shared.Exit(fmt.Sprintf("error while running daemon: %v", err))
-		default:
-		}
+		err := <-errs
+		shared.Exit(fmt.Sprintf("error while running daemon: %v", err))
 	}
 }
