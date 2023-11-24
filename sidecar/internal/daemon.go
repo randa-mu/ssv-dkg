@@ -34,7 +34,7 @@ func NewDaemon(port uint, keyPath string) (Daemon, error) {
 		return Daemon{}, fmt.Errorf("error loading keypair: %v", err)
 	}
 
-	fmt.Println(fmt.Sprintf("Keypair loaded from %s", keyPath))
+	fmt.Printf("Keypair loaded from %s\n", keyPath)
 
 	suite := crypto.NewBLSSuite()
 

@@ -95,7 +95,7 @@ func readSourceUrl(url string) []crypto.Identity {
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("failed to read response body"))
+		shared.Exit("failed to read response body")
 	}
 
 	var j operatorsJsonResponse

@@ -64,7 +64,7 @@ func createKey(_ *cobra.Command, args []string) {
 		shared.Exit(fmt.Sprintf("failed to store keypair: %v", err))
 	}
 
-	fmt.Println(fmt.Sprintf("Created a new keypair at %s", keyPath))
+	fmt.Printf("Created a new keypair at %s\n", keyPath)
 }
 
 func signKey(_ *cobra.Command, _ []string) {
