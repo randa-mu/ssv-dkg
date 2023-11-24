@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 var PortFlag uint
@@ -27,17 +26,17 @@ func init() {
 
 func Start(_ *cobra.Command, _ []string) {
 	if PortFlag == 0 {
-		shared.Exit("You must provide a port to start the sidecar")
+		log.Fatalln("You must provide a port to start the sidecar")
 	}
 	daemon, err := internal.NewDaemon(PortFlag, DirectoryFlag)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("error starting daemon: %v", err))
+		log.Fatalf("error starting daemon: %v\n", err)
 	}
 
 	errs := daemon.Start()
-	fmt.Printf("SSV sidecar started, serving on port %d\n", PortFlag)
+	log.Printf("SSV sidecar started, serving on port %d\n", PortFlag)
 	for {
 		err := <-errs
-		shared.Exit(fmt.Sprintf("error while running daemon: %v", err))
+		log.Fatalf("error while running daemon: %v\n", err)
 	}
 }
