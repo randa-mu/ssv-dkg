@@ -5,7 +5,8 @@ This module contains an implementation of the distributed key generation sidecar
 
 ## steps
 - sign public key and upload to repo
-- start node (?)
+- start your SSV node (or stub)
+- start your sidecar
 
 
 ## example commands
@@ -24,9 +25,11 @@ $ ssv-sidecar key sign --directory ~/.ssv --url https://example.org | jq
 }
 ```
 
-- start your node
+- start your SSV node (or a stubbed node, which can be found in [../tools/stub](../tools/stub))
+
+- start your sidecar node
 ```shell
-$ ssv-sidecar start --port 443 --directory ~/.ssv
-SSV sidecar started, serving on port 443
-Keypair loaded from ~/.ssv
+$ ssv-sidecar start --port 443 --directory ~/.ssv --ssv-url http://localhost:8888
+{"time":"2023-11-28T17:46:27+01:00","level":"info","message":"Keypair loaded from ~/ssv"}
+{"time":"2023-11-28T17:46:27+01:00","level":"info","message":"SSV sidecar started, serving on port 443"}
 ```
