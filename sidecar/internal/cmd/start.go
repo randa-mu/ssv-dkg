@@ -1,12 +1,14 @@
 package cmd
 
 import (
-	"github.com/randa-mu/ssv-dkg/sidecar/internal"
+	"github.com/randa-mu/ssv-dkg/sidecar"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"log"
+	"path"
 )
 
 var PortFlag uint
+var SsvURLFlag string
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the DKG sidecar",
@@ -22,21 +24,28 @@ func init() {
 		8080,
 		"the public port you wish to run the sidecar server on",
 	)
+	startCmd.PersistentFlags().StringVarP(
+		&SsvURLFlag,
+		"ssv-url",
+		"s",
+		"http://localhost:8888",
+		"the hostname and port of the SSV binary you wish to connect to",
+	)
 }
 
 func Start(_ *cobra.Command, _ []string) {
 	if PortFlag == 0 {
-		log.Fatalln("You must provide a port to start the sidecar")
+		log.Fatal().Msg("You must provide a port to start the sidecar")
 	}
-	daemon, err := internal.NewDaemon(PortFlag, DirectoryFlag)
+	daemon, err := sidecar.NewDaemon(PortFlag, SsvURLFlag, path.Join(DirectoryFlag, KeypairFilename))
 	if err != nil {
-		log.Fatalf("error starting daemon: %v\n", err)
+		log.Fatal().Err(err).Msg("error starting daemon")
 	}
 
 	errs := daemon.Start()
-	log.Printf("SSV sidecar started, serving on port %d\n", PortFlag)
+	log.Info().Msgf("SSV sidecar started, serving on port %d", PortFlag)
 	for {
 		err := <-errs
-		log.Fatalf("error while running daemon: %v\n", err)
+		log.Fatal().Err(err).Msg("error running daemon")
 	}
 }

@@ -1,9 +1,8 @@
-package main
+package key_verifier
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"os"
 )
@@ -12,19 +11,7 @@ type operatorsFile struct {
 	Operators []crypto.Identity `json:"operators"`
 }
 
-func main() {
-	// the command plus the filepath arg
-	if len(os.Args) != 2 {
-		shared.Exit("you must provide a filepath of keys to verify")
-	}
-
-	err := verifyKeys(os.Args[1])
-	if err != nil {
-		shared.Exit(fmt.Sprintf("key validation error: %v", err))
-	}
-}
-
-func verifyKeys(filepath string) error {
+func VerifyKeys(filepath string) error {
 	suite := crypto.NewBLSSuite()
 	file, err := os.ReadFile(filepath)
 	if err != nil {

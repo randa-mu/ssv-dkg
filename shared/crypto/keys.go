@@ -1,10 +1,14 @@
 package crypto
 
-// Suite represents a cryptographic scheme used for signing and verification operations
-type Suite interface {
+// SigningScheme represents a cryptographic scheme used for signing and verification operations
+type SigningScheme interface {
 	CreateKeypair() (Keypair, error)
 	Sign(keypair Keypair, message []byte) ([]byte, error)
 	Verify(message []byte, publicKey []byte, signature []byte) error
+}
+type EncryptionScheme interface {
+	Encrypt(publicKey []byte, plaintext []byte) ([]byte, error)
+	Decrypt(privateKey []byte, ciphertext []byte) ([]byte, error)
 }
 
 type Keypair struct {
@@ -13,7 +17,7 @@ type Keypair struct {
 }
 
 // SelfSign signs an address to attribute it to a given public key and returns an Identity
-func (k Keypair) SelfSign(suite Suite, address string) (Identity, error) {
+func (k Keypair) SelfSign(suite SigningScheme, address string) (Identity, error) {
 	message := append(k.Public, []byte(address)...)
 
 	signature, err := suite.Sign(k, message)
@@ -35,7 +39,7 @@ type Identity struct {
 }
 
 // Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file
-func (i Identity) Verify(suite Suite) error {
+func (i Identity) Verify(suite SigningScheme) error {
 	m := append(i.Public, []byte(i.Address)...)
 	return suite.Verify(m, i.Public, i.Signature)
 }

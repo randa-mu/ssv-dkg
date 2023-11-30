@@ -8,14 +8,14 @@ import (
 	"crypto/x509"
 )
 
-type rsaSuite struct {
+type RsaSuite struct {
 }
 
-func NewRSASuite() rsaSuite {
-	return rsaSuite{}
+func NewRSASuite() RsaSuite {
+	return RsaSuite{}
 }
 
-func (r rsaSuite) CreateKeypair() (Keypair, error) {
+func (r RsaSuite) CreateKeypair() (Keypair, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return Keypair{}, err
@@ -29,7 +29,7 @@ func (r rsaSuite) CreateKeypair() (Keypair, error) {
 	}, nil
 }
 
-func (r rsaSuite) Sign(k Keypair, message []byte) ([]byte, error) {
+func (r RsaSuite) Sign(k Keypair, message []byte) ([]byte, error) {
 	privateKey, err := x509.ParsePKCS1PrivateKey(k.Private)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (r rsaSuite) Sign(k Keypair, message []byte) ([]byte, error) {
 	return privateKey.Sign(rand.Reader, digest, crypto.SHA256)
 }
 
-func (r rsaSuite) Verify(message []byte, publicKey []byte, signature []byte) error {
+func (r RsaSuite) Verify(message []byte, publicKey []byte, signature []byte) error {
 	pk, err := x509.ParsePKCS1PublicKey(publicKey)
 	if err != nil {
 		return err
@@ -53,4 +53,22 @@ func (r rsaSuite) Verify(message []byte, publicKey []byte, signature []byte) err
 	digest := sha.Sum(nil)
 
 	return rsa.VerifyPKCS1v15(pk, crypto.SHA256, digest, signature)
+}
+
+func (r RsaSuite) Encrypt(publicKey []byte, plaintext []byte) ([]byte, error) {
+	pk, err := x509.ParsePKCS1PublicKey(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return rsa.EncryptPKCS1v15(rand.Reader, pk, plaintext)
+}
+
+func (r RsaSuite) Decrypt(privateKey []byte, ciphertext []byte) ([]byte, error) {
+	sk, err := x509.ParsePKCS1PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return rsa.DecryptPKCS1v15(rand.Reader, sk, ciphertext)
 }
