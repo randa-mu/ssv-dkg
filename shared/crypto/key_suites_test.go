@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-var suite Suite
+var scheme SigningScheme
 
-func TestKeyCryptography(t *testing.T) {
-	suites := []Suite{NewRSASuite(), NewBLSSuite()}
+func TestSigning(t *testing.T) {
+	schemes := []SigningScheme{NewRSASuite(), NewBLSSuite()}
 
-	for _, s := range suites {
-		suite = s
+	for _, s := range schemes {
+		scheme = s
 		t.Run("creating a key, signing it, and verifying the self-sign", CreatingAKeyAndSigningItAndVerifyingIt)
 		t.Run("verifying an invalid self-signature fails", CreatingAKeyAndSigningItAndModifyingTheSignature)
 		t.Run("verifying a valid self-signature with the wrong key fails", CreatingKeyAndSigningItAndModifyingKey)
@@ -20,68 +20,85 @@ func TestKeyCryptography(t *testing.T) {
 	}
 }
 
+func TestEncryption(t *testing.T) {
+	t.Parallel()
+	scheme := NewRSASuite()
+
+	kp, err := scheme.CreateKeypair()
+	require.NoError(t, err)
+
+	plaintext := []byte("hello world")
+	ciphertext, err := scheme.Encrypt(kp.Public, plaintext)
+	require.NoError(t, err)
+
+	p, err := scheme.Decrypt(kp.Private, ciphertext)
+	require.NoError(t, err)
+
+	require.Equal(t, plaintext, p)
+}
+
 func CreatingAKeyAndSigningItAndVerifyingIt(t *testing.T) {
 	t.Parallel()
 
-	k, err := suite.CreateKeypair()
+	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(suite, "hello world")
+	i, err := k.SelfSign(scheme, "hello world")
 	require.NoError(t, err)
 
-	require.NoError(t, i.Verify(suite))
+	require.NoError(t, i.Verify(scheme))
 }
 
 func CreatingAKeyAndSigningItAndModifyingTheSignature(t *testing.T) {
 	t.Parallel()
 
-	k, err := suite.CreateKeypair()
+	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(suite, "hello world")
+	i, err := k.SelfSign(scheme, "hello world")
 	require.NoError(t, err)
 
 	i.Signature = []byte("deadbeef")
 
-	require.Error(t, i.Verify(suite))
+	require.Error(t, i.Verify(scheme))
 }
 
 func CreatingKeyAndSigningItAndModifyingKey(t *testing.T) {
 	t.Parallel()
 
-	k, err := suite.CreateKeypair()
+	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(suite, "hello world")
+	i, err := k.SelfSign(scheme, "hello world")
 	require.NoError(t, err)
 
 	i.Public = []byte("deadbeef")
 
-	require.Error(t, i.Verify(suite))
+	require.Error(t, i.Verify(scheme))
 }
 
 func KeypairSigningArbitraryBytesVerifies(t *testing.T) {
 	t.Parallel()
 
 	m := []byte("deadbeef")
-	k, err := suite.CreateKeypair()
+	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	sig, err := suite.Sign(k, m)
+	sig, err := scheme.Sign(k, m)
 	require.NoError(t, err)
 
-	require.NoError(t, suite.Verify(m, k.Public, sig))
+	require.NoError(t, scheme.Verify(m, k.Public, sig))
 }
 
 func InvalidMessageFailsForSignature(t *testing.T) {
 	t.Parallel()
 
 	m := []byte("deadbeef")
-	k, err := suite.CreateKeypair()
+	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	sig, err := suite.Sign(k, m)
+	sig, err := scheme.Sign(k, m)
 	require.NoError(t, err)
 
-	require.Error(t, suite.Verify([]byte("different message"), k.Public, sig))
+	require.Error(t, scheme.Verify([]byte("different message"), k.Public, sig))
 }

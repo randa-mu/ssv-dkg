@@ -6,6 +6,8 @@ require (
 	github.com/drand/kyber v1.2.0
 	github.com/drand/kyber-bls12381 v0.3.1
 	github.com/go-chi/chi/v5 v5.0.10
+	github.com/jarcoal/httpmock v1.3.1
+	github.com/rs/zerolog v1.0.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.2
 )

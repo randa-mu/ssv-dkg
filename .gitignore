@@ -3,3 +3,7 @@
 ./key-verifier
 ./cli/cli
 ./sidecar/sidecar
+ssv-sidecar
+ssv-cli
+stub
+

@@ -33,7 +33,7 @@ jobs:
         run: go test ./...
 
       - name: 🛠️ Build CLI
-        run: go build -o ssv-dkg ./cli/main.go
+        run: go build -o ssv-dkg ./cli/cmd/main.go
 
       - name: 🛠️ Build sidecar
-        run: go build -o ssv-sidecar ./sidecar/main.go
+        run: go build -o ssv-sidecar ./sidecar/cmd/main.go

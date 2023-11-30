@@ -1,4 +1,4 @@
-package main
+package key_verifier
 
 import (
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func TestValidKeyValidates(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	require.NoError(t, verifyKeys(p))
+	require.NoError(t, VerifyKeys(p))
 }
 
 func TestInvalidAddressReturnsError(t *testing.T) {
@@ -65,7 +65,7 @@ func TestInvalidAddressReturnsError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	require.Error(t, verifyKeys(p))
+	require.Error(t, VerifyKeys(p))
 }
 
 func TestInvalidSignatureReturnsError(t *testing.T) {
@@ -93,7 +93,7 @@ func TestInvalidSignatureReturnsError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	require.Error(t, verifyKeys(p))
+	require.Error(t, VerifyKeys(p))
 }
 
 func TestInvalidJsonReturnsError(t *testing.T) {
@@ -121,11 +121,11 @@ func TestInvalidJsonReturnsError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	require.Error(t, verifyKeys(p))
+	require.Error(t, VerifyKeys(p))
 }
 
 func TestNonExistentFileReturnsError(t *testing.T) {
 	t.Parallel()
 
-	require.Error(t, verifyKeys("somenonsensepath"))
+	require.Error(t, VerifyKeys("somenonsensepath"))
 }
