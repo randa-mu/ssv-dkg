@@ -10,7 +10,7 @@ This module contains an implementation of the distributed key generation sidecar
 
 
 ## example commands
-- generate a keypair (won't be needed after connection with SSV node)
+- generate a BLS12-381 keypair
 ```shell
 $ ssv-sidecar key create ~/.ssv 
 ```
