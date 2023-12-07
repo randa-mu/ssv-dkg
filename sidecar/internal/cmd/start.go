@@ -9,6 +9,7 @@ import (
 
 var PortFlag uint
 var SsvURLFlag string
+var PublicURLFlag string
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the DKG sidecar",
@@ -31,13 +32,17 @@ func init() {
 		"http://localhost:8888",
 		"the hostname and port of the SSV binary you wish to connect to",
 	)
+	startCmd.PersistentFlags().StringVarP(
+		&PublicURLFlag,
+		"public-url",
+		"u",
+		"",
+		"the public endpoint you host your node on",
+	)
 }
 
 func Start(_ *cobra.Command, _ []string) {
-	if PortFlag == 0 {
-		log.Fatal().Msg("You must provide a port to start the sidecar")
-	}
-	daemon, err := sidecar.NewDaemon(PortFlag, SsvURLFlag, path.Join(DirectoryFlag, KeypairFilename))
+	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, path.Join(DirectoryFlag, KeypairFilename))
 	if err != nil {
 		log.Fatal().Err(err).Msg("error starting daemon")
 	}

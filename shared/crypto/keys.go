@@ -1,11 +1,24 @@
 package crypto
 
+import (
+	"github.com/drand/kyber"
+	"github.com/drand/kyber/share"
+)
+
 // SigningScheme represents a cryptographic scheme used for signing and verification operations
 type SigningScheme interface {
 	CreateKeypair() (Keypair, error)
 	Sign(keypair Keypair, message []byte) ([]byte, error)
 	Verify(message []byte, publicKey []byte, signature []byte) error
 }
+
+type ThresholdScheme interface {
+	SigningScheme
+	KeyGroup() kyber.Group
+	SignWithPartial(private *share.PriShare, msg []byte) ([]byte, error)
+	VerifyPartial(public *share.PubPoly, msg, sig []byte) error
+}
+
 type EncryptionScheme interface {
 	Encrypt(publicKey []byte, plaintext []byte) ([]byte, error)
 	Decrypt(privateKey []byte, ciphertext []byte) ([]byte, error)

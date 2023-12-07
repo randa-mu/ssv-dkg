@@ -1,18 +1,11 @@
 package api
 
-var SidecarSignPath = "/sign"
-var SidecarHealthPath = "/health"
-
-type SignRequest struct {
-	Data []byte `json:"data"`
-}
-
 type SignResponse struct {
-	EncryptedShare                 []byte `ssz-max:"2048"`
-	SharePK                        []byte `ssz-max:"2048"`
-	ValidatorPK                    []byte `ssz-size:"48"`
-	DepositDataPartialSignature    []byte `ssz-size:"96"`
-	DepositValidatorNonceSignature []byte `ssz-size:"96"`
+	EncryptedShare                 []byte
+	SharePK                        []byte
+	ValidatorPK                    []byte
+	DepositDataPartialSignature    []byte
+	DepositValidatorNonceSignature []byte
 }
 
 var SsvHealthPath = "/health"

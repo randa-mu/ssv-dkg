@@ -1,12 +1,16 @@
 package cli
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"net/http"
+	"sync"
+	"time"
 )
 
 func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api.SignResponse, error) {
@@ -18,40 +22,95 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 
 	// let's first health-check everything
 	log.MaybeLog("⏳ contacting nodes")
-	for _, operator := range operators {
-		res, err := http.Get(fmt.Sprintf("%s/health", operator))
+	identities := make([]crypto.Identity, len(operators))
+	for i, operator := range operators {
+		client := api.NewSidecarClient(operator)
+		response, err := client.Identity()
 		if err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %v", operator, err)
 		}
-		if res.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: status %d", operator, res.StatusCode)
+		identity := crypto.Identity{
+			Address:   response.Address,
+			Public:    response.PublicKey,
+			Signature: response.Signature,
 		}
+		err = identity.Verify(crypto.NewBLSSuite())
+		if err != nil {
+			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %v", operator, err)
+		}
+
+		identities[i] = identity
 	}
 
+	sessionID, err := createSessionID()
+	if err != nil {
+		return nil, err
+	}
 	data := api.SignRequest{
-		Data: depositData,
+		Data:      depositData,
+		Operators: identities,
+		SessionID: sessionID,
 	}
 
 	// then let's actually kick off the DKG
 	log.MaybeLog("⏳ starting distributed key generation")
+
 	suite := crypto.NewBLSSuite()
-	var responses []api.SignResponse
+	responses := shared.SafeList[api.SignResponse]{}
+	errs := make(chan error, 1)
+	wg := sync.WaitGroup{}
+	wg.Add(numOfNodes)
 	for _, operator := range operators {
-		client := api.NewSidecarClient(operator)
+		go func(operator string) {
 
-		signResponse, err := client.Sign(data)
-		if err != nil {
-			return nil, fmt.Errorf("error signing: %v", err)
-		}
+			client := api.NewSidecarClient(operator)
+			signResponse, err := client.Sign(data)
+			if err != nil {
+				errs <- fmt.Errorf("error signing: %v", err)
+				return
+			}
 
-		// verify that the signature over the deposit data verifies for the reported public key
-		err = suite.Verify(depositData, signResponse.SharePK, signResponse.DepositDataPartialSignature)
-		if err != nil {
-			return nil, fmt.Errorf("signature did not verify for the signed deposit data for node %s: %v", operator, err)
-		}
+			publicPolynomial, err := crypto.UnmarshalPubPoly(suite, signResponse.ValidatorPK)
+			if err != nil {
+				errs <- err
+				return
+			}
+			// verify that the signature over the deposit data verifies for the reported public key
+			err = suite.VerifyPartial(&publicPolynomial, depositData, signResponse.DepositDataPartialSignature)
+			if err != nil {
+				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %v", operator, err)
+			}
 
-		responses = append(responses, signResponse)
+			responses.Append(signResponse)
+			wg.Done()
+		}(operator)
 	}
 
-	return responses, nil
+	done := make(chan struct{})
+
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case err := <-errs:
+		return nil, err
+	case <-done:
+		return responses.Get(), nil
+	}
+}
+
+// a sessionID is used in the DKG to avoid replay attacks
+func createSessionID() ([]byte, error) {
+	now := time.Now().Unix()
+	buf := bytes.NewBuffer(make([]byte, binary.MaxVarintLen64))
+	if err := binary.Write(buf, binary.BigEndian, now); err != nil {
+		return nil, err
+	}
+	s := sha256.New()
+	if _, err := s.Write(buf.Bytes()); err != nil {
+		return nil, err
+	}
+	return s.Sum(nil), nil
 }

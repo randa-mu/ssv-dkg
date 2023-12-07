@@ -32,14 +32,14 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 	if err != nil {
 		return SignResponse{}, err
 	}
-	response, err := http.Post(fmt.Sprintf("%s/sign", s.url), "application/json", bytes.NewBuffer(j))
+	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarSignPath), "application/json", bytes.NewBuffer(j))
 
 	if err != nil {
 		return SignResponse{}, fmt.Errorf("error signing with validator %s: %v", s.url, err)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return SignResponse{}, fmt.Errorf("error signing with validator %s. Node return status code %d", s.url, response.StatusCode)
+		return SignResponse{}, fmt.Errorf("error signing with validator %s. Node returned status code %d", s.url, response.StatusCode)
 	}
 
 	responseBytes, err := io.ReadAll(response.Body)
@@ -50,4 +50,43 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 	var signResponse SignResponse
 	err = json.Unmarshal(responseBytes, &signResponse)
 	return signResponse, err
+}
+
+func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
+	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath))
+	if err != nil {
+		return SidecarIdentityResponse{}, fmt.Errorf("error making HTTP request: %v", err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return SidecarIdentityResponse{}, fmt.Errorf("error retrieving identity for %s. Node returned status code %d", s.url, res.StatusCode)
+	}
+
+	responseBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return SidecarIdentityResponse{}, fmt.Errorf("error reading response body: %v", err)
+	}
+
+	var identity SidecarIdentityResponse
+	err = json.Unmarshal(responseBytes, &identity)
+	if err != nil {
+		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling response body: %v", err)
+	}
+	return identity, nil
+}
+
+func (s SidecarClient) BroadcastDKG(packet SidecarDKGPacket) error {
+	requestBytes, err := json.Marshal(packet)
+	if err != nil {
+		return fmt.Errorf("error marshalling json: %v", err)
+	}
+
+	res, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarDKGPath), "application/json", bytes.NewBuffer(requestBytes))
+	if err != nil {
+		return fmt.Errorf("error making HTTP request: %v", err)
+	}
+	if res.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("error broadcasting DKG to %s. Node returned status code %d", s.url, res.StatusCode)
+	}
+	return nil
 }
