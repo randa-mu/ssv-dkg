@@ -109,6 +109,5 @@ func (d Daemon) Identity() (api.SidecarIdentityResponse, error) {
 }
 
 func (d Daemon) BroadcastDKG(packet api.SidecarDKGPacket) error {
-	d.dkg.ProcessPacket(packet)
-	return nil
+	return d.dkg.ProcessPacket(packet)
 }
