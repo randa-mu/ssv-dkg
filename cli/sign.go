@@ -20,6 +20,8 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 		return nil, errors.New("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
 	}
 
+	suite := crypto.NewBLSSuite()
+
 	// let's first health-check everything
 	log.MaybeLog("⏳ contacting nodes")
 	identities := make([]crypto.Identity, len(operators))
@@ -34,7 +36,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 			Public:    response.PublicKey,
 			Signature: response.Signature,
 		}
-		err = identity.Verify(crypto.NewBLSSuite())
+		err = identity.Verify(suite)
 		if err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %v", operator, err)
 		}
@@ -55,7 +57,6 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 	// then let's actually kick off the DKG
 	log.MaybeLog("⏳ starting distributed key generation")
 
-	suite := crypto.NewBLSSuite()
 	responses := shared.SafeList[api.SignResponse]{}
 	errs := make(chan error, 1)
 	wg := sync.WaitGroup{}
