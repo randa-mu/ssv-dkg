@@ -3,6 +3,7 @@ package shared
 import (
 	"fmt"
 	"os"
+	"sync"
 )
 
 // Exit is a helper function for bombing out of the process in CLI commands
@@ -38,4 +39,23 @@ func (q QuietLogger) MaybeLog(message string) {
 
 func (q QuietLogger) Log(message string) {
 	fmt.Println(message)
+}
+
+type SafeList[T any] struct {
+	lock     sync.RWMutex
+	delegate []T
+}
+
+func (s *SafeList[T]) Append(value T) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.delegate = append(s.delegate, value)
+}
+
+func (s *SafeList[T]) Get() []T {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	out := make([]T, len(s.delegate))
+	copy(out, s.delegate)
+	return out
 }

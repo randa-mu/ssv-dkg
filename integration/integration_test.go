@@ -70,7 +70,7 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) (sidecar.Daemon, error)
 		return sidecar.Daemon{}, err
 	}
 	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
-	return sidecar.NewDaemon(port, ssvURL, keyPath)
+	return sidecar.NewDaemon(port, url, ssvURL, keyPath)
 }
 
 func fmap[T any, U any](arr []T, f func(T) U) []U {
