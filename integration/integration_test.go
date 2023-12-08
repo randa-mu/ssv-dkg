@@ -37,7 +37,7 @@ func startStubSSVNode(t *testing.T, ssvPort uint) {
 	}()
 	err := awaitHealthy(ssvPort)
 	if err != nil {
-		t.Errorf("error starting SSV stub: %v", err)
+		t.Errorf("error starting SSV stub: %w", err)
 		t.FailNow()
 	}
 }
@@ -51,7 +51,7 @@ func startSidecars(t *testing.T, ports []uint, ssvPort uint) {
 		}()
 		err = awaitHealthy(o)
 		if err != nil {
-			t.Errorf("error starting stub: %v", err)
+			t.Errorf("error starting stub: %w", err)
 			t.FailNow()
 		}
 	}

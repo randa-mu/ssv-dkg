@@ -54,7 +54,7 @@ func createKey(_ *cobra.Command, args []string) {
 	keyPath := path.Join(dir, KeypairFilename)
 	err := sidecar.GenerateKey(keyPath)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		shared.Exit(fmt.Sprintf("%w", err))
 	}
 
 	fmt.Printf("Created a new keypair at %s\n", keyPath)
@@ -64,7 +64,7 @@ func signKey(_ *cobra.Command, _ []string) {
 	keyPath := path.Join(DirectoryFlag, KeypairFilename)
 	signature, err := sidecar.SignKey(UrlFlag, keyPath)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		shared.Exit(fmt.Sprintf("%w", err))
 	}
 	fmt.Println(string(signature))
 }

@@ -35,7 +35,7 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarSignPath), "application/json", bytes.NewBuffer(j))
 
 	if err != nil {
-		return SignResponse{}, fmt.Errorf("error signing with validator %s: %v", s.url, err)
+		return SignResponse{}, fmt.Errorf("error signing with validator %s: %w", s.url, err)
 	}
 
 	if response.StatusCode != http.StatusOK {
@@ -44,7 +44,7 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 
 	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return SignResponse{}, fmt.Errorf("error reading response bytes: %v", err)
+		return SignResponse{}, fmt.Errorf("error reading response bytes: %w", err)
 	}
 
 	var signResponse SignResponse
@@ -55,7 +55,7 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
 	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath))
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error making HTTP request: %v", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error making HTTP request: %w", err)
 	}
 
 	if res.StatusCode != http.StatusOK {
@@ -64,13 +64,13 @@ func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
 
 	responseBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error reading response body: %v", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	var identity SidecarIdentityResponse
 	err = json.Unmarshal(responseBytes, &identity)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling response body: %v", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling response body: %w", err)
 	}
 	return identity, nil
 }
@@ -78,12 +78,12 @@ func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
 func (s SidecarClient) BroadcastDKG(packet SidecarDKGPacket) error {
 	requestBytes, err := json.Marshal(packet)
 	if err != nil {
-		return fmt.Errorf("error marshalling json: %v", err)
+		return fmt.Errorf("error marshalling json: %w", err)
 	}
 
 	res, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarDKGPath), "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
-		return fmt.Errorf("error making HTTP request: %v", err)
+		return fmt.Errorf("error making HTTP request: %w", err)
 	}
 	if res.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("error broadcasting DKG to %s. Node returned status code %d", s.url, res.StatusCode)

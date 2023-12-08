@@ -37,7 +37,7 @@ func init() {
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
-	// if the operator flag isn't passed, we consume them from stdin
+	// if the operator flag isn't passed, we consume operator addresses from stdin
 	var args []string
 	if len(operatorFlag) == 0 {
 		stdin, err := io.ReadAll(cmd.InOrStdin())
@@ -53,15 +53,15 @@ func Sign(cmd *cobra.Command, _ []string) {
 	if inputPathFlag == "" {
 		shared.Exit("input path cannot be empty")
 	}
-	// read in the deposit data and unmarshal it from JSON
+
 	depositData, err := os.ReadFile(inputPathFlag)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("error reading the deposit data file: %v", err))
+		shared.Exit(fmt.Sprintf("error reading the deposit data file: %w", err))
 	}
 
 	responses, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		shared.Exit(fmt.Sprintf("%w", err))
 	}
 
 	// we aggregate the partial signatures and write the final signed deposit data out

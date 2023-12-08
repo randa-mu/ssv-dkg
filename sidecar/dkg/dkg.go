@@ -10,7 +10,7 @@ import (
 	"github.com/drand/kyber/sign/schnorr"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/slog"
 	"sort"
 	"time"
 )
@@ -102,7 +102,7 @@ func (d *DKGCoordinator) RunDKG(identities []crypto.Identity, sessionID []byte, 
 
 func (d *DKGCoordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 	if packet.Deal != nil {
-		log.Debug().Msgf("received deal from %d", packet.Deal.DealerIndex)
+		slog.Debug(fmt.Sprintf("received deal from %d", packet.Deal.DealerIndex))
 		bundle, err := packet.Deal.ToDomain(d.scheme)
 		if err != nil {
 			return err
@@ -111,11 +111,11 @@ func (d *DKGCoordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 		d.board.PushDeals(&bundle)
 
 	} else if packet.Response != nil {
-		log.Debug().Msgf("received response from %d", packet.Response.ShareIndex)
+		slog.Debug(fmt.Sprintf("received response from %d", packet.Response.ShareIndex))
 		d.board.PushResponses(&packet.Response.ResponseBundle)
 
 	} else if packet.Justification != nil {
-		log.Debug().Msgf("received justification from %d", packet.Justification.DealerIndex)
+		slog.Debug(fmt.Sprintf("received justification from %d", packet.Justification.DealerIndex))
 		bundle, err := packet.Justification.ToDomain(d.scheme)
 		if err != nil {
 			return err
@@ -123,7 +123,7 @@ func (d *DKGCoordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 		d.board.PushJustifications(&bundle)
 
 	} else {
-		log.Error().Msg("received a DKG packet with nothing in it")
+		slog.Error("received a DKG packet with nothing in it")
 		return errors.New("DKG packet was empty")
 	}
 	return nil
@@ -133,9 +133,9 @@ type dkgLogger struct {
 }
 
 func (d dkgLogger) Info(keyvals ...interface{}) {
-	log.Info().Msgf("%s", keyvals)
+	slog.Info("", keyvals)
 }
 
 func (d dkgLogger) Error(keyvals ...interface{}) {
-	log.Error().Msgf("%s", keyvals)
+	slog.Error("", keyvals)
 }

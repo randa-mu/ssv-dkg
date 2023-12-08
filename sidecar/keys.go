@@ -12,12 +12,12 @@ func GenerateKey(keyPath string) error {
 	suite := crypto.NewBLSSuite()
 	kp, err := suite.CreateKeypair()
 	if err != nil {
-		return fmt.Errorf("failed to create keypair: %v", err)
+		return fmt.Errorf("failed to create keypair: %w", err)
 	}
 
 	err = util.StoreKeypair(kp, keyPath)
 	if err != nil {
-		return fmt.Errorf("failed to store keypair: %v", err)
+		return fmt.Errorf("failed to store keypair: %w", err)
 	}
 	return nil
 }
@@ -29,18 +29,18 @@ func SignKey(url string, keyPath string) ([]byte, error) {
 
 	keypair, err := util.LoadKeypair(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load keypair from %s: %v", keyPath, err)
+		return nil, fmt.Errorf("failed to load keypair from %s: %w", keyPath, err)
 	}
 
 	suite := crypto.NewBLSSuite()
 	identity, err := keypair.SelfSign(suite, url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign address: %v", err)
+		return nil, fmt.Errorf("failed to sign address: %w", err)
 	}
 
 	bytes, err := json.Marshal(identity)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal json for identity: %v", err)
+		return nil, fmt.Errorf("failed to marshal json for identity: %w", err)
 	}
 	return bytes, nil
 }

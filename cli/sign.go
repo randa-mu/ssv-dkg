@@ -29,7 +29,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 		client := api.NewSidecarClient(operator)
 		response, err := client.Identity()
 		if err != nil {
-			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %v", operator, err)
+			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %w", operator, err)
 		}
 		identity := crypto.Identity{
 			Address:   response.Address,
@@ -38,7 +38,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 		}
 		err = identity.Verify(suite)
 		if err != nil {
-			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %v", operator, err)
+			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %w", operator, err)
 		}
 
 		identities[i] = identity
@@ -67,7 +67,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 			client := api.NewSidecarClient(operator)
 			signResponse, err := client.Sign(data)
 			if err != nil {
-				errs <- fmt.Errorf("error signing: %v", err)
+				errs <- fmt.Errorf("error signing: %w", err)
 				return
 			}
 
@@ -79,7 +79,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 			// verify that the signature over the deposit data verifies for the reported public key
 			err = suite.VerifyPartial(&publicPolynomial, depositData, signResponse.DepositDataPartialSignature)
 			if err != nil {
-				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %v", operator, err)
+				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", operator, err)
 			}
 
 			responses.Append(signResponse)
