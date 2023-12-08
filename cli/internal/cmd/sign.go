@@ -56,12 +56,12 @@ func Sign(cmd *cobra.Command, _ []string) {
 
 	depositData, err := os.ReadFile(inputPathFlag)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("error reading the deposit data file: %w", err))
+		shared.Exit(fmt.Sprintf("error reading the deposit data file: %v", err))
 	}
 
 	responses, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%w", err))
+		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
 	// we aggregate the partial signatures and write the final signed deposit data out

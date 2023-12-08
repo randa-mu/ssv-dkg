@@ -75,13 +75,13 @@ func listOperators(_ *cobra.Command, _ []string) {
 func readSourceFile(path string) []crypto.Identity {
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("there was an error reading the source file: %w", err))
+		shared.Exit(fmt.Sprintf("there was an error reading the source file: %v", err))
 	}
 
 	var j operatorsJsonResponse
 	err = json.Unmarshal(contents, &j)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("there was an error unmarshalling the source file: %w", err))
+		shared.Exit(fmt.Sprintf("there was an error unmarshalling the source file: %v", err))
 	}
 	return j.Operators
 }
@@ -89,7 +89,7 @@ func readSourceFile(path string) []crypto.Identity {
 func readSourceUrl(url string) []crypto.Identity {
 	res, err := http.Get(url)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("failed to reach URL %s: %w", url, err))
+		shared.Exit(fmt.Sprintf("failed to reach URL %s: %v", url, err))
 	}
 	defer res.Body.Close()
 
@@ -101,7 +101,7 @@ func readSourceUrl(url string) []crypto.Identity {
 	var j operatorsJsonResponse
 	err = json.Unmarshal(body, &j)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("there was an error unmarshalling the HTTP response: %w", err))
+		shared.Exit(fmt.Sprintf("there was an error unmarshalling the HTTP response: %v", err))
 	}
 
 	return j.Operators

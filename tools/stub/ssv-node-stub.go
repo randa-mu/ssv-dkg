@@ -13,7 +13,7 @@ func StartStub(port uint) {
 	suite := crypto.NewRSASuite()
 	kp, err := suite.CreateKeypair()
 	if err != nil {
-		shared.Exit(fmt.Sprintf("failed to generate RSA keypair: %w", err))
+		shared.Exit(fmt.Sprintf("failed to generate RSA keypair: %v", err))
 	}
 
 	router := chi.NewMux()
@@ -39,7 +39,7 @@ func (s stub) Start() {
 	fmt.Printf("starting stub on port %d\n", s.port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", s.port), s.router)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("error starting SSV stub: %w", err))
+		shared.Exit(fmt.Sprintf("error starting SSV stub: %v", err))
 	}
 }
 

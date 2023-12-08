@@ -14,6 +14,6 @@ func main() {
 
 	err := key_verifier.VerifyKeys(os.Args[1])
 	if err != nil {
-		shared.Exit(fmt.Sprintf("key validation error: %w", err))
+		shared.Exit(fmt.Sprintf("key validation error: %v", err))
 	}
 }
