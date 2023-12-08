@@ -50,7 +50,7 @@ func (b blsSuite) Sign(keypair Keypair, message []byte) ([]byte, error) {
 	sk := b.KeyGroup().Scalar()
 	err := sk.UnmarshalBinary(keypair.Private)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal private key: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal private key: %w", err)
 	}
 
 	return b.scheme.Sign(sk, message)
@@ -60,7 +60,7 @@ func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) err
 	pk := b.KeyGroup().Point()
 	err := pk.UnmarshalBinary(publicKey)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal public key: %v", err)
+		return fmt.Errorf("failed to unmarshal public key: %w", err)
 	}
 
 	return b.scheme.Verify(pk, message, signature)

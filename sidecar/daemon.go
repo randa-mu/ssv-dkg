@@ -1,23 +1,24 @@
 package sidecar
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
-	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 type Daemon struct {
 	port             uint
 	publicURL        string
 	ssvClient        api.Ssv
-	router           chi.Router
+	server           *http.Server
 	dkg              *dkg.DKGCoordinator
 	key              crypto.Keypair
 	thresholdScheme  crypto.ThresholdScheme
@@ -47,10 +48,10 @@ func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daem
 	keypair, err := util.LoadKeypair(keyPath)
 
 	if err != nil {
-		return Daemon{}, fmt.Errorf("error loading keypair: %v", err)
+		return Daemon{}, fmt.Errorf("error loading keypair: %w", err)
 	}
 
-	log.Info().Msgf("Keypair loaded from %s", keyPath)
+	slog.Info(fmt.Sprintf("Keypair loaded from %s", keyPath))
 
 	thresholdScheme := crypto.NewBLSSuite()
 	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
@@ -64,7 +65,10 @@ func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daem
 		encryptionScheme: crypto.NewRSASuite(),
 	}
 	router := createAPI(daemon)
-	daemon.router = router
+	daemon.server = &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: router,
+	}
 
 	return daemon, nil
 }
@@ -77,9 +81,17 @@ func (d Daemon) Start() chan error {
 		errs <- err
 	}
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", d.port), d.router)
+		err := d.server.ListenAndServe()
 		errs <- err
 	}()
 
 	return errs
+}
+
+func (d Daemon) Stop() {
+	err := d.server.Shutdown(context.Background())
+	if err != nil {
+		slog.Error("error shutting down server", err)
+		os.Exit(1)
+	}
 }

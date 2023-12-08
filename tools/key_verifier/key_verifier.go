@@ -15,13 +15,13 @@ func VerifyKeys(filepath string) error {
 	suite := crypto.NewBLSSuite()
 	file, err := os.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("error opening file for verification: %v", err)
+		return fmt.Errorf("error opening file for verification: %w", err)
 	}
 
 	var f operatorsFile
 	err = json.Unmarshal(file, &f)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling JSON in file: %v", err)
+		return fmt.Errorf("error unmarshalling JSON in file: %w", err)
 	}
 	for _, identity := range f.Operators {
 		if err := identity.Verify(suite); err != nil {

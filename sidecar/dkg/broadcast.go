@@ -1,9 +1,10 @@
 package dkg
 
 import (
+	"fmt"
 	"github.com/drand/kyber/share/dkg"
 	"github.com/randa-mu/ssv-dkg/shared/api"
-	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/slog"
 )
 
 type DKGBoard struct {
@@ -28,7 +29,7 @@ func (d *DKGBoard) PushDeals(bundle *dkg.DealBundle) {
 	h := bundle.Hash()
 	hash := string(h)
 	if d.packetsSeen[hash] {
-		log.Debug().Msgf("ignoring duplicate DKG packet")
+		slog.Debug("ignoring duplicate DKG packet")
 		return
 	}
 	d.packetsSeen[hash] = true
@@ -37,7 +38,7 @@ func (d *DKGBoard) PushDeals(bundle *dkg.DealBundle) {
 
 	dealPacket, err := api.DealFromDomain(bundle)
 	if err != nil {
-		log.Error().Err(err).Msgf("couldn't construct a deal packet to gossip from %d", bundle.DealerIndex)
+		slog.Error(fmt.Sprintf("couldn't construct a deal packet to gossip from %d", bundle.DealerIndex), err)
 	} else {
 		d.gossip(api.SidecarDKGPacket{Deal: dealPacket})
 	}
@@ -66,7 +67,7 @@ func (d *DKGBoard) PushJustifications(bundle *dkg.JustificationBundle) {
 
 	justificationPacket, err := api.JustFromDomain(bundle)
 	if err != nil {
-		log.Error().Err(err).Msgf("couldn't construct a justification packet to gossip from %d", bundle.DealerIndex)
+		slog.Error(fmt.Sprintf("couldn't construct a justification packet to gossip from %d", bundle.DealerIndex), err)
 	} else {
 		d.gossip(api.SidecarDKGPacket{Justification: justificationPacket})
 	}
@@ -90,7 +91,7 @@ func (d *DKGBoard) gossip(packet api.SidecarDKGPacket) {
 			client := api.NewSidecarClient(s)
 			err := client.BroadcastDKG(packet)
 			if err != nil {
-				log.Error().Err(err).Msgf("error writing DKG packet to %s", s)
+				slog.Error(fmt.Sprintf("error writing DKG packet to %s", s), err)
 			}
 		}(s)
 	}
