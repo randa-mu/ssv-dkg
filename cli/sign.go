@@ -57,7 +57,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 	log.MaybeLog("⏳ starting distributed key generation")
 
 	responses := shared.SafeList[api.SignResponse]{}
-	errs := make(chan error, 1)
+	errs := make(chan error, len(operators))
 	wg := sync.WaitGroup{}
 	wg.Add(numOfNodes)
 	for _, operator := range operators {
