@@ -28,7 +28,7 @@ type Daemon struct {
 func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daemon, error) {
 	thresholdScheme := crypto.NewBLSSuite()
 	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
-	return NewDaemonWithDKG(port, publicURL, ssvURL, keyPath, &dkgCoordinator)
+	return NewDaemonWithDKG(port, publicURL, ssvURL, keyPath, dkgCoordinator)
 }
 
 func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, keyPath string, coordinator dkg.Protocol) (Daemon, error) {

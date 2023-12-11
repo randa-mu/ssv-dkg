@@ -30,8 +30,7 @@ func UnmarshalDistKey(scheme ThresholdScheme, bytes []byte) (share.PriShare, err
 	I := binary.BigEndian.Uint64(bytes[0:8])
 
 	V := scheme.KeyGroup().Scalar()
-	err := V.UnmarshalBinary(bytes[8:])
-	if err != nil {
+	if err := V.UnmarshalBinary(bytes[8:]); err != nil {
 		return share.PriShare{}, err
 	}
 	return share.PriShare{

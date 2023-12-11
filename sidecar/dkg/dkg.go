@@ -26,8 +26,8 @@ type Coordinator struct {
 	scheme    crypto.ThresholdScheme
 }
 
-func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) Coordinator {
-	return Coordinator{
+func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) *Coordinator {
+	return &Coordinator{
 		publicURL: publicURL,
 		scheme:    scheme,
 		board:     nil,

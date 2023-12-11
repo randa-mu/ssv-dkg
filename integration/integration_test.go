@@ -76,8 +76,7 @@ func startStubSSVNode(t *testing.T, ssvPort uint) {
 	}()
 	err := awaitHealthy(ssvPort)
 	if err != nil {
-		t.Errorf("error starting SSV stub: %v", err)
-		t.FailNow()
+		t.Fatal(fmt.Sprintf("error starting SSV stub: %v", err))
 	}
 }
 
@@ -91,8 +90,7 @@ func startSidecars(t *testing.T, ports []uint, ssvPort uint) []sidecar.Daemon {
 		}()
 		err := awaitHealthy(o)
 		if err != nil {
-			t.Errorf("error starting stub: %v", err)
-			t.FailNow()
+			t.Fatal(fmt.Sprintf("error starting stub: %v", err))
 		}
 	}
 	return out
@@ -108,8 +106,7 @@ func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordina
 		}()
 		err := awaitHealthy(o)
 		if err != nil {
-			t.Errorf("error starting stub: %v", err)
-			t.FailNow()
+			t.Fatal(fmt.Sprintf("error starting stub: %v", err))
 		}
 	}
 	return out
@@ -119,18 +116,18 @@ func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator d
 	keyPath := path.Join(t.TempDir(), strconv.Itoa(int(port)), "keypair.json")
 	err := sidecar.GenerateKey(keyPath)
 	if err != nil {
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
 	_, err = sidecar.SignKey(url, keyPath)
 	if err != nil {
-		t.FailNow()
+		t.Fatal(err)
 	}
 	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
 	d, err := sidecar.NewDaemonWithDKG(port, url, ssvURL, keyPath, errorCoordinator)
 	if err != nil {
-		t.FailNow()
+		t.Fatal(err)
 	}
 	return d
 }
@@ -139,18 +136,18 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
 	keyPath := path.Join(t.TempDir(), strconv.Itoa(int(port)), "keypair.json")
 	err := sidecar.GenerateKey(keyPath)
 	if err != nil {
-		t.FailNow()
+		t.Fatal(err)
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
 	_, err = sidecar.SignKey(url, keyPath)
 	if err != nil {
-		t.FailNow()
+		t.Fatal(err)
 	}
 	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
 	d, err := sidecar.NewDaemon(port, url, ssvURL, keyPath)
 	if err != nil {
-		t.FailNow()
+		t.Fatal(err)
 	}
 	return d
 }

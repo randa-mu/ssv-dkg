@@ -2,16 +2,16 @@ package integration
 
 import (
 	"errors"
-	"github.com/drand/kyber/share/dkg"
+	kyber "github.com/drand/kyber/share/dkg"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	dkg2 "github.com/randa-mu/ssv-dkg/sidecar/dkg"
+	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 )
 
 type ErrorStartingDKG struct {
 }
 
-func (e ErrorStartingDKG) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error) {
+func (e ErrorStartingDKG) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*kyber.Result, error) {
 	return nil, errors.New("simulated error starting DKG")
 }
 
@@ -24,8 +24,8 @@ type ErrorDuringDKG struct {
 	scheme crypto.ThresholdScheme
 }
 
-func (e ErrorDuringDKG) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error) {
-	d := dkg2.NewDKGCoordinator(e.url, e.scheme)
+func (e ErrorDuringDKG) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*kyber.Result, error) {
+	d := dkg.NewDKGCoordinator(e.url, e.scheme)
 	return d.RunDKG(identities, sessionID, keypair)
 }
 
