@@ -36,8 +36,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 			Public:    response.PublicKey,
 			Signature: response.Signature,
 		}
-		err = identity.Verify(suite)
-		if err != nil {
+		if err = identity.Verify(suite); err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %w", operator, err)
 		}
 
@@ -77,8 +76,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 				return
 			}
 			// verify that the signature over the deposit data verifies for the reported public key
-			err = suite.VerifyPartial(&publicPolynomial, depositData, signResponse.DepositDataPartialSignature)
-			if err != nil {
+			if err = suite.VerifyPartial(&publicPolynomial, depositData, signResponse.DepositDataPartialSignature); err != nil {
 				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", operator, err)
 			}
 

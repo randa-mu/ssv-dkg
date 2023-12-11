@@ -26,6 +26,21 @@ func MarshalDistKey(key *share.PriShare) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func UnmarshalDistKey(scheme ThresholdScheme, bytes []byte) (share.PriShare, error) {
+	I := binary.BigEndian.Uint64(bytes[0:8])
+
+	V := scheme.KeyGroup().Scalar()
+	err := V.UnmarshalBinary(bytes[8:])
+	if err != nil {
+		return share.PriShare{}, err
+	}
+	return share.PriShare{
+		I: int(I),
+		V: V,
+	}, nil
+
+}
+
 func MarshalPubPoly(pub *share.PubPoly) ([]byte, error) {
 	buf := new(bytes.Buffer)
 

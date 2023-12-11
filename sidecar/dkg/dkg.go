@@ -15,21 +15,26 @@ import (
 	"time"
 )
 
-type DKGCoordinator struct {
+type Protocol interface {
+	RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error)
+	ProcessPacket(packet api.SidecarDKGPacket) error
+}
+
+type Coordinator struct {
 	publicURL string
 	board     *DKGBoard
 	scheme    crypto.ThresholdScheme
 }
 
-func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) DKGCoordinator {
-	return DKGCoordinator{
+func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) Coordinator {
+	return Coordinator{
 		publicURL: publicURL,
 		scheme:    scheme,
 		board:     nil,
 	}
 }
 
-func (d *DKGCoordinator) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error) {
+func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error) {
 	numberOfNodes := len(identities)
 	threshold := dkg.MinimumT(numberOfNodes)
 	keyGroup := d.scheme.KeyGroup()
@@ -40,7 +45,7 @@ func (d *DKGCoordinator) RunDKG(identities []crypto.Identity, sessionID []byte, 
 		return nil, err
 	}
 
-	// we sort the identities by their public key, so that everyone has the same view
+	// we sort the identities by their public key, so that everyone has the same order
 	sort.SliceStable(identities, func(i, j int) bool {
 		return bytes.Compare(identities[i].Public, identities[j].Public) > 0
 	})
@@ -86,7 +91,7 @@ func (d *DKGCoordinator) RunDKG(identities []crypto.Identity, sessionID []byte, 
 
 	d.board = NewDKGBoard(addresses)
 	p := dkg.NewTimePhaser(5 * time.Second)
-	protocol, err := dkg.NewProtocol(&config, d.board, p, true)
+	protocol, err := dkg.NewProtocol(&config, d.board, p, false)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +105,7 @@ func (d *DKGCoordinator) RunDKG(identities []crypto.Identity, sessionID []byte, 
 	}
 }
 
-func (d *DKGCoordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
+func (d *Coordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 	if packet.Deal != nil {
 		slog.Debug(fmt.Sprintf("received deal from %d", packet.Deal.DealerIndex))
 		bundle, err := packet.Deal.ToDomain(d.scheme)
@@ -133,9 +138,9 @@ type dkgLogger struct {
 }
 
 func (d dkgLogger) Info(keyvals ...interface{}) {
-	slog.Info("", keyvals)
+	slog.Info("dkg", "message", fmt.Sprintf("%s", keyvals))
 }
 
 func (d dkgLogger) Error(keyvals ...interface{}) {
-	slog.Error("", keyvals)
+	slog.Error("dkg", "error", fmt.Sprintf("%s", keyvals))
 }

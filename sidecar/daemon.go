@@ -19,13 +19,19 @@ type Daemon struct {
 	publicURL        string
 	ssvClient        api.Ssv
 	server           *http.Server
-	dkg              *dkg.DKGCoordinator
+	dkg              dkg.Protocol
 	key              crypto.Keypair
 	thresholdScheme  crypto.ThresholdScheme
 	encryptionScheme crypto.EncryptionScheme
 }
 
 func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daemon, error) {
+	thresholdScheme := crypto.NewBLSSuite()
+	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
+	return NewDaemonWithDKG(port, publicURL, ssvURL, keyPath, &dkgCoordinator)
+}
+
+func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, keyPath string, coordinator dkg.Protocol) (Daemon, error) {
 	if port == 0 {
 		return Daemon{}, errors.New("you must provide a port")
 	}
@@ -54,13 +60,12 @@ func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daem
 	slog.Info(fmt.Sprintf("Keypair loaded from %s", keyPath))
 
 	thresholdScheme := crypto.NewBLSSuite()
-	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
 	daemon := Daemon{
 		port:             port,
 		key:              keypair,
 		publicURL:        publicURL,
 		ssvClient:        api.NewSsvClient(ssvURL),
-		dkg:              &dkgCoordinator,
+		dkg:              coordinator,
 		thresholdScheme:  thresholdScheme,
 		encryptionScheme: crypto.NewRSASuite(),
 	}
