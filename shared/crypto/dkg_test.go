@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"encoding/hex"
 	"github.com/drand/kyber/share"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -41,4 +42,18 @@ func TestMarshallingDistKey(t *testing.T) {
 	reconstructed2, err := UnmarshalDistKey(scheme, bytes2)
 	require.NoError(t, err)
 	require.Equal(t, shares[1].Hash(scheme.suite), reconstructed2.Hash(scheme.suite))
+}
+
+func TestUnmarshallingShortDistKeyDoesntPanic(t *testing.T) {
+	scheme := NewBLSSuite()
+
+	tooShort, err := hex.DecodeString("deadbeefdeadbe")
+	require.NoError(t, err)
+	_, err = UnmarshalDistKey(scheme, tooShort)
+	require.Error(t, err)
+
+	tooShortButHasFirstParam, err := hex.DecodeString("deadbeefdeadbeef")
+	require.NoError(t, err)
+	_, err = UnmarshalDistKey(scheme, tooShortButHasFirstParam)
+	require.Error(t, err)
 }
