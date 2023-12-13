@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/exp/slog"
 	"net/http"
 )
 
@@ -32,7 +32,7 @@ func createSsvIdentityAPI(node Ssv) http.HandlerFunc {
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			fmt.Println("there was an error writing an HTTP response body")
+			slog.Error("there was an error writing an HTTP response body", "err", err)
 		}
 	}
 }

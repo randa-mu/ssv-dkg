@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"github.com/drand/kyber/share"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -35,6 +36,27 @@ func TestEncryption(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, plaintext, p)
+}
+
+func TestThresholdSchemePartialSigning(t *testing.T) {
+	scheme := NewBLSSuite()
+	rand := scheme.suite.RandomStream()
+	message := []byte("hello world")
+
+	s := scheme.KeyGroup().Scalar().Pick(rand)
+	priv := share.NewPriPoly(scheme.KeyGroup(), 2, s, rand)
+	pub := priv.Commit(scheme.KeyGroup().Point().Base())
+
+	shares := priv.Shares(2)
+	signature1, err := scheme.SignWithPartial(shares[0], message)
+	require.NoError(t, err)
+	signature2, err := scheme.SignWithPartial(shares[1], message)
+	require.NoError(t, err)
+
+	err = scheme.VerifyPartial(pub, message, signature1)
+	require.NoError(t, err)
+	err = scheme.VerifyPartial(pub, message, signature2)
+	require.NoError(t, err)
 }
 
 func CreatingAKeyAndSigningItAndVerifyingIt(t *testing.T) {

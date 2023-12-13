@@ -17,9 +17,9 @@ type Sidecar interface {
 }
 
 type SignRequest struct {
-	Data      []byte `json:"data"`
-	Operators []crypto.Identity
-	SessionID []byte `json:"sessionId"`
+	Data      []byte            `json:"data"`
+	Operators []crypto.Identity `json:"operators"`
+	SessionID []byte            `json:"sessionId"`
 }
 
 type SidecarIdentityRequest struct {
