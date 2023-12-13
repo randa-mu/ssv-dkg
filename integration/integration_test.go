@@ -7,7 +7,6 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar"
-	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 	"github.com/randa-mu/ssv-dkg/tools/stub"
 	"github.com/stretchr/testify/require"
 	"path"
@@ -96,7 +95,7 @@ func startSidecars(t *testing.T, ports []uint, ssvPort uint) []sidecar.Daemon {
 	return out
 }
 
-func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordinator dkg.Protocol) []sidecar.Daemon {
+func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordinator sidecar.DKGProtocol) []sidecar.Daemon {
 	out := make([]sidecar.Daemon, len(ports))
 	for i, o := range ports {
 		d := createErrorDaemon(t, o, ssvPort, errorCooordinator)
@@ -112,7 +111,7 @@ func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordina
 	return out
 }
 
-func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator dkg.Protocol) sidecar.Daemon {
+func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator sidecar.DKGProtocol) sidecar.Daemon {
 	keyPath := path.Join(t.TempDir(), strconv.Itoa(int(port)), "keypair.json")
 	err := sidecar.GenerateKey(keyPath)
 	if err != nil {

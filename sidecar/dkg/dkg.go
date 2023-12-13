@@ -15,11 +15,6 @@ import (
 	"time"
 )
 
-type Protocol interface {
-	RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error)
-	ProcessPacket(packet api.SidecarDKGPacket) error
-}
-
 type Coordinator struct {
 	publicURL string
 	board     *DKGBoard

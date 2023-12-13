@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share"
 )
@@ -27,6 +28,9 @@ func MarshalDistKey(key *share.PriShare) ([]byte, error) {
 }
 
 func UnmarshalDistKey(scheme ThresholdScheme, bytes []byte) (share.PriShare, error) {
+	if len(bytes) < 8 {
+		return share.PriShare{}, errors.New("invalid length for dist key")
+	}
 	I := binary.BigEndian.Uint64(bytes[0:8])
 
 	V := scheme.KeyGroup().Scalar()
@@ -72,6 +76,11 @@ func UnmarshalPubPoly(scheme ThresholdScheme, b []byte) (share.PubPoly, error) {
 	group := scheme.KeyGroup()
 	pointLen := group.PointLen()
 	base := group.Point()
+
+	if len(b) < pointLen {
+		return share.PubPoly{}, errors.New("invalid length for public polynomial")
+	}
+
 	err := base.UnmarshalBinary(b[0:pointLen])
 	if err != nil {
 		return share.PubPoly{}, err
