@@ -16,7 +16,7 @@ func (e ErrorStartingDKG) RunDKG(identities []crypto.Identity, sessionID []byte,
 }
 
 func (e ErrorStartingDKG) ProcessPacket(packet api.SidecarDKGPacket) error {
-	panic("implement me")
+	return errors.New("processing packet is undefined for the error DKG")
 }
 
 type ErrorDuringDKG struct {

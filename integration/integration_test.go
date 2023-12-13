@@ -92,6 +92,11 @@ func startSidecars(t *testing.T, ports []uint, ssvPort uint) []sidecar.Daemon {
 			t.Fatalf("error starting stub: %v", err)
 		}
 	}
+	t.Cleanup(func() {
+		for _, n := range out {
+			n.Stop()
+		}
+	})
 	return out
 }
 
@@ -108,6 +113,11 @@ func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordina
 			t.Fatalf("error starting stub: %v", err)
 		}
 	}
+	t.Cleanup(func() {
+		for _, n := range out {
+			n.Stop()
+		}
+	})
 	return out
 }
 
