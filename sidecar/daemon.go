@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	kyber "github.com/drand/kyber/share/dkg"
+	"net/http"
+	"net/url"
+	"os"
+
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
 	"golang.org/x/exp/slog"
-	"net/http"
-	"net/url"
-	"os"
 )
 
 type Daemon struct {
@@ -27,7 +27,7 @@ type Daemon struct {
 }
 
 type DKGProtocol interface {
-	RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*kyber.Result, error)
+	RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Output, error)
 	ProcessPacket(packet api.SidecarDKGPacket) error
 }
 

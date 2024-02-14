@@ -6,19 +6,29 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sort"
+	"time"
+
+	"github.com/drand/kyber/share"
 	"github.com/drand/kyber/share/dkg"
 	"github.com/drand/kyber/sign/schnorr"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"golang.org/x/exp/slog"
-	"sort"
-	"time"
 )
 
 type Coordinator struct {
 	publicURL string
 	board     *DKGBoard
 	scheme    crypto.ThresholdScheme
+	timeout   time.Duration
+}
+
+type Output struct {
+	GroupPublicKey   []byte
+	PublicPolynomial []byte
+	KeyShare         []byte
+	NodePublicKeys   [][]byte
 }
 
 func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) *Coordinator {
@@ -26,10 +36,11 @@ func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) *Coordin
 		publicURL: publicURL,
 		scheme:    scheme,
 		board:     nil,
+		timeout:   1 * time.Minute,
 	}
 }
 
-func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Result, error) {
+func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*Output, error) {
 	numberOfNodes := len(identities)
 	threshold := dkg.MinimumT(numberOfNodes)
 	keyGroup := d.scheme.KeyGroup()
@@ -94,8 +105,12 @@ func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, key
 	go p.Start()
 	select {
 	case result := <-protocol.WaitEnd():
-		return result.Result, result.Error
-	case <-time.After(1 * time.Minute):
+		output, err := AsResult(d.scheme, result.Result)
+		if err != nil {
+			return nil, err
+		}
+		return &output, result.Error
+	case <-time.After(d.timeout):
 		return nil, fmt.Errorf("DKG with sessionID %s timed out", hex.EncodeToString(sessionID))
 	}
 }
@@ -138,4 +153,41 @@ func (d dkgLogger) Info(keyvals ...interface{}) {
 
 func (d dkgLogger) Error(keyvals ...interface{}) {
 	slog.Error("dkg", "error", fmt.Sprintf("%s", keyvals))
+}
+
+func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error) {
+	distKey, err := crypto.MarshalDistKey(result.Key.Share)
+	if err != nil {
+		return Output{}, err
+	}
+
+	pubPoly, err := crypto.MarshalPubPoly(share.NewPubPoly(scheme.KeyGroup(), result.Key.Public(), result.Key.Commits))
+	if err != nil {
+		return Output{}, err
+	}
+
+	pubKey, err := result.Key.Public().MarshalBinary()
+	if err != nil {
+		return Output{}, err
+	}
+
+	// we fail the DKG if any node doesn't make it, so we can safely assume there will be a node at each index
+	sort.Slice(result.QUAL, func(i, j int) bool {
+		return result.QUAL[i].Index < result.QUAL[j].Index
+	})
+	pubKeys := make([][]byte, len(result.QUAL))
+	for i, node := range result.QUAL {
+		pk, err := node.Public.MarshalBinary()
+		if err != nil {
+			return Output{}, err
+		}
+		pubKeys[i] = pk
+	}
+
+	return Output{
+		KeyShare:         distKey,
+		GroupPublicKey:   pubKey,
+		PublicPolynomial: pubPoly,
+		NodePublicKeys:   pubKeys,
+	}, nil
 }

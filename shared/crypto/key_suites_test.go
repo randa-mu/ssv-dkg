@@ -1,9 +1,10 @@
 package crypto
 
 import (
+	"testing"
+
 	"github.com/drand/kyber/share"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var scheme SigningScheme
@@ -48,14 +49,22 @@ func TestThresholdSchemePartialSigning(t *testing.T) {
 	pub := priv.Commit(scheme.KeyGroup().Point().Base())
 
 	shares := priv.Shares(2)
-	signature1, err := scheme.SignWithPartial(shares[0], message)
+	distKey1, err := MarshalDistKey(shares[0])
 	require.NoError(t, err)
-	signature2, err := scheme.SignWithPartial(shares[1], message)
+	signature1, err := scheme.SignWithPartial(distKey1, message)
 	require.NoError(t, err)
 
-	err = scheme.VerifyPartial(pub, message, signature1)
+	distKey2, err := MarshalDistKey(shares[1])
 	require.NoError(t, err)
-	err = scheme.VerifyPartial(pub, message, signature2)
+	signature2, err := scheme.SignWithPartial(distKey2, message)
+	require.NoError(t, err)
+
+	pubKey, err := MarshalPubPoly(pub)
+	require.NoError(t, err)
+
+	err = scheme.VerifyPartial(pubKey, message, signature1)
+	require.NoError(t, err)
+	err = scheme.VerifyPartial(pubKey, message, signature2)
 	require.NoError(t, err)
 }
 

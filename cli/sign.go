@@ -6,11 +6,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"sync"
-	"time"
 )
 
 func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api.SignResponse, error) {
@@ -70,13 +71,8 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 				return
 			}
 
-			publicPolynomial, err := crypto.UnmarshalPubPoly(suite, signResponse.ValidatorPK)
-			if err != nil {
-				errs <- err
-				return
-			}
 			// verify that the signature over the deposit data verifies for the reported public key
-			if err = suite.VerifyPartial(&publicPolynomial, depositData, signResponse.DepositDataPartialSignature); err != nil {
+			if err = suite.VerifyPartial(signResponse.ValidatorPK, depositData, signResponse.DepositDataPartialSignature); err != nil {
 				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", operator, err)
 			}
 

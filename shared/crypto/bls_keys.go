@@ -5,11 +5,10 @@ import (
 	"crypto/cipher"
 	"encoding/binary"
 	"fmt"
+
 	"github.com/drand/kyber"
 	bls "github.com/drand/kyber-bls12381"
 	"github.com/drand/kyber/pairing"
-	"github.com/drand/kyber/share"
-
 	"github.com/drand/kyber/sign"
 	//nolint:staticcheck //only a rogue key attack if used wrong
 	signing "github.com/drand/kyber/sign/bls"
@@ -70,12 +69,17 @@ func (b blsSuite) KeyGroup() kyber.Group {
 	return b.suite.G1()
 }
 
-func (b blsSuite) SignWithPartial(private *share.PriShare, message []byte) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.BigEndian, uint16(private.I)); err != nil {
+func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error) {
+	distKey, err := UnmarshalDistKey(b, private)
+	if err != nil {
 		return nil, err
 	}
-	sig, err := b.scheme.Sign(private.V, message)
+
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.BigEndian, uint16(distKey.I)); err != nil {
+		return nil, err
+	}
+	sig, err := b.scheme.Sign(distKey.V, message)
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +89,17 @@ func (b blsSuite) SignWithPartial(private *share.PriShare, message []byte) ([]by
 	return buf.Bytes(), nil
 }
 
-func (b blsSuite) VerifyPartial(public *share.PubPoly, msg, sig []byte) error {
+func (b blsSuite) VerifyPartial(public []byte, msg, sig []byte) error {
+	pubPoly, err := UnmarshalPubPoly(b, public)
+	if err != nil {
+		return err
+	}
 	sh := SigShare(sig)
 	i, err := sh.Index()
 	if err != nil {
 		return err
 	}
-	V, err := public.Eval(i).V.MarshalBinary()
+	V, err := pubPoly.Eval(i).V.MarshalBinary()
 	if err != nil {
 		return err
 	}
