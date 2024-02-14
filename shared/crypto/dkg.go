@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share"
 )
@@ -86,7 +87,7 @@ func UnmarshalPubPoly(scheme ThresholdScheme, b []byte) (share.PubPoly, error) {
 		return share.PubPoly{}, err
 	}
 	var commits []kyber.Point
-	for i := pointLen; i < len(b); i += pointLen {
+	for i := pointLen; i+pointLen <= len(b); i += pointLen {
 		p := group.Point()
 		err = p.UnmarshalBinary(b[i : i+pointLen])
 		if err != nil {
