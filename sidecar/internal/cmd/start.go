@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/sidecar"
-	"github.com/spf13/cobra"
-	"golang.org/x/exp/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
 	"syscall"
+
+	"github.com/randa-mu/ssv-dkg/sidecar"
+	"github.com/spf13/cobra"
+	"golang.org/x/exp/slog"
 )
 
 var PortFlag uint
@@ -48,7 +51,7 @@ func init() {
 func Start(_ *cobra.Command, _ []string) {
 	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, path.Join(DirectoryFlag, KeypairFilename))
 	if err != nil {
-		slog.Error("error starting daemon", err)
+		slog.Error("error starting daemon", "err", err)
 		os.Exit(1)
 	}
 
@@ -63,9 +66,9 @@ func Start(_ *cobra.Command, _ []string) {
 	}()
 
 	slog.Info(fmt.Sprintf("SSV sidecar started, serving on port %d", PortFlag))
-	for {
-		err := <-errs
-		slog.Error("error running daemon", err)
+	err = <-errs
+	if !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("error running daemon", "err", err)
 		os.Exit(1)
 	}
 }

@@ -36,6 +36,8 @@ type JustificationShare struct {
 	Share      []byte
 }
 
+// ToDomain takes the deal part of an HTTP request and maps it into
+// a type usable by the kyber DKG
 func (d Deal) ToDomain(scheme crypto.ThresholdScheme) (dkg.DealBundle, error) {
 	publicCommitments := make([]kyber.Point, len(d.Public))
 	for i, p := range d.Public {
@@ -57,6 +59,8 @@ func (d Deal) ToDomain(scheme crypto.ThresholdScheme) (dkg.DealBundle, error) {
 	}, nil
 }
 
+// DealFromDomain takes the kyber DKG packet and turns it into something
+// that can be marshalled into an HTTP request
 func DealFromDomain(bundle *dkg.DealBundle) (*Deal, error) {
 	publicCommitments := make([][]byte, len(bundle.Public))
 	for i, p := range bundle.Public {
@@ -77,6 +81,8 @@ func DealFromDomain(bundle *dkg.DealBundle) (*Deal, error) {
 	}, nil
 }
 
+// ToDomain takes the deal part of an HTTP request and maps it into
+// a type usable by the kyber DKG
 func (j Justification) ToDomain(scheme crypto.ThresholdScheme) (dkg.JustificationBundle, error) {
 	justifs := make([]dkg.Justification, len(j.Justifications))
 	for i, it := range j.Justifications {
@@ -100,6 +106,8 @@ func (j Justification) ToDomain(scheme crypto.ThresholdScheme) (dkg.Justificatio
 	}, nil
 }
 
+// JustFromDomain takes the kyber DKG packet and turns it into something
+// that can be marshalled into an HTTP request
 func JustFromDomain(bundle *dkg.JustificationBundle) (*Justification, error) {
 	justifs := make([]JustificationShare, len(bundle.Justifications))
 	for i, it := range bundle.Justifications {

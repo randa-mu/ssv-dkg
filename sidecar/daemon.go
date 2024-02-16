@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
 	"golang.org/x/exp/slog"
-	"net/http"
-	"net/url"
-	"os"
 )
 
 type Daemon struct {
@@ -19,13 +20,24 @@ type Daemon struct {
 	publicURL        string
 	ssvClient        api.Ssv
 	server           *http.Server
-	dkg              *dkg.DKGCoordinator
+	dkg              DKGProtocol
 	key              crypto.Keypair
 	thresholdScheme  crypto.ThresholdScheme
 	encryptionScheme crypto.EncryptionScheme
 }
 
+type DKGProtocol interface {
+	RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Output, error)
+	ProcessPacket(packet api.SidecarDKGPacket) error
+}
+
 func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daemon, error) {
+	thresholdScheme := crypto.NewBLSSuite()
+	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
+	return NewDaemonWithDKG(port, publicURL, ssvURL, keyPath, dkgCoordinator)
+}
+
+func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, keyPath string, coordinator DKGProtocol) (Daemon, error) {
 	if port == 0 {
 		return Daemon{}, errors.New("you must provide a port")
 	}
@@ -54,13 +66,12 @@ func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daem
 	slog.Info(fmt.Sprintf("Keypair loaded from %s", keyPath))
 
 	thresholdScheme := crypto.NewBLSSuite()
-	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
 	daemon := Daemon{
 		port:             port,
 		key:              keypair,
 		publicURL:        publicURL,
 		ssvClient:        api.NewSsvClient(ssvURL),
-		dkg:              &dkgCoordinator,
+		dkg:              coordinator,
 		thresholdScheme:  thresholdScheme,
 		encryptionScheme: crypto.NewRSASuite(),
 	}

@@ -6,11 +6,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"sync"
-	"time"
 )
 
 func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api.SignResponse, error) {
@@ -36,8 +37,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 			Public:    response.PublicKey,
 			Signature: response.Signature,
 		}
-		err = identity.Verify(suite)
-		if err != nil {
+		if err = identity.Verify(suite); err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %w", operator, err)
 		}
 
@@ -58,7 +58,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 	log.MaybeLog("⏳ starting distributed key generation")
 
 	responses := shared.SafeList[api.SignResponse]{}
-	errs := make(chan error, 1)
+	errs := make(chan error, len(operators))
 	wg := sync.WaitGroup{}
 	wg.Add(numOfNodes)
 	for _, operator := range operators {
@@ -71,14 +71,8 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 				return
 			}
 
-			publicPolynomial, err := crypto.UnmarshalPubPoly(suite, signResponse.ValidatorPK)
-			if err != nil {
-				errs <- err
-				return
-			}
 			// verify that the signature over the deposit data verifies for the reported public key
-			err = suite.VerifyPartial(&publicPolynomial, depositData, signResponse.DepositDataPartialSignature)
-			if err != nil {
+			if err = suite.VerifyPartial(signResponse.ValidatorPK, depositData, signResponse.DepositDataPartialSignature); err != nil {
 				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", operator, err)
 			}
 
