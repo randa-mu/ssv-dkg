@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
 var DirectoryFlag string
+var ValidatorNonceFlag uint32
 
 var rootCmd = &cobra.Command{
 	Use:   "ssv-sidecar",

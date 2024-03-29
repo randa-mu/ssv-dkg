@@ -45,9 +45,10 @@ func (k Keypair) SelfSign(suite SigningScheme, address string) (Identity, error)
 }
 
 type Identity struct {
-	Address   string `json:"address"`
-	Public    []byte `json:"public"`
-	Signature []byte `json:"signature"`
+	ValidatorNonce uint32 `json:"validator_nonce"`
+	Address        string `json:"address"`
+	Public         []byte `json:"public"`
+	Signature      []byte `json:"signature"`
 }
 
 // Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file

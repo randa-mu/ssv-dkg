@@ -2,11 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"io"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"golang.org/x/exp/slog"
-	"io"
-	"net/http"
 )
 
 type Sidecar interface {
@@ -17,9 +18,10 @@ type Sidecar interface {
 }
 
 type SignRequest struct {
-	Data      []byte            `json:"data"`
-	Operators []crypto.Identity `json:"operators"`
-	SessionID []byte            `json:"sessionId"`
+	ValidatorNonce uint32            `json:"validator_nonce"`
+	Data           []byte            `json:"data"`
+	Operators      []crypto.Identity `json:"operators"`
+	SessionID      []byte            `json:"sessionId"`
 }
 
 type SidecarIdentityRequest struct {

@@ -3,13 +3,14 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/shared"
-	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/randa-mu/ssv-dkg/shared"
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
+	"github.com/spf13/cobra"
 )
 
 var quietFlag bool
@@ -53,7 +54,7 @@ func listOperators(_ *cobra.Command, _ []string) {
 	}
 
 	// verify the signatures of all the operators
-	var addresses []string
+	var operatorIdentities []crypto.Identity
 	suite := crypto.NewBLSSuite()
 
 	for _, op := range operators {
@@ -61,14 +62,14 @@ func listOperators(_ *cobra.Command, _ []string) {
 			log.MaybeLog(fmt.Sprintf("🔒 error verifying key for %s", op.Address))
 			continue
 		}
-		addresses = append(addresses, op.Address)
+		operatorIdentities = append(operatorIdentities, op)
 	}
 
 	// print out the pretty or machine-readable results
 	if quietFlag {
-		log.Log(strings.Join(addresses, " "))
+		printOperatorsQuiet(log, operatorIdentities)
 	} else {
-		printOperatorsPretty(log, addresses)
+		printOperatorsPretty(log, operatorIdentities)
 	}
 }
 
@@ -107,28 +108,36 @@ func readSourceUrl(url string) []crypto.Identity {
 	return j.Operators
 }
 
-func printOperatorsPretty(log shared.QuietLogger, addresses []string) {
-	if len(addresses) == 0 {
+func printOperatorsPretty(log shared.QuietLogger, operators []crypto.Identity) {
+	if len(operators) == 0 {
 		shared.Exit("Operator list was empty!")
 	}
 
 	log.Log("⏳\tchecking health of operators")
 
-	var success []string
-	var failure []string
-	for _, address := range addresses {
-		res, err := http.Get(fmt.Sprintf("%s/health", address))
+	var success []crypto.Identity
+	var failure []crypto.Identity
+	for _, o := range operators {
+		res, err := http.Get(fmt.Sprintf("%s/health", o.Address))
 		if err != nil || res.StatusCode != 200 {
-			failure = append(failure, address)
+			failure = append(failure, o)
 		} else {
-			success = append(success, address)
+			success = append(success, o)
 		}
 	}
 
 	for _, s := range success {
-		log.Log(fmt.Sprintf("✅\t%s", s))
+		log.Log(fmt.Sprintf("✅\t%d,%s", s.ValidatorNonce, s.Address))
 	}
 	for _, f := range failure {
-		log.Log(fmt.Sprintf("❌\t%s", f))
+		log.Log(fmt.Sprintf("❌\t%d,%s", f.ValidatorNonce, f.Address))
 	}
+}
+
+func printOperatorsQuiet(log shared.QuietLogger, operators []crypto.Identity) {
+	entries := make([]string, len(operators))
+	for i, operator := range operators {
+		entries[i] = fmt.Sprintf("%d,%s", operator.ValidatorNonce, operator.Address)
+	}
+	log.Log(strings.Join(entries, " "))
 }
