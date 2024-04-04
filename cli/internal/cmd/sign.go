@@ -3,12 +3,13 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/cli"
-	"github.com/randa-mu/ssv-dkg/shared"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/randa-mu/ssv-dkg/cli"
+	"github.com/randa-mu/ssv-dkg/shared"
+	"github.com/spf13/cobra"
 )
 
 var operatorFlag []string
@@ -59,13 +60,11 @@ func Sign(cmd *cobra.Command, _ []string) {
 		shared.Exit(fmt.Sprintf("error reading the deposit data file: %v", err))
 	}
 
-	responses, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
+	groupSignature, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	// we aggregate the partial signatures and write the final signed deposit data out
-	// TODO: actually aggregate and verify the signature
 	log.MaybeLog("✅ received signed deposit data!")
-	log.Log(base64.StdEncoding.EncodeToString(responses[0].DepositDataPartialSignature))
+	log.Log(base64.StdEncoding.EncodeToString(groupSignature))
 }

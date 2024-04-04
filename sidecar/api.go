@@ -69,8 +69,8 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	slog.Info(fmt.Sprintf("DKG with sessionID %s completed successfully", hex.EncodeToString(request.SessionID)))
 
 	return api.SignResponse{
-		SharePK:                        result.GroupPublicKey,
-		ValidatorPK:                    result.PublicPolynomial,
+		GroupPK:                        result.GroupPublicPoly,
+		NodePK:                         result.PublicKeyShare,
 		DepositDataPartialSignature:    partialSignature,
 		EncryptedShare:                 encryptedShare,
 		DepositValidatorNonceSignature: encryptedNonce,

@@ -3,27 +3,32 @@ package crypto
 import (
 	"bytes"
 	"crypto/cipher"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 
 	"github.com/drand/kyber"
 	bls "github.com/drand/kyber-bls12381"
 	"github.com/drand/kyber/pairing"
+	"github.com/drand/kyber/share/dkg"
 	"github.com/drand/kyber/sign"
+	"github.com/drand/kyber/sign/tbls"
+
 	//nolint:staticcheck //only a rogue key attack if used wrong
 	signing "github.com/drand/kyber/sign/bls"
 	"github.com/drand/kyber/util/random"
 )
 
 type blsSuite struct {
-	suite  pairing.Suite
-	scheme sign.AggregatableScheme
+	suite           pairing.Suite
+	scheme          sign.AggregatableScheme
+	thresholdScheme sign.ThresholdScheme
 }
 
 func NewBLSSuite() blsSuite {
 	suite := bls.NewBLS12381Suite()
 	scheme := signing.NewSchemeOnG2(suite)
-	return blsSuite{scheme: scheme, suite: suite}
+	return blsSuite{scheme: scheme, suite: suite, thresholdScheme: tbls.NewThresholdSchemeOnG2(suite)}
 }
 
 func (b blsSuite) CreateKeypair() (Keypair, error) {
@@ -79,7 +84,8 @@ func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error
 	if err := binary.Write(buf, binary.BigEndian, uint16(distKey.I)); err != nil {
 		return nil, err
 	}
-	sig, err := b.scheme.Sign(distKey.V, message)
+	m := b.Digest(message)
+	sig, err := b.scheme.Sign(distKey.V, m)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +109,52 @@ func (b blsSuite) VerifyPartial(public []byte, msg, sig []byte) error {
 	if err != nil {
 		return err
 	}
-	return b.Verify(msg, V, sh.Value())
+	m := b.Digest(msg)
+	return b.Verify(m, V, sh.Value())
+}
+
+func (b blsSuite) RecoverSignature(message []byte, pubPoly []byte, sigs [][]byte, nodeCount int) ([]byte, error) {
+	threshold := dkg.MinimumT(nodeCount)
+	p, err := UnmarshalPubPoly(b, pubPoly)
+	if err != nil {
+		return nil, err
+	}
+	m := b.Digest(message)
+	return b.thresholdScheme.Recover(&p, m, sigs, threshold, nodeCount)
+}
+
+func (b blsSuite) VerifyRecovered(message []byte, publicKey []byte, signature []byte) error {
+	p, err := UnmarshalPubPoly(b, publicKey)
+	if err != nil {
+		return err
+	}
+	m := b.Digest(message)
+	return b.thresholdScheme.VerifyRecovered(p.Commit(), m, signature)
+}
+
+func (b blsSuite) Digest(msg []byte) []byte {
+	h := sha256.New()
+	h.Write(msg)
+	return h.Sum(nil)
+}
+
+func (b blsSuite) AggregateSignatures(sigs ...[]byte) ([]byte, error) {
+	return b.scheme.AggregateSignatures(sigs...)
+}
+
+func (b blsSuite) AggregatePublicKeys(publicKeys ...[]byte) ([]byte, error) {
+	points := make([]kyber.Point, len(publicKeys))
+	for i, key := range publicKeys {
+		p := b.KeyGroup().Point()
+		err := p.UnmarshalBinary(key)
+		if err != nil {
+			return nil, err
+		}
+		points[i] = p
+	}
+
+	aggregatedPublicKey := b.scheme.AggregatePublicKeys(points...)
+	return aggregatedPublicKey.MarshalBinary()
 }
 
 type SigShare []byte
