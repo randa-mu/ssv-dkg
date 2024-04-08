@@ -58,8 +58,8 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// encrypt the validator nonce
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, validatorIdentity.Nonce)
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, request.ValidatorNonce)
 	encryptedNonce, err := d.encryptionScheme.Encrypt(validatorIdentity.PublicKey, buf)
 	if err != nil {
 		slog.Error("error encrypting nonce", err)
@@ -77,8 +77,8 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}, nil
 }
 
-func (d Daemon) Identity() (api.SidecarIdentityResponse, error) {
-	identity, err := d.key.SelfSign(d.thresholdScheme, d.publicURL)
+func (d Daemon) Identity(request api.SidecarIdentityRequest) (api.SidecarIdentityResponse, error) {
+	identity, err := d.key.SelfSign(d.thresholdScheme, d.publicURL, request.ValidatorNonce)
 	if err != nil {
 		return api.SidecarIdentityResponse{}, err
 	}

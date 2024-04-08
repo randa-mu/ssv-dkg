@@ -7,7 +7,6 @@ import (
 )
 
 var DirectoryFlag string
-var ValidatorNonceFlag uint32
 
 var rootCmd = &cobra.Command{
 	Use:   "ssv-sidecar",

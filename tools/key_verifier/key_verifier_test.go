@@ -14,18 +14,16 @@ func TestValidKeyValidates(t *testing.T) {
 	valid := `
 {
   "operators": [
-    {
-	  "validator_nonce": 1,
-      "address": "http://localhost:8083",
-      "public": "jZWr53MWiZLC+L/W22sXVumZmQ43H2QX1417dBH7ftZGivSil8Z9QMHLL8Vx6QMC",
-      "signature": "l8xyXvh9gWnT/sYpR91VXk/cp9Q21/cL+HbW0p8IigBhwQz2R6ITjkQGPahlqS4eBsArXXbnwE95HyyXTZKsZ5m3M7g7nHOb0zbrFHnX1gFU8YKNYR5h5i8hp+IufUnp"
-    },
-    {
-	  "validator_nonce": 2,
-      "address": "http://localhost:8082",
-      "public": "q2blC6iQjSfit5mrg0DOn/EZAi2DaK4v76Zu/mO/6Eyy6S9fCnNKEdOS/WEpLB2a",
-      "signature": "hV7hFPO75y0D5ZqUZ4CLPqeGIGtdsKM7j4PkgvRV7zz+3DOLTVUtgJ2eHqu66zgUFhYCjfmsSWkd/eGI42e9ZWmI6iQCc1i/tw54blE18JWK/8hRtQPpWPVVanpYZqbb"
-    }
+	{
+		"validator_nonce":1,
+		"address":"localhost:8081",
+		"public":"ho/OAKsG0JfQCnshVS2jgn8ANXxyCGshck9fyosN8ANwmt3MRWgx2gNfWLoon7uG","signature":"kt6482ssubbqhzYJE3K2lc+Y7CbAKpiDLM8wwRPR73tsaSyTfxofv/ZUUw3Exh6YB/uRnN8YBY7U2Dk8aChXdjzWt6AVokGcNRCHxCS16MwdUP/XISw1LILjoS189ybt"
+	},
+	{
+		"validator_nonce":2,
+		"address":"localhost:8082",
+		"public":"q2blC6iQjSfit5mrg0DOn/EZAi2DaK4v76Zu/mO/6Eyy6S9fCnNKEdOS/WEpLB2a","signature":"jdrY1vDocPWi9ib7AQQhTZ0TuMW7eBsjXA1bABFZGxJ6SxUbOhYGUiS1PY6aZAgOEf89jH9NdsLHgKA7GWlRIE1m2/P8VeozTKNqzth15/R3yJngkv4V9KCqkmp8cAYd"
+	}
   ]
 }`
 

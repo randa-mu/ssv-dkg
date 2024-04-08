@@ -150,7 +150,7 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
-	_, err = sidecar.SignKey(url, 1, keyPath)
+	_, err = sidecar.SignKey(url, uint32(port), keyPath)
 	if err != nil {
 		t.Fatal(err)
 	}

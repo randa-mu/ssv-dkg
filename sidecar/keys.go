@@ -37,7 +37,7 @@ func SignKey(url string, validatorNonce uint32, keyPath string) ([]byte, error) 
 	}
 
 	suite := crypto.NewBLSSuite()
-	identity, err := keypair.SelfSign(suite, url)
+	identity, err := keypair.SelfSign(suite, url, validatorNonce)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign address: %w", err)
 	}

@@ -10,6 +10,7 @@ import (
 )
 
 var UrlFlag string
+var ValidatorNonceFlag uint32
 var keyCmd = &cobra.Command{
 	Use:   "key",
 	Short: "All operations related to keys",

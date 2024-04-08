@@ -37,7 +37,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 		// then we fetch the keys for the node
 		// perhaps these should be checked against the ones registered in the repo
 		client := api.NewSidecarClient(address)
-		response, err := client.Identity()
+		response, err := client.Identity(api.SidecarIdentityRequest{ValidatorNonce: nonce})
 		if err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %w", operator, err)
 		}

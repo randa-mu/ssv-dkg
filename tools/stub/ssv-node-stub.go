@@ -2,11 +2,12 @@ package stub
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"net/http"
 )
 
 func StartStub(port uint) {
@@ -50,6 +51,5 @@ func (s stub) Health() error {
 func (s stub) Identity() (api.SsvIdentityResponse, error) {
 	return api.SsvIdentityResponse{
 		PublicKey: s.keypair.Public,
-		Nonce:     1,
 	}, nil
 }

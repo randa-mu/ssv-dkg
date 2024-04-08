@@ -54,7 +54,7 @@ func listOperators(_ *cobra.Command, _ []string) {
 	}
 
 	// verify the signatures of all the operators
-	var operatorIdentities []crypto.Identity
+	operatorIdentities := make([]crypto.Identity, 0, len(operators))
 	suite := crypto.NewBLSSuite()
 
 	for _, op := range operators {
@@ -115,8 +115,8 @@ func printOperatorsPretty(log shared.QuietLogger, operators []crypto.Identity) {
 
 	log.Log("⏳\tchecking health of operators")
 
-	var success []crypto.Identity
-	var failure []crypto.Identity
+	success := make([]crypto.Identity, 0, len(operators))
+	failure := make([]crypto.Identity, 0, len(operators))
 	for _, o := range operators {
 		res, err := http.Get(fmt.Sprintf("%s/health", o.Address))
 		if err != nil || res.StatusCode != 200 {

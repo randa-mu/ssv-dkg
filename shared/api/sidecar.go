@@ -13,7 +13,7 @@ import (
 type Sidecar interface {
 	Health() error
 	Sign(request SignRequest) (SignResponse, error)
-	Identity() (SidecarIdentityResponse, error)
+	Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error)
 	BroadcastDKG(packet SidecarDKGPacket) error
 }
 
@@ -21,11 +21,11 @@ type SignRequest struct {
 	ValidatorNonce uint32            `json:"validator_nonce"`
 	Data           []byte            `json:"data"`
 	Operators      []crypto.Identity `json:"operators"`
-	SessionID      []byte            `json:"sessionId"`
+	SessionID      []byte            `json:"session_id"`
 }
 
 type SidecarIdentityRequest struct {
-	Address string `json:"address"`
+	ValidatorNonce uint32 `json:"validator_nonce"`
 }
 
 type SidecarIdentityResponse struct {
@@ -42,7 +42,7 @@ var SidecarDKGPath = "/dkg"
 func BindSidecarAPI(router *chi.Mux, node Sidecar) {
 	router.Get(SidecarHealthPath, createHealthAPI(node))
 	router.Post(SidecarSignPath, createSignAPI(node))
-	router.Get(SidecarIdentityPath, createSidecarIdentityAPI(node))
+	router.Post(SidecarIdentityPath, createSidecarIdentityAPI(node))
 	router.Post(SidecarDKGPath, createSidecarDKGAPI(node))
 }
 
@@ -93,7 +93,19 @@ func createSignAPI(node Sidecar) http.HandlerFunc {
 
 func createSidecarIdentityAPI(node Sidecar) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		identity, err := node.Identity()
+		bytes, err := io.ReadAll(request.Body)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var requestBody SidecarIdentityRequest
+		err = json.Unmarshal(bytes, &requestBody)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		identity, err := node.Identity(requestBody)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
