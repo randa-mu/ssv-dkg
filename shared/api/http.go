@@ -4,7 +4,7 @@ type SignResponse struct {
 	// the key share encrypted with the validator's RSA key
 	EncryptedShare []byte
 	// the BLS12-381 public key for the group created during the DKG
-	GroupPK []byte
+	PublicPolynomial []byte
 	// the BLS12-381 public key for the specific validator node
 	NodePK []byte
 	// a partial signature over the deposit data's SHA256 hash

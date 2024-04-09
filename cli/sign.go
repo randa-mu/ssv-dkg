@@ -62,7 +62,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]byt
 	// then let's actually kick off the DKG
 	log.MaybeLog("⏳ starting distributed key generation")
 
-	signResponses := shared.SafeList[api.SignResponse]{}
+	dkgResponses := shared.SafeList[api.SignResponse]{}
 	errs := make(chan error, len(identities))
 	wg := sync.WaitGroup{}
 	wg.Add(numOfNodes)
@@ -76,18 +76,18 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]byt
 				Operators:      identities,
 				SessionID:      sessionID,
 			}
-			signResponse, err := client.Sign(data)
+			dkgResponse, err := client.Sign(data)
 			if err != nil {
 				errs <- fmt.Errorf("error signing: %w", err)
 				return
 			}
 
 			// verify that the signature over the deposit data verifies for the reported public key
-			if err = suite.VerifyPartial(signResponse.GroupPK, depositData, signResponse.DepositDataPartialSignature); err != nil {
+			if err = suite.VerifyPartial(dkgResponse.PublicPolynomial, depositData, dkgResponse.DepositDataPartialSignature); err != nil {
 				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", identity.Address, err)
 			}
 
-			signResponses.Append(signResponse)
+			dkgResponses.Append(dkgResponse)
 			wg.Done()
 		}(identity)
 	}
@@ -107,23 +107,23 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]byt
 	}
 
 	// then we gather the responses and verify the sanity of them
-	responses := signResponses.Get()
+	responses := dkgResponses.Get()
 	pks := make([][]byte, len(responses))
 	partials := make([][]byte, len(responses))
 	for i, r := range responses {
-		pks[i] = r.GroupPK
+		pks[i] = r.PublicPolynomial
 		partials[i] = r.DepositDataPartialSignature
 
 		// all nodes should return the same group public key or someone is being naughty
 		if i != 0 {
-			if !bytes.Equal(pks[i-1], r.GroupPK) {
+			if !bytes.Equal(pks[i-1], r.PublicPolynomial) {
 				return nil, fmt.Errorf("group public key was different for nodes %d and %d", i-1, i)
 			}
 		}
 	}
 
 	// as all the group public keys are the same, we can use the first to verify all the partials
-	groupPK := responses[0].GroupPK
+	groupPK := responses[0].PublicPolynomial
 	groupSignature, err := suite.RecoverSignature(depositData, groupPK, partials, len(responses))
 	if err != nil {
 		return nil, fmt.Errorf(fmt.Sprintf("error aggregating signature: %v", err))
