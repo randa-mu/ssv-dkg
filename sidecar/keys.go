@@ -42,8 +42,6 @@ func SignKey(url string, validatorNonce uint32, keyPath string) ([]byte, error) 
 		return nil, fmt.Errorf("failed to sign address: %w", err)
 	}
 
-	identity.ValidatorNonce = validatorNonce
-
 	bytes, err := json.Marshal(identity)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal json for identity: %w", err)
