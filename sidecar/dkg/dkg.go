@@ -156,6 +156,10 @@ func (d dkgLogger) Error(keyvals ...interface{}) {
 }
 
 func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error) {
+	if result == nil || result.Key == nil {
+		return Output{}, errors.New("DKG result was nil")
+	}
+
 	distKey, err := crypto.MarshalDistKey(result.Key.Share)
 	if err != nil {
 		return Output{}, err
