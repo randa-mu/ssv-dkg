@@ -34,7 +34,7 @@ type Keypair struct {
 
 // SelfSign signs an address to attribute it to a given public key and returns an Identity
 func (k Keypair) SelfSign(suite SigningScheme, address string, nonce uint32) (Identity, error) {
-	message, err := messageFor(k.Public, address, nonce)
+	message, err := digestFor(k.Public, address, nonce)
 	if err != nil {
 		return Identity{}, err
 	}
@@ -61,16 +61,20 @@ type Identity struct {
 
 // Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file
 func (i Identity) Verify(suite SigningScheme) error {
-	m, err := messageFor(i.Public, i.Address, i.ValidatorNonce)
+	m, err := digestFor(i.Public, i.Address, i.ValidatorNonce)
 	if err != nil {
 		return err
 	}
 	return suite.Verify(m, i.Public, i.Signature)
 }
 
-func messageFor(publicKey []byte, address string, validatorNonce uint32) ([]byte, error) {
+func digestFor(publicKey []byte, address string, validatorNonce uint32) ([]byte, error) {
 	buf := new(bytes.Buffer)
 
+	dst := []byte("ssv:randamu:sha256")
+	if err := binary.Write(buf, binary.BigEndian, dst); err != nil {
+		return nil, err
+	}
 	if err := binary.Write(buf, binary.BigEndian, publicKey); err != nil {
 		return nil, err
 	}
