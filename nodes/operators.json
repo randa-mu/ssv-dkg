@@ -1,7 +1,7 @@
 {
   "operators": [
-    {"address":"http://localhost:8001","public":"oRkzO6vELnLqZ5PyAqfL3L7w7Sx8zUw3LqDwgQcQRIp4hnjwt7z5JniEgrwtaPCR","signature":"uU+/zx2YXpNRvOl8BVT4yqvTk5EoAw0XbheKBl/okfcMI1CQDNrhnvmUkDRQrK2oDZe9QjV+GmCCezBfxIMVMo/YXkABlgb4TBhvVfqo9TOq68w72JwMBuUwNby9Sq3Q"},
-    {"address":"http://localhost:8002","public":"tr7xQzZzIjVeqUW6bemmrHQg+Pc3UuCq7bXyxlhuD78V7mukAyYOhu86FkVqBJkC","signature":"hLWvVa45pttpVVDzxc648zdaVRPJ2SyHFo4jYpGegWwTgtZTvhT18oTVSWbHkv1oC2sSaO7+JOGPKdbqNZR0CpgWPIWZ7DVqd94KPiRm4GGLBUJTj5b+AouOo/XFY18v"},
-    {"address":"http://localhost:8003","public":"lRWe3sNKd2mRad0c8F6EJe7Av+MWjaURD+TI/oKFL0SB279C55x2LOSzjc8SOpXT","signature":"jwOA4QdefFqBczznjTuHkFfY9OUFK2P7ZAuE7YElyIOssY+2sbauG7V3xSRXhRD5B2uKeTVPN3lRfiiQLMZiuYNqtugNEVgYjokq1AoW8zOX0G0BiQ9effyrduWKLqp0"}
+    {"validator_nonce":1,"address":"http://localhost:8081","public":"ho/OAKsG0JfQCnshVS2jgn8ANXxyCGshck9fyosN8ANwmt3MRWgx2gNfWLoon7uG","signature":"losbc5rfmrmORCFdOzA3mrp+C+CehX8Y1vXiGqDossLgxt6nyBXuX2dZTDeW/+y8Do9IRr6B7S+Rh5r4s9CQLfe2uSiklLQR8cUQoM/zHXq6AaghVd8Cfza0EZfaiCfN"},
+    {"validator_nonce":2,"address":"http://localhost:8082","public":"q2blC6iQjSfit5mrg0DOn/EZAi2DaK4v76Zu/mO/6Eyy6S9fCnNKEdOS/WEpLB2a","signature":"tLkNiQ6zMIgNuCovTT6FzjANoh69l/eOSwKHxWDoIZn6JTY0g7B/9pLcsTMCL7DSGMWSbJcvtIVtgz0FY0FK2XHKT/WlUAT6NckHRGuqDmzKiA/yKxQPM23xTJY1ldsm"},
+    {"validator_nonce":3,"address":"http://localhost:8083","public":"jZWr53MWiZLC+L/W22sXVumZmQ43H2QX1417dBH7ftZGivSil8Z9QMHLL8Vx6QMC","signature":"uBzVN38DBVCXn21JYA5DYAR+CK0gWkQh4yNpR8Vy1IM0u7v+FZHg0o6TjnIBlIZkDAJJNOihQ2sDN8DygxA8OBANRYzM1iPVsxVrVjeEWPG0P2rwVx4xWh9g6WvefcDx"}
   ]
 }

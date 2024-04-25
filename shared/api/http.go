@@ -13,5 +13,4 @@ var SsvIdentityPath = "/identity"
 
 type SsvIdentityResponse struct {
 	PublicKey []byte `json:"publicKey"`
-	Nonce     uint64 `json:"nonce"`
 }

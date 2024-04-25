@@ -2,9 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/exp/slog"
-	"net/http"
 )
 
 type Ssv interface {

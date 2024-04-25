@@ -18,19 +18,19 @@ This module contains the CLI for creating distributed validator clusters of SSV 
 ```shell
 $ ssv-dkg operators list
 
-✅ https://example.org
-✅ https://muster.de
-✅ https://exemple.fr
-❌ https://esempio.it
+✅ 1,https://example.org
+✅ 2,https://muster.de
+✅ 3,https://exemple.fr
+❌ 4,https://esempio.it
 ```
 
 - Start a DKG and sign your deposit data
 ```shell
 $ ssv-dkg sign --input /path/to/deposit/data \
       --output /path/to/storing/permanent/data/for/reshares/etc \
-      --operator https://example.org \
-      --operator https://muster.de \
-      --operator https://exemple.fr
+      --operator 1,https://example.org \
+      --operator 2,https://muster.de \
+      --operator 9,https://exemple.fr
 
 ⏳ contacting nodes
 ⏳ starting distributed key generation
@@ -41,6 +41,7 @@ $ ssv-dkg sign --input /path/to/deposit/data \
   "data": "deadbeef0101"
 }
 ```
+Each operator must be in the form `$validatorNonce,$address`. Providing the wrong validator nonce may result in disaster for your DKG.
 
 - combine both in a single command
 ```shell

@@ -52,8 +52,12 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 	return signResponse, err
 }
 
-func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
-	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath))
+func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error) {
+	j, err := json.Marshal(request)
+	if err != nil {
+		return SidecarIdentityResponse{}, err
+	}
+	res, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath), "application/json", bytes.NewBuffer(j))
 	if err != nil {
 		return SidecarIdentityResponse{}, fmt.Errorf("error making HTTP request: %w", err)
 	}

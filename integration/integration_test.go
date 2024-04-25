@@ -2,6 +2,11 @@ package integration
 
 import (
 	"fmt"
+	"path"
+	"strconv"
+	"testing"
+	"time"
+
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -9,10 +14,6 @@ import (
 	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/randa-mu/ssv-dkg/tools/stub"
 	"github.com/stretchr/testify/require"
-	"path"
-	"strconv"
-	"testing"
-	"time"
 )
 
 func TestSuccessfulSigning(t *testing.T) {
@@ -23,7 +24,7 @@ func TestSuccessfulSigning(t *testing.T) {
 	startSidecars(t, ports, stubPort)
 
 	operators := fmap(ports, func(o uint) string {
-		return fmt.Sprintf("http://localhost:%d", o)
+		return fmt.Sprintf("%d,http://localhost:%d", o, o)
 	})
 
 	depositData := []byte("hello world")
@@ -42,7 +43,7 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 	startErrorSidecars(t, []uint{10013}, stubPort, ErrorStartingDKG{})
 
 	operators := fmap(append(ports, 10013), func(o uint) string {
-		return fmt.Sprintf("http://localhost:%d", o)
+		return fmt.Sprintf("%d,http://localhost:%d", o, o)
 	})
 
 	depositData := []byte("hello world")
@@ -60,7 +61,7 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 	startErrorSidecars(t, []uint{10023}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://localhost:10023"})
 
 	operators := fmap(append(ports, 10023), func(o uint) string {
-		return fmt.Sprintf("http://localhost:%d", o)
+		return fmt.Sprintf("%d,http://localhost:%d", o, o)
 	})
 
 	depositData := []byte("hello world")
@@ -129,7 +130,7 @@ func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator s
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
-	_, err = sidecar.SignKey(url, keyPath)
+	_, err = sidecar.SignKey(url, 1, keyPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +150,7 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
-	_, err = sidecar.SignKey(url, keyPath)
+	_, err = sidecar.SignKey(url, uint32(port), keyPath)
 	if err != nil {
 		t.Fatal(err)
 	}
