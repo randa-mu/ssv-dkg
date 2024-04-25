@@ -25,10 +25,10 @@ type Coordinator struct {
 }
 
 type Output struct {
-	GroupPublicKey   []byte
-	PublicPolynomial []byte
-	KeyShare         []byte
-	NodePublicKeys   [][]byte
+	PublicKeyShare  []byte
+	GroupPublicPoly []byte
+	KeyShare        []byte
+	NodePublicKeys  [][]byte
 }
 
 func NewDKGCoordinator(publicURL string, scheme crypto.ThresholdScheme) *Coordinator {
@@ -156,6 +156,10 @@ func (d dkgLogger) Error(keyvals ...interface{}) {
 }
 
 func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error) {
+	if result == nil || result.Key == nil {
+		return Output{}, errors.New("DKG result was nil")
+	}
+
 	distKey, err := crypto.MarshalDistKey(result.Key.Share)
 	if err != nil {
 		return Output{}, err
@@ -185,9 +189,9 @@ func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error)
 	}
 
 	return Output{
-		KeyShare:         distKey,
-		GroupPublicKey:   pubKey,
-		PublicPolynomial: pubPoly,
-		NodePublicKeys:   pubKeys,
+		KeyShare:        distKey,
+		PublicKeyShare:  pubKey,
+		GroupPublicPoly: pubPoly,
+		NodePublicKeys:  pubKeys,
 	}, nil
 }

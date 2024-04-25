@@ -2,7 +2,9 @@
 ./ssv-dkg
 ./key-verifier
 ./cli/cli
+./cli/main
 ./sidecar/sidecar
+./sidecar/main
 ssv-sidecar
 ssv-cli
 stub

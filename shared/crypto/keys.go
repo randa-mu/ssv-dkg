@@ -20,6 +20,8 @@ type ThresholdScheme interface {
 	KeyGroup() kyber.Group
 	SignWithPartial(private []byte, msg []byte) ([]byte, error)
 	VerifyPartial(public []byte, msg, sig []byte) error
+	AggregateSignatures(sigs ...[]byte) ([]byte, error)
+	AggregatePublicKeys(publicKeys ...[]byte) ([]byte, error)
 }
 
 type EncryptionScheme interface {

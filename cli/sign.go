@@ -16,7 +16,7 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
-func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api.SignResponse, error) {
+func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]byte, error) {
 	// parse and validate the operators provided
 	numOfNodes := len(operators)
 	if numOfNodes != 3 && numOfNodes != 5 && numOfNodes != 7 {
@@ -62,7 +62,7 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 	// then let's actually kick off the DKG
 	log.MaybeLog("⏳ starting distributed key generation")
 
-	responses := shared.SafeList[api.SignResponse]{}
+	dkgResponses := shared.SafeList[api.SignResponse]{}
 	errs := make(chan error, len(identities))
 	wg := sync.WaitGroup{}
 	wg.Add(numOfNodes)
@@ -76,24 +76,24 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 				Operators:      identities,
 				SessionID:      sessionID,
 			}
-			signResponse, err := client.Sign(data)
+			dkgResponse, err := client.Sign(data)
 			if err != nil {
 				errs <- fmt.Errorf("error signing: %w", err)
 				return
 			}
 
 			// verify that the signature over the deposit data verifies for the reported public key
-			if err = suite.VerifyPartial(signResponse.ValidatorPK, depositData, signResponse.DepositDataPartialSignature); err != nil {
+			if err = suite.VerifyPartial(dkgResponse.PublicPolynomial, depositData, dkgResponse.DepositDataPartialSignature); err != nil {
 				errs <- fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", identity.Address, err)
 			}
 
-			responses.Append(signResponse)
+			dkgResponses.Append(dkgResponse)
 			wg.Done()
 		}(identity)
 	}
 
+	// we wait for the DKG to finish
 	done := make(chan struct{})
-
 	go func() {
 		wg.Wait()
 		close(done)
@@ -103,8 +103,39 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) ([]api
 	case err := <-errs:
 		return nil, err
 	case <-done:
-		return responses.Get(), nil
+		break
 	}
+
+	// then we gather the responses and verify the sanity of them
+	responses := dkgResponses.Get()
+	pks := make([][]byte, len(responses))
+	partials := make([][]byte, len(responses))
+	for i, r := range responses {
+		pks[i] = r.PublicPolynomial
+		partials[i] = r.DepositDataPartialSignature
+
+		// all nodes should return the same group public key or someone is being naughty
+		if i != 0 {
+			if !bytes.Equal(pks[i-1], r.PublicPolynomial) {
+				return nil, fmt.Errorf("group public key was different for nodes %d and %d", i-1, i)
+			}
+		}
+	}
+
+	// as all the group public keys are the same, we can use the first to verify all the partials
+	groupPK := responses[0].PublicPolynomial
+	groupSignature, err := suite.RecoverSignature(depositData, groupPK, partials, len(responses))
+	if err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("error aggregating signature: %v", err))
+	}
+
+	err = suite.VerifyRecovered(depositData, groupPK, groupSignature)
+	if err != nil {
+		return nil, fmt.Errorf("error verifying deposit data signature: %v", err)
+	}
+
+	return groupSignature, nil
+
 }
 
 // parseOperator takes a string in form `$validatorNonce,$address` and separates it out
