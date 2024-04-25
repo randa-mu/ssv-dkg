@@ -27,7 +27,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3.7.0
         with:
           version: v1.54
-          args: ./cli ./sidecar
+          args: ./cli ./sidecar ./shared
 
       - name: 🧑‍🔬 Run tests
         run: go test ./...
