@@ -42,8 +42,23 @@ $ ssv-dkg sign --input /path/to/deposit/data \
 }
 ```
 Each operator must be in the form `$validatorNonce,$address`. Providing the wrong validator nonce may result in disaster for your DKG.
+The output directory will default to `~/.ssv`. It will be in a file named after the date (and a counter if you create multiple clusters in a day). 
+You will need to maintain this state file if you wish to reshare the key for this cluster in future, e.g. if operators become unresponsive and you wish to exclude them. 
 
 - combine both in a single command
 ```shell
 $ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/to/deposit --quiet > signed_deposit.json 
 ```
+
+- reshare the key of a validator cluster you've already created
+```shell
+$ ssv-dkg reshare --state ~/.ssv/2024-01-01-deadbeef.json \
+      --operator 1,https://example.org \
+      --operator 2,https://muster.de \
+      --operator 9,https://exemple.fr
+
+⏳ contacting nodes
+⏳ starting distributed key resharing
+✅ distributed key reshared successfully!
+```
+Note: you will have to maintain 50% + 1 of the same operators in the new cluster for this to succeed.

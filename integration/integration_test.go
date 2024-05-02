@@ -29,10 +29,12 @@ func TestSuccessfulSigning(t *testing.T) {
 
 	depositData := []byte("hello world")
 
-	signature, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
+	signingOutput, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
 	require.NoError(t, err)
-	require.NotNil(t, signature)
-	require.NotEmpty(t, signature)
+	require.NotEmpty(t, signingOutput)
+	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.Operators)
 }
 
 func TestErroneousNodeOnStartup(t *testing.T) {
