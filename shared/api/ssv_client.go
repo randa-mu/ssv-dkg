@@ -18,7 +18,7 @@ func NewSsvClient(url string) SsvClient {
 func (s SsvClient) Health() error {
 	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SsvHealthPath))
 	if err != nil {
-		return err
+		return fmt.Errorf("there was an error connecting to the SSV node: %v", err)
 	}
 	if res.StatusCode != 200 {
 		return fmt.Errorf("SSV health returned %d", res.StatusCode)

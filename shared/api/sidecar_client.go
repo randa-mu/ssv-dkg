@@ -52,6 +52,31 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 	return signResponse, err
 }
 
+func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) {
+	j, err := json.Marshal(request)
+	if err != nil {
+		return ReshareResponse{}, err
+	}
+	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarResharePath), "application/json", bytes.NewBuffer(j))
+
+	if err != nil {
+		return ReshareResponse{}, fmt.Errorf("error resharing with validator %s: %w", s.url, err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return ReshareResponse{}, fmt.Errorf("error resharing with validator %s. Node returned status code %d", s.url, response.StatusCode)
+	}
+
+	responseBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return ReshareResponse{}, fmt.Errorf("error reading response bytes: %w", err)
+	}
+
+	var reshareResponse ReshareResponse
+	err = json.Unmarshal(responseBytes, &reshareResponse)
+	return reshareResponse, err
+}
+
 func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error) {
 	j, err := json.Marshal(request)
 	if err != nil {

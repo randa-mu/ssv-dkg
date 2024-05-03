@@ -22,27 +22,29 @@ type Daemon struct {
 	server           *http.Server
 	dkg              DKGProtocol
 	key              crypto.Keypair
+	stateDir         string
 	thresholdScheme  crypto.ThresholdScheme
 	encryptionScheme crypto.EncryptionScheme
 }
 
 type DKGProtocol interface {
 	RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Output, error)
+	RunReshare(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair, state dkg.GroupFile) (*dkg.Output, error)
 	ProcessPacket(packet api.SidecarDKGPacket) error
 }
 
-func NewDaemon(port uint, publicURL string, ssvURL string, keyPath string) (Daemon, error) {
+func NewDaemon(port uint, publicURL string, ssvURL string, stateDir string) (Daemon, error) {
 	thresholdScheme := crypto.NewBLSSuite()
 	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
-	return NewDaemonWithDKG(port, publicURL, ssvURL, keyPath, dkgCoordinator)
+	return NewDaemonWithDKG(port, publicURL, ssvURL, stateDir, dkgCoordinator)
 }
 
-func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, keyPath string, coordinator DKGProtocol) (Daemon, error) {
+func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir string, coordinator DKGProtocol) (Daemon, error) {
 	if port == 0 {
 		return Daemon{}, errors.New("you must provide a port")
 	}
 
-	if keyPath == "" {
+	if stateDir == "" {
 		return Daemon{}, errors.New("you must pass a valid path to a keypair")
 	}
 
@@ -57,13 +59,13 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, keyPath string
 		return Daemon{}, errors.New("you must pass a public URL flag")
 	}
 
-	keypair, err := util.LoadKeypair(keyPath)
+	keypair, err := util.LoadKeypair(stateDir)
 
 	if err != nil {
 		return Daemon{}, fmt.Errorf("error loading keypair: %w", err)
 	}
 
-	slog.Info(fmt.Sprintf("Keypair loaded from %s", keyPath))
+	slog.Info(fmt.Sprintf("Keypair loaded from %s", stateDir))
 
 	thresholdScheme := crypto.NewBLSSuite()
 	daemon := Daemon{
@@ -71,6 +73,7 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, keyPath string
 		key:              keypair,
 		publicURL:        publicURL,
 		ssvClient:        api.NewSsvClient(ssvURL),
+		stateDir:         stateDir,
 		dkg:              coordinator,
 		thresholdScheme:  thresholdScheme,
 		encryptionScheme: crypto.NewRSASuite(),

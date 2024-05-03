@@ -126,19 +126,19 @@ func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordina
 }
 
 func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator sidecar.DKGProtocol) sidecar.Daemon {
-	keyPath := path.Join(t.TempDir(), strconv.Itoa(int(port)), "keypair.json")
-	err := sidecar.GenerateKey(keyPath)
+	stateDir := path.Join(t.TempDir(), strconv.Itoa(int(port)))
+	err := sidecar.GenerateKey(stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
-	_, err = sidecar.SignKey(url, 1, keyPath)
+	_, err = sidecar.SignKey(url, 1, stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
-	d, err := sidecar.NewDaemonWithDKG(port, url, ssvURL, keyPath, errorCoordinator)
+	d, err := sidecar.NewDaemonWithDKG(port, url, ssvURL, stateDir, errorCoordinator)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,19 +146,19 @@ func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator s
 }
 
 func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
-	keyPath := path.Join(t.TempDir(), strconv.Itoa(int(port)), "keypair.json")
-	err := sidecar.GenerateKey(keyPath)
+	stateDir := path.Join(t.TempDir(), strconv.Itoa(int(port)))
+	err := sidecar.GenerateKey(stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", port)
-	_, err = sidecar.SignKey(url, uint32(port), keyPath)
+	_, err = sidecar.SignKey(url, uint32(port), stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
-	d, err := sidecar.NewDaemon(port, url, ssvURL, keyPath)
+	d, err := sidecar.NewDaemon(port, url, ssvURL, stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}

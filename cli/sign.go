@@ -34,7 +34,6 @@ type operatorResponse struct {
 }
 
 func Sign(operators []string, depositData []byte, log shared.QuietLogger) (SigningOutput, error) {
-	// parse and validate the operators provided
 	numOfNodes := len(operators)
 	if numOfNodes != 3 && numOfNodes != 5 && numOfNodes != 7 {
 		return SigningOutput{}, errors.New("you must pass either 3, 5, or 7 operators to ensure a majority threshold")

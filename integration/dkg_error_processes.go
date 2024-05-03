@@ -15,6 +15,10 @@ func (e ErrorStartingDKG) RunDKG(identities []crypto.Identity, sessionID []byte,
 	return nil, errors.New("simulated error starting DKG")
 }
 
+func (e ErrorStartingDKG) RunReshare(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair, state dkg.GroupFile) (*dkg.Output, error) {
+	return nil, errors.New("simulated error running reshare")
+}
+
 func (e ErrorStartingDKG) ProcessPacket(packet api.SidecarDKGPacket) error {
 	return errors.New("processing packet is undefined for the error DKG")
 }
@@ -27,6 +31,10 @@ type ErrorDuringDKG struct {
 func (e ErrorDuringDKG) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Output, error) {
 	d := dkg.NewDKGCoordinator(e.url, e.scheme)
 	return d.RunDKG(identities, sessionID, keypair)
+}
+
+func (e ErrorDuringDKG) RunReshare(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair, state dkg.GroupFile) (*dkg.Output, error) {
+	return nil, errors.New("simulated error running reshare")
 }
 
 func (e ErrorDuringDKG) ProcessPacket(packet api.SidecarDKGPacket) error {

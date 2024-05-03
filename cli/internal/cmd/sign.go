@@ -58,7 +58,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 
 	bytes, err := storeState(stateDirectory, signingOutput)
 	if err != nil {
-		log.Log(fmt.Sprintf("⚠️ there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
+		log.Log(fmt.Sprintf("⚠️  there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
 		log.Log(string(bytes))
 	}
 }

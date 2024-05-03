@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 
 	"github.com/randa-mu/ssv-dkg/sidecar"
@@ -49,7 +48,7 @@ func init() {
 }
 
 func Start(_ *cobra.Command, _ []string) {
-	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, path.Join(DirectoryFlag, KeypairFilename))
+	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, DirectoryFlag)
 	if err != nil {
 		slog.Error("error starting daemon", "err", err)
 		os.Exit(1)
