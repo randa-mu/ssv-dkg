@@ -24,7 +24,7 @@ func TestSuccessfulSigning(t *testing.T) {
 	startSidecars(t, ports, stubPort)
 
 	operators := fmap(ports, func(o uint) string {
-		return fmt.Sprintf("%d,http://localhost:%d", o, o)
+		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
 	depositData := []byte("hello world")
@@ -46,7 +46,7 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 	startErrorSidecars(t, []uint{10013}, stubPort, ErrorStartingDKG{})
 
 	operators := fmap(append(ports, 10013), func(o uint) string {
-		return fmt.Sprintf("%d,http://localhost:%d", o, o)
+		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
 	depositData := []byte("hello world")
@@ -61,10 +61,10 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 
 	ports := []uint{10021, 10022}
 	startSidecars(t, ports, stubPort)
-	startErrorSidecars(t, []uint{10023}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://localhost:10023"})
+	startErrorSidecars(t, []uint{10023}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://127.0.0.1:10023"})
 
 	operators := fmap(append(ports, 10023), func(o uint) string {
-		return fmt.Sprintf("%d,http://localhost:%d", o, o)
+		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
 	depositData := []byte("hello world")
@@ -132,12 +132,12 @@ func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator s
 		t.Fatal(err)
 	}
 
-	url := fmt.Sprintf("http://localhost:%d", port)
+	url := fmt.Sprintf("http://127.0.0.1:%d", port)
 	_, err = sidecar.SignKey(url, 1, stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
+	ssvURL := fmt.Sprintf("http://127.0.0.1:%d", ssvPort)
 	d, err := sidecar.NewDaemonWithDKG(port, url, ssvURL, stateDir, errorCoordinator)
 	if err != nil {
 		t.Fatal(err)
@@ -152,12 +152,12 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
 		t.Fatal(err)
 	}
 
-	url := fmt.Sprintf("http://localhost:%d", port)
+	url := fmt.Sprintf("http://127.0.0.1:%d", port)
 	_, err = sidecar.SignKey(url, uint32(port), stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ssvURL := fmt.Sprintf("http://localhost:%d", ssvPort)
+	ssvURL := fmt.Sprintf("http://127.0.0.1:%d", ssvPort)
 	d, err := sidecar.NewDaemon(port, url, ssvURL, stateDir)
 	if err != nil {
 		t.Fatal(err)
@@ -174,7 +174,7 @@ func fmap[T any, U any](arr []T, f func(T) U) []U {
 }
 
 func awaitHealthy(port uint) error {
-	c := api.NewSidecarClient(fmt.Sprintf("http://localhost:%d", port))
+	c := api.NewSidecarClient(fmt.Sprintf("http://127.0.0.1:%d", port))
 	var err error
 	for i := 0; i < 5; i++ {
 		if err = c.Health(); err == nil {

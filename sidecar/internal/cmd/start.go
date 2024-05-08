@@ -35,7 +35,7 @@ func init() {
 		&SsvURLFlag,
 		"ssv-url",
 		"s",
-		"http://localhost:8888",
+		"http://127.0.0.1:8888",
 		"the hostname and port of the SSV binary you wish to connect to",
 	)
 	startCmd.PersistentFlags().StringVarP(

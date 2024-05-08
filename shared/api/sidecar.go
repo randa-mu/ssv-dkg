@@ -118,20 +118,20 @@ func createSignAPI(node Sidecar) http.HandlerFunc {
 
 		response, err := node.Sign(requestBody)
 		if err != nil {
-			slog.Error("error signing deposit data", err)
+			slog.Error("error signing deposit data", "err", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		j, err := json.Marshal(response)
 		if err != nil {
-			slog.Error("error marshalling signed deposit data", err)
+			slog.Error("error marshalling signed deposit data", "err", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("error writing a signing HTTP response", err)
+			slog.Error("error writing a signing HTTP response", "err", err)
 		}
 	}
 }
@@ -165,7 +165,7 @@ func createReshareAPI(node Sidecar) http.HandlerFunc {
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("error writing a reshare HTTP response", err)
+			slog.Error("error writing a reshare HTTP response", "err", err)
 		}
 	}
 }
@@ -197,7 +197,7 @@ func createSidecarIdentityAPI(node Sidecar) http.HandlerFunc {
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("error writing an identity HTTP response", err)
+			slog.Error("error writing an identity HTTP response", "err", err)
 		}
 	}
 }
@@ -207,7 +207,7 @@ func createSidecarDKGAPI(node Sidecar) http.HandlerFunc {
 		requestBytes, err := io.ReadAll(request.Body)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			slog.Error("error reading DKG packet", err)
+			slog.Error("error reading DKG packet", "err", err)
 			return
 		}
 
@@ -215,14 +215,14 @@ func createSidecarDKGAPI(node Sidecar) http.HandlerFunc {
 		err = json.Unmarshal(requestBytes, &dkgPacket)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			slog.Error("error unmarshalling DKG packet", err)
+			slog.Error("error unmarshalling DKG packet", "err", err)
 			return
 		}
 
 		err = node.BroadcastDKG(dkgPacket)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			slog.Error("error broadcasting DKG packet", err)
+			slog.Error("error broadcasting DKG packet", "err", err)
 			return
 		}
 		writer.WriteHeader(http.StatusNoContent)
