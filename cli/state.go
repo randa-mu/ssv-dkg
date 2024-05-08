@@ -52,5 +52,5 @@ func LoadState(filepath string) (SigningOutput, error) {
 
 	var s SigningOutput
 	err = json.Unmarshal(bytes, &s)
-	return s, nil
+	return s, err
 }
