@@ -33,8 +33,8 @@ func TestSuccessfulSigning(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.GroupSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
-	require.NotEmpty(t, signingOutput.Operators)
+	require.NotEmpty(t, signingOutput.PolynomialCommitments)
+	require.NotEmpty(t, signingOutput.OperatorShares)
 }
 
 func TestErroneousNodeOnStartup(t *testing.T) {

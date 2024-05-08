@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +15,7 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(versionCmd, operatorsCmd, signCmd)
+	rootCmd.AddCommand(versionCmd, operatorsCmd, signCmd, reshareCmd)
 }
 
 func Execute() error {

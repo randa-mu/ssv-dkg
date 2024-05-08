@@ -143,7 +143,7 @@ func (d *Coordinator) RunReshare(identities []crypto.Identity, sessionID []byte,
 		return nil, err
 	}
 
-	addresses := make([]string, len(identities))
+	var addresses []string
 	for _, identity := range identities {
 		// if it's not our node, we'd like to gossip packets to it
 		if identity.Address != d.publicURL {
@@ -168,7 +168,7 @@ func (d *Coordinator) RunReshare(identities []crypto.Identity, sessionID []byte,
 		NewNodes:       newNodes,
 		Share:          &distKey,
 		Threshold:      threshold,
-		OldThreshold:   0,
+		OldThreshold:   int(state.Threshold),
 		UserReaderOnly: false,
 		FastSync:       false,
 		Nonce:          sessionID,

@@ -152,12 +152,14 @@ func createReshareAPI(node Sidecar) http.HandlerFunc {
 		}
 		reshareResponse, err := node.Reshare(requestBody)
 		if err != nil {
+			slog.Debug("error resharing", "err", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		j, err := json.Marshal(reshareResponse)
 		if err != nil {
+			slog.Debug("error marshalling response in resharing", "err", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}

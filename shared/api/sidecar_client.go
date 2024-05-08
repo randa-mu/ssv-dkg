@@ -58,7 +58,6 @@ func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) 
 		return ReshareResponse{}, err
 	}
 	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarResharePath), "application/json", bytes.NewBuffer(j))
-
 	if err != nil {
 		return ReshareResponse{}, fmt.Errorf("error resharing with validator %s: %w", s.url, err)
 	}

@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"fmt"
+
 	"github.com/drand/kyber/share/dkg"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"golang.org/x/exp/slog"
@@ -91,7 +92,7 @@ func (d *DKGBoard) gossip(packet api.SidecarDKGPacket) {
 			client := api.NewSidecarClient(s)
 			err := client.BroadcastDKG(packet)
 			if err != nil {
-				slog.Error(fmt.Sprintf("error writing DKG packet to %s", s), err)
+				slog.Error(fmt.Sprintf("error writing DKG packet to %s", s), "err", err)
 			}
 		}(s)
 	}

@@ -2,13 +2,10 @@ package cmd
 
 import (
 	"encoding/base64"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/randa-mu/ssv-dkg/cli"
@@ -56,7 +53,8 @@ func Sign(cmd *cobra.Command, _ []string) {
 	log.MaybeLog("✅ received signed deposit data!")
 	log.Log(base64.StdEncoding.EncodeToString(signingOutput.GroupSignature))
 
-	bytes, err := storeState(stateDirectory, signingOutput)
+	path := cli.CreateFilename(stateDirectory, signingOutput)
+	bytes, err := cli.StoreStateIfNotExists(path, signingOutput)
 	if err != nil {
 		log.Log(fmt.Sprintf("⚠️  there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
 		log.Log(string(bytes))
@@ -78,6 +76,8 @@ func verifyAndGetArgs(cmd *cobra.Command) ([]string, []byte, error) {
 		}
 
 		args = strings.Split(operatorString, " ")
+	} else {
+		args = operatorFlag
 	}
 
 	if inputPathFlag == "" {
@@ -95,23 +95,4 @@ func verifyAndGetArgs(cmd *cobra.Command) ([]string, []byte, error) {
 	}
 
 	return args, depositData, nil
-}
-
-// this stores the JSON encoded `SigningOutput` in a flat file.
-// it returns the json bytes on file write failure, so they can be printed to console
-// so users don't just lose their DKG state completely if e.g. they write somewhere without perms
-func storeState(stateDirectory string, output cli.SigningOutput) ([]byte, error) {
-	bytes, err := json.Marshal(output)
-	if err != nil {
-		return nil, err
-	}
-
-	filename := path.Join(stateDirectory, fmt.Sprintf("%s.json", hex.EncodeToString(output.SessionID)))
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0755)
-	if err != nil {
-		return bytes, err
-	}
-
-	_, err = file.Write(bytes)
-	return bytes, err
 }

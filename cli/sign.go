@@ -17,13 +17,13 @@ import (
 )
 
 type SigningOutput struct {
-	SessionID      []byte     `json:"session_id"`
-	GroupSignature []byte     `json:"group_signature"`
-	GroupPublicKey []byte     `json:"group_public_key"`
-	Operators      []Operator `json:"operators"`
+	SessionID             []byte          `json:"session_id"`
+	GroupSignature        []byte          `json:"group_signature"`
+	PolynomialCommitments []byte          `json:"group_public_key"`
+	OperatorShares        []OperatorShare `json:"operator_shares"`
 }
 
-type Operator struct {
+type OperatorShare struct {
 	Identity       crypto.Identity `json:"identity"`
 	EncryptedShare []byte          `json:"encrypted_share"`
 }
@@ -66,10 +66,10 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) (Signi
 	}
 
 	return SigningOutput{
-		SessionID:      sessionID,
-		GroupSignature: groupSig.signature,
-		GroupPublicKey: groupSig.publicKey,
-		Operators:      extractEncryptedShares(responses),
+		SessionID:             sessionID,
+		GroupSignature:        groupSig.signature,
+		PolynomialCommitments: groupSig.publicKey,
+		OperatorShares:        extractEncryptedShares(responses),
 	}, nil
 }
 
@@ -104,10 +104,10 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 	return identities, nil
 }
 
-func extractEncryptedShares(arr []operatorResponse) []Operator {
-	operators := make([]Operator, len(arr))
+func extractEncryptedShares(arr []operatorResponse) []OperatorShare {
+	operators := make([]OperatorShare, len(arr))
 	for i, o := range arr {
-		operators[i] = Operator{
+		operators[i] = OperatorShare{
 			Identity:       o.identity,
 			EncryptedShare: o.response.EncryptedShare,
 		}
