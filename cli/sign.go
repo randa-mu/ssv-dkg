@@ -16,27 +16,10 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
-type SigningOutput struct {
-	SessionID             []byte          `json:"session_id"`
-	GroupSignature        []byte          `json:"group_signature"`
-	PolynomialCommitments []byte          `json:"group_public_key"`
-	OperatorShares        []OperatorShare `json:"operator_shares"`
-}
-
-type OperatorShare struct {
-	Identity       crypto.Identity `json:"identity"`
-	EncryptedShare []byte          `json:"encrypted_share"`
-}
-
-type operatorResponse struct {
-	identity crypto.Identity
-	response api.SignResponse
-}
-
-func Sign(operators []string, depositData []byte, log shared.QuietLogger) (SigningOutput, error) {
+func Sign(operators []string, depositData []byte, log shared.QuietLogger) (api.SigningOutput, error) {
 	numOfNodes := len(operators)
 	if numOfNodes != 3 && numOfNodes != 5 && numOfNodes != 7 {
-		return SigningOutput{}, errors.New("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
+		return api.SigningOutput{}, errors.New("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
 	}
 
 	suite := crypto.NewBLSSuite()
@@ -45,27 +28,27 @@ func Sign(operators []string, depositData []byte, log shared.QuietLogger) (Signi
 	log.MaybeLog("⏳ contacting nodes")
 	identities, err := fetchIdentities(suite, operators)
 	if err != nil {
-		return SigningOutput{}, err
+		return api.SigningOutput{}, err
 	}
 
 	sessionID, err := createSessionID()
 	if err != nil {
-		return SigningOutput{}, err
+		return api.SigningOutput{}, err
 	}
 
 	// then let's actually kick off the DKG
 	log.MaybeLog("⏳ starting distributed key generation")
 	responses, err := runDKG(suite, sessionID, identities, depositData)
 	if err != nil {
-		return SigningOutput{}, err
+		return api.SigningOutput{}, err
 	}
 
 	groupSig, err := aggregateGroupSignature(suite, responses, depositData)
 	if err != nil {
-		return SigningOutput{}, err
+		return api.SigningOutput{}, err
 	}
 
-	return SigningOutput{
+	return api.SigningOutput{
 		SessionID:             sessionID,
 		GroupSignature:        groupSig.signature,
 		PolynomialCommitments: groupSig.publicKey,
@@ -104,12 +87,12 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 	return identities, nil
 }
 
-func extractEncryptedShares(arr []operatorResponse) []OperatorShare {
-	operators := make([]OperatorShare, len(arr))
+func extractEncryptedShares(arr []api.OperatorResponse) []api.OperatorShare {
+	operators := make([]api.OperatorShare, len(arr))
 	for i, o := range arr {
-		operators[i] = OperatorShare{
-			Identity:       o.identity,
-			EncryptedShare: o.response.EncryptedShare,
+		operators[i] = api.OperatorShare{
+			Identity:       o.Identity,
+			EncryptedShare: o.Response.EncryptedShare,
 		}
 	}
 	return operators
@@ -136,8 +119,8 @@ func parseOperator(input string) (uint32, string, error) {
 	return uint32(validatorNonce), parts[1], nil
 }
 
-func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.Identity, depositData []byte) ([]operatorResponse, error) {
-	dkgResponses := shared.SafeList[operatorResponse]{}
+func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.Identity, depositData []byte) ([]api.OperatorResponse, error) {
+	dkgResponses := shared.SafeList[api.OperatorResponse]{}
 	errs := make(chan error, len(identities))
 	wg := sync.WaitGroup{}
 	wg.Add(len(identities))
@@ -148,9 +131,9 @@ func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.
 			if err != nil {
 				errs <- err
 			} else {
-				dkgResponses.Append(operatorResponse{
-					identity: identity,
-					response: dkgResponse,
+				dkgResponses.Append(api.OperatorResponse{
+					Identity: identity,
+					Response: dkgResponse,
 				})
 				wg.Done()
 			}
@@ -213,7 +196,7 @@ type groupSignature struct {
 	publicKey []byte
 }
 
-func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []operatorResponse, depositData []byte) (groupSignature, error) {
+func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []api.OperatorResponse, depositData []byte) (groupSignature, error) {
 	// ensure everybody came up with the same polynomials
 	err := verifyPublicPolynomialSame(responses)
 	if err != nil {
@@ -221,7 +204,7 @@ func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []operatorR
 	}
 
 	// as all the group public keys are the same, we can use the first to verify all the partials
-	groupPK := responses[0].response.PublicPolynomial
+	groupPK := responses[0].Response.PublicPolynomial
 
 	partials := extractPartials(responses)
 
@@ -241,11 +224,11 @@ func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []operatorR
 	}, nil
 }
 
-func verifyPublicPolynomialSame(arr []operatorResponse) error {
+func verifyPublicPolynomialSame(arr []api.OperatorResponse) error {
 	for i := 1; i < len(arr); i++ {
 		// all nodes should return the same group public key or someone is being naughty
-		lastPK := arr[i-1].response.PublicPolynomial
-		currentPK := arr[i].response.PublicPolynomial
+		lastPK := arr[i-1].Response.PublicPolynomial
+		currentPK := arr[i].Response.PublicPolynomial
 		if !bytes.Equal(lastPK, currentPK) {
 			return fmt.Errorf("group public key was different for nodes %d and %d", i-1, i)
 		}
@@ -253,10 +236,10 @@ func verifyPublicPolynomialSame(arr []operatorResponse) error {
 	return nil
 }
 
-func extractPartials(arr []operatorResponse) [][]byte {
+func extractPartials(arr []api.OperatorResponse) [][]byte {
 	partials := make([][]byte, len(arr))
 	for i, o := range arr {
-		partials[i] = o.response.DepositDataPartialSignature
+		partials[i] = o.Response.DepositDataPartialSignature
 	}
 	return partials
 }

@@ -21,6 +21,7 @@ type Daemon struct {
 	ssvClient        api.Ssv
 	server           *http.Server
 	dkg              DKGProtocol
+	db               *dkg.FileStore
 	key              crypto.Keypair
 	stateDir         string
 	thresholdScheme  crypto.ThresholdScheme
@@ -75,6 +76,7 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir strin
 		ssvClient:        api.NewSsvClient(ssvURL),
 		stateDir:         stateDir,
 		dkg:              coordinator,
+		db:               dkg.NewFileStore(stateDir),
 		thresholdScheme:  thresholdScheme,
 		encryptionScheme: crypto.NewRSASuite(),
 	}

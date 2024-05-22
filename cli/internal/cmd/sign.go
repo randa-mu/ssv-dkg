@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -50,7 +51,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	log.MaybeLog("✅ received signed deposit data!")
+	log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! sessionID: %s", hex.EncodeToString(signingOutput.SessionID)))
 	log.Log(base64.StdEncoding.EncodeToString(signingOutput.GroupSignature))
 
 	path := cli.CreateFilename(stateDirectory, signingOutput)

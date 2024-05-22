@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSuccessfulSigning(t *testing.T) {
+func TestSuccessfulSigningAndResharing(t *testing.T) {
 	var stubPort uint = 10000
 	startStubSSVNode(t, stubPort)
 
@@ -29,7 +29,65 @@ func TestSuccessfulSigning(t *testing.T) {
 
 	depositData := []byte("hello world")
 
-	signingOutput, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
+	log := shared.QuietLogger{Quiet: false}
+	signingOutput, err := cli.Sign(operators, depositData, log)
+	require.NoError(t, err)
+	require.NotEmpty(t, signingOutput)
+	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.PolynomialCommitments)
+	require.NotEmpty(t, signingOutput.OperatorShares)
+
+	signingOutput, err = cli.Reshare(operators, signingOutput, log)
+	require.NoError(t, err)
+	require.NotEmpty(t, signingOutput)
+	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.PolynomialCommitments)
+	require.NotEmpty(t, signingOutput.OperatorShares)
+
+	// reshare a second time with the same group just to confirm the polynomial commitments have been saved as expected
+	signingOutput, err = cli.Reshare(operators, signingOutput, log)
+	require.NoError(t, err)
+	require.NotEmpty(t, signingOutput)
+	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.PolynomialCommitments)
+	require.NotEmpty(t, signingOutput.OperatorShares)
+
+	// reshare a third time with a slightly different group
+	startSidecars(t, []uint{10004}, stubPort)
+	operators = append(operators[0:2], "10004,http://127.0.0.1:10004")
+	signingOutput, err = cli.Reshare(operators, signingOutput, log)
+	require.NoError(t, err)
+	require.NotEmpty(t, signingOutput)
+	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.PolynomialCommitments)
+	require.NotEmpty(t, signingOutput.OperatorShares)
+}
+
+func TestResharingNewNode(t *testing.T) {
+	var stubPort uint = 10000
+	startStubSSVNode(t, stubPort)
+
+	ports := []uint{10001, 10002, 10003}
+	startSidecars(t, ports, stubPort)
+
+	operators := fmap(ports, func(o uint) string {
+		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
+	})
+
+	depositData := []byte("hello world")
+
+	log := shared.QuietLogger{Quiet: false}
+	signingOutput, err := cli.Sign(operators, depositData, log)
+	require.NoError(t, err)
+	require.NotEmpty(t, signingOutput)
+	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.PolynomialCommitments)
+	require.NotEmpty(t, signingOutput.OperatorShares)
+
+	// reshare a third time with a slightly different group
+	startSidecars(t, []uint{10004}, stubPort)
+	operators = append(operators[0:2], "10004,http://127.0.0.1:10004")
+	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.GroupSignature)

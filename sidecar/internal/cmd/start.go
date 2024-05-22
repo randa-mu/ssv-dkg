@@ -16,6 +16,7 @@ import (
 var PortFlag uint
 var SsvURLFlag string
 var PublicURLFlag string
+var VerboseFlag bool
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the DKG sidecar",
@@ -45,9 +46,23 @@ func init() {
 		"",
 		"the public endpoint you host your node on",
 	)
+	startCmd.PersistentFlags().BoolVarP(
+		&VerboseFlag,
+		"verbose",
+		"v",
+		false,
+		"enables more detailed logging if provided",
+	)
 }
 
 func Start(_ *cobra.Command, _ []string) {
+	if VerboseFlag {
+		l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+		slog.SetDefault(l)
+	}
+
 	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, DirectoryFlag)
 	if err != nil {
 		slog.Error("error starting daemon", "err", err)

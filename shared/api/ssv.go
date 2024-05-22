@@ -33,7 +33,7 @@ func createSsvIdentityAPI(node Ssv) http.HandlerFunc {
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("there was an error writing an HTTP response body", "err", err)
+			slog.Error("there was an error writing an HTTP Response body", "err", err)
 		}
 	}
 }

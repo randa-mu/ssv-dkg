@@ -43,9 +43,16 @@ type SignResponse struct {
 }
 
 type ReshareRequest struct {
-	SessionID      []byte            `json:"session_id"`
-	ValidatorNonce uint32            `json:"validator_nonce"`
-	Operators      []crypto.Identity `json:"operators"`
+	ValidatorNonce             uint32            `json:"validator_nonce"`
+	Operators                  []crypto.Identity `json:"operators"`
+	PreviousState              PreviousDKGState  `json:"previous_state"`
+	PreviousEncryptedShareHash []byte            `json:"previous_encrypted_share_hash"`
+}
+
+type PreviousDKGState struct {
+	SessionID                   string            `json:"session_id"`
+	Nodes                       []crypto.Identity `json:"nodes"`
+	PublicPolynomialCommitments []byte            `json:"public_polynomial_commitments"`
 }
 
 type ReshareResponse struct {
@@ -131,7 +138,7 @@ func createSignAPI(node Sidecar) http.HandlerFunc {
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("error writing a signing HTTP response", "err", err)
+			slog.Error("error writing a signing HTTP Response", "err", err)
 		}
 	}
 }
@@ -159,13 +166,13 @@ func createReshareAPI(node Sidecar) http.HandlerFunc {
 
 		j, err := json.Marshal(reshareResponse)
 		if err != nil {
-			slog.Debug("error marshalling response in resharing", "err", err)
+			slog.Debug("error marshalling Response in resharing", "err", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("error writing a reshare HTTP response", "err", err)
+			slog.Error("error writing a reshare HTTP Response", "err", err)
 		}
 	}
 }
@@ -197,7 +204,7 @@ func createSidecarIdentityAPI(node Sidecar) http.HandlerFunc {
 		}
 		_, err = writer.Write(j)
 		if err != nil {
-			slog.Error("error writing an identity HTTP response", "err", err)
+			slog.Error("error writing an Identity HTTP Response", "err", err)
 		}
 	}
 }

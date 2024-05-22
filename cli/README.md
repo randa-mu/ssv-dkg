@@ -52,7 +52,7 @@ $ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/t
 
 - reshare the key of a validator cluster you've already created
 ```shell
-$ ssv-dkg reshare --state ~/.ssv/2024-01-01-deadbeef.json \
+$ ssv-dkg reshare --state ~/.ssv/deadbeefcafebabe.json \
       --operator 1,https://example.org \
       --operator 2,https://muster.de \
       --operator 9,https://exemple.fr

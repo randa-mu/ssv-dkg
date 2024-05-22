@@ -44,7 +44,7 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 
 	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return SignResponse{}, fmt.Errorf("error reading response bytes: %w", err)
+		return SignResponse{}, fmt.Errorf("error reading Response bytes: %w", err)
 	}
 
 	var signResponse SignResponse
@@ -68,7 +68,7 @@ func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) 
 
 	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return ReshareResponse{}, fmt.Errorf("error reading response bytes: %w", err)
+		return ReshareResponse{}, fmt.Errorf("error reading Response bytes: %w", err)
 	}
 
 	var reshareResponse ReshareResponse
@@ -87,18 +87,18 @@ func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentity
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return SidecarIdentityResponse{}, fmt.Errorf("error retrieving identity for %s. Node returned status code %d", s.url, res.StatusCode)
+		return SidecarIdentityResponse{}, fmt.Errorf("error retrieving Identity for %s. Node returned status code %d", s.url, res.StatusCode)
 	}
 
 	responseBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error reading response body: %w", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error reading Response body: %w", err)
 	}
 
 	var identity SidecarIdentityResponse
 	err = json.Unmarshal(responseBytes, &identity)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling response body: %w", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling Response body: %w", err)
 	}
 	return identity, nil
 }

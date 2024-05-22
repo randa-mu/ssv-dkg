@@ -33,7 +33,7 @@ func (s SsvClient) Identity() (SsvIdentityResponse, error) {
 	}
 
 	if res.StatusCode != 200 {
-		return SsvIdentityResponse{}, fmt.Errorf("error encrypting with the sidecar; status code %d", res.StatusCode)
+		return SsvIdentityResponse{}, fmt.Errorf("error fetching identity; status code %d", res.StatusCode)
 	}
 
 	bytes, err := io.ReadAll(res.Body)

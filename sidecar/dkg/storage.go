@@ -2,11 +2,14 @@ package dkg
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path"
+	"reflect"
+	"sync"
 
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share"
@@ -17,13 +20,113 @@ import (
 
 type GroupFile struct {
 	SessionID                   string            `json:"session_id"`
-	Threshold                   uint32            `json:"threshold"`
 	Nodes                       []crypto.Identity `json:"nodes"`
 	PublicPolynomialCommitments []byte            `json:"public_polynomial_commitments"`
 	KeyShare                    []byte            `json:"key_share"`
+	EncryptedKeyShareHash       []byte            `json:"encrypted_key_share_hash"`
 }
+
 type DistPublic struct {
 	Coefficients []kyber.Point
+}
+
+type FileStore struct {
+	lock sync.Mutex
+	path string
+}
+
+type GroupFiles struct {
+	SessionID  string      `json:"session_id"`
+	GroupFiles []GroupFile `json:"group_files"`
+}
+
+func NewFileStore(path string) *FileStore {
+	return &FileStore{
+		lock: sync.Mutex{},
+		path: path,
+	}
+}
+
+// Save checks for any state for a given sessionID, and stores the new group file as part of it
+func (f *FileStore) Save(group GroupFile) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	sessionID := group.SessionID
+
+	g, err := f.Load(sessionID)
+	if err != nil {
+		return err
+	}
+
+	var groupFiles GroupFiles
+	if reflect.DeepEqual(g, GroupFiles{}) {
+		groupFiles = GroupFiles{
+			SessionID:  sessionID,
+			GroupFiles: []GroupFile{group},
+		}
+	} else {
+		groupFiles = GroupFiles{
+			SessionID:  sessionID,
+			GroupFiles: append(g.GroupFiles, group),
+		}
+	}
+
+	p := path.Join(f.path, fmt.Sprintf("%s.json", sessionID))
+	b, err := json.Marshal(groupFiles)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(p, b, 0644)
+}
+
+// Load loads a set of group files associated with a given sessionID
+// if none exist, it returns an empty `GroupFiles` object
+func (f *FileStore) Load(sessionID string) (GroupFiles, error) {
+	p := path.Join(f.path, fmt.Sprintf("%s.json", sessionID))
+
+	b, err := os.ReadFile(p)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return GroupFiles{}, nil
+		}
+		return GroupFiles{}, err
+	}
+	var output GroupFiles
+	err = json.Unmarshal(b, &output)
+	if err != nil {
+		return GroupFiles{}, err
+	}
+	return output, nil
+}
+
+// LoadSingle loads a group file given an encryptedShareHash
+// in some scenarios, we can complete a reshare and store a share, though someone in the wider
+// group had errors; in this case, the caller will re-run the reshare, and tell use which share to use
+// by passing the hash of the encrypted share
+func (f *FileStore) LoadSingle(sessionID string, encryptedShareHash []byte) (GroupFile, error) {
+	// if the caller didn't give us an encrypted share hash, we can assume we weren't in the last group
+	if encryptedShareHash == nil {
+		return GroupFile{}, nil
+	}
+
+	// in principle, if we receive an `encryptedShareHash`, we should _really_ have state
+	groupFiles, err := f.Load(sessionID)
+	if err != nil {
+		return GroupFile{}, err
+	}
+	if reflect.DeepEqual(GroupFiles{}, groupFiles) {
+		return GroupFile{}, errors.New("could not find state for the encrypted share")
+	}
+
+	for _, g := range groupFiles.GroupFiles {
+		if bytes.Equal(g.EncryptedKeyShareHash, encryptedShareHash) {
+			return g, nil
+		}
+	}
+
+	return GroupFile{}, nil
 }
 
 // Share represents the private information that a node holds after a successful
@@ -50,47 +153,23 @@ func (s *Share) Public() DistPublic {
 	return DistPublic{s.Commits}
 }
 
-func NewGroupFile(sessionID string, threshold uint32, pubPoly []byte, nodes []crypto.Identity, share []byte) GroupFile {
+func NewGroupFile(sessionID string, pubPoly []byte, nodes []crypto.Identity, share, encryptedShare []byte) (GroupFile, error) {
 	slices.SortFunc(nodes, func(a, b crypto.Identity) int {
 		return bytes.Compare(a.Public, b.Public)
 	})
-	group := GroupFile{
+
+	s := sha256.New()
+	_, err := s.Write(encryptedShare)
+	if err != nil {
+		return GroupFile{}, err
+	}
+	encryptedShareHash := s.Sum(nil)
+
+	return GroupFile{
 		SessionID:                   sessionID,
-		Threshold:                   threshold,
 		Nodes:                       nodes,
 		PublicPolynomialCommitments: pubPoly,
 		KeyShare:                    share,
-	}
-
-	return group
-}
-
-func StoreDKG(stateDir, sessionID string, response *Output, identities []crypto.Identity) error {
-	threshold := dkg.MinimumT(len(response.NodePublicKeys))
-	p := path.Join(stateDir, fmt.Sprintf("%s.json", sessionID))
-	groupFile := NewGroupFile(sessionID, uint32(threshold), response.GroupPublicPoly, identities, response.KeyShare)
-	b, err := json.Marshal(groupFile)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(p, b, 0644)
-}
-
-func LoadDKG(stateDir, sessionID string) (GroupFile, error) {
-	p := path.Join(stateDir, fmt.Sprintf("%s.json", sessionID))
-
-	b, err := os.ReadFile(p)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return GroupFile{}, nil
-		}
-		return GroupFile{}, err
-	}
-	var output GroupFile
-	err = json.Unmarshal(b, &output)
-	if err != nil {
-		return GroupFile{}, err
-	}
-	return output, nil
+		EncryptedKeyShareHash:       encryptedShareHash,
+	}, nil
 }
