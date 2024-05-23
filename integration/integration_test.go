@@ -132,9 +132,8 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 }
 
 func startStubSSVNode(t *testing.T, ssvPort uint) {
-	go func() {
-		stub.StartStub(ssvPort)
-	}()
+	stop := stub.StartStub(ssvPort)
+	t.Cleanup(stop)
 	err := awaitHealthy(ssvPort)
 	if err != nil {
 		t.Fatalf("error starting SSV stub: %v", err)
