@@ -5,9 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"strings"
 
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
@@ -64,21 +62,9 @@ func Sign(cmd *cobra.Command, _ []string) {
 
 func verifyAndGetArgs(cmd *cobra.Command) ([]string, []byte, error) {
 	// if the operator flag isn't passed, we consume operator addresses from stdin
-	var args []string
-	if len(operatorFlag) == 0 {
-		stdin, err := io.ReadAll(cmd.InOrStdin())
-		if err != nil {
-			return nil, nil, errors.New("error reading from stdin")
-		}
-
-		operatorString := strings.Trim(string(stdin), "\n")
-		if operatorString == "" {
-			return nil, nil, errors.New("you must provider either the --operator flag or operators via stdin")
-		}
-
-		args = strings.Split(operatorString, " ")
-	} else {
-		args = operatorFlag
+	operators, err := arrayOrReader(operatorFlag, cmd.InOrStdin())
+	if err != nil {
+		return nil, nil, errors.New("you must provider either the --operator flag or operators via stdin")
 	}
 
 	if inputPathFlag == "" {
@@ -95,5 +81,5 @@ func verifyAndGetArgs(cmd *cobra.Command) ([]string, []byte, error) {
 		return nil, nil, fmt.Errorf("error reading the deposit data file: %v", err)
 	}
 
-	return args, depositData, nil
+	return operators, depositData, nil
 }

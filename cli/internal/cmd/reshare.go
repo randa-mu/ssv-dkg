@@ -42,7 +42,7 @@ func Reshare(cmd *cobra.Command, _ []string) {
 	}
 
 	// if the operator flag isn't passed, we consume operator addresses from stdin
-	operators, err := operatorsOrStdin(cmd)
+	operators, err := arrayOrReader(operatorFlag, cmd.InOrStdin())
 	if err != nil {
 		shared.Exit("you must pass your new set of operators either via the operator flag or from stdin")
 	}
@@ -83,4 +83,23 @@ func operatorsOrStdin(cmd *cobra.Command) ([]string, error) {
 	}
 
 	return strings.Split(operatorString, " "), nil
+}
+
+// arrayOrReader returns the array if it's non-empty, or reads an array of strings from the provided `Reader` if it's empty
+func arrayOrReader(arr []string, r io.Reader) ([]string, error) {
+	if len(arr) != 0 {
+		return arr, nil
+	}
+
+	bytes, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Trim(string(bytes), "\n")
+	if lines == "" {
+		return nil, errors.New("reader was empty")
+	}
+
+	return strings.Split(lines, " "), nil
 }

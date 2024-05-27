@@ -37,7 +37,7 @@ func StartStub(port uint) func() {
 	}()
 
 	return func() {
-		stop <- true
+		close(stop)
 	}
 }
 

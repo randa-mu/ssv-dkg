@@ -41,8 +41,7 @@ func Reshare(operators []string, state api.SigningOutput, log shared.QuietLogger
 	}
 
 	// we do some sanity checks on the returned details to ensure the public key hasn't changed
-	err = verifyPublicPolynomialSameReshare(operatorResponses)
-	if err != nil {
+	if err := verifyPublicPolynomialSameReshare(operatorResponses); err != nil {
 		return api.SigningOutput{}, err
 	}
 	polynomialCommitments := operatorResponses[0].response.PublicPolynomial
