@@ -51,27 +51,14 @@ func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, key
 		return nil, err
 	}
 
-	// we sort the identities by their public key, so that everyone has the same order
-	sort.SliceStable(identities, func(i, j int) bool {
-		return bytes.Compare(identities[i].Public, identities[j].Public) > 0
-	})
-
 	// we map the identities into the DKG node format and extract the addresses we want to gossip to (not ourselves)
-	nodes := make([]dkg.Node, numberOfNodes)
-	var addresses []string
-	for i, identity := range identities {
-		// turn the public key into a kyber point
-		pk := keyGroup.Point()
-		err = pk.UnmarshalBinary(identity.Public)
-		if err != nil {
-			return nil, err
-		}
+	nodes, err := prepareIdentities(d.scheme, identities)
+	if err != nil {
+		return nil, err
+	}
 
-		// map it into the DKG struct
-		nodes[i] = dkg.Node{
-			Index:  uint32(i),
-			Public: pk,
-		}
+	var addresses []string
+	for _, identity := range identities {
 		// if it's not our node, we'd like to gossip packets to it
 		if identity.Address != d.publicURL {
 			addresses = append(addresses, identity.Address)
@@ -92,7 +79,7 @@ func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, key
 		FastSync:       false,
 		Nonce:          sessionID,
 		Auth:           schnorr.NewScheme(&crypto.SchnorrSuite{Group: keyGroup}),
-		Log:            dkgLogger{},
+		Log:            dkgLogger{address: d.publicURL},
 	}
 
 	d.board = NewDKGBoard(addresses)
@@ -105,7 +92,7 @@ func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, key
 	go p.Start()
 	select {
 	case result := <-protocol.WaitEnd():
-		output, err := AsResult(d.scheme, result.Result)
+		output, err := AsResult(d.scheme, numberOfNodes, result.Result)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +102,121 @@ func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, key
 	}
 }
 
+func (d *Coordinator) RunReshare(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair, state GroupFile) (*Output, error) {
+	numberOfNodes := len(identities)
+	threshold := dkg.MinimumT(numberOfNodes)
+	oldThreshold := dkg.MinimumT(len(state.Nodes))
+	keyGroup := d.scheme.KeyGroup()
+
+	secretKey := keyGroup.Scalar()
+	err := secretKey.UnmarshalBinary(keypair.Private)
+	if err != nil {
+		return nil, err
+	}
+
+	pubPoly, err := crypto.UnmarshalPubPoly(d.scheme, state.PublicPolynomialCommitments)
+	if err != nil {
+		return nil, err
+	}
+	_, polynomialCommitments := pubPoly.Info()
+
+	oldNodes, err := prepareIdentities(d.scheme, state.Nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	newNodes, err := prepareIdentities(d.scheme, identities)
+	if err != nil {
+		return nil, err
+	}
+
+	var addresses []string
+	for _, identity := range identities {
+		// if it's not our node, we'd like to gossip packets to it
+		if identity.Address != d.publicURL {
+			addresses = append(addresses, identity.Address)
+		}
+	}
+
+	// new nodes won't have a key share, so they just pass `nil` to the DKG config
+	var distKey *dkg.DistKeyShare
+	if state.KeyShare != nil {
+		s, err := crypto.UnmarshalDistKey(d.scheme, state.KeyShare)
+		if err != nil {
+			return nil, err
+		}
+		distKey = &dkg.DistKeyShare{
+			Commits: polynomialCommitments,
+			Share:   &s,
+		}
+	} else {
+		slog.Debug("no existing share for resharing")
+	}
+
+	config := dkg.Config{
+		Suite:          keyGroup.(dkg.Suite),
+		Longterm:       secretKey,
+		PublicCoeffs:   polynomialCommitments,
+		OldNodes:       oldNodes,
+		NewNodes:       newNodes,
+		Share:          distKey,
+		Threshold:      threshold,
+		OldThreshold:   oldThreshold,
+		UserReaderOnly: false,
+		FastSync:       false,
+		//TODO: this should probably be made an actual nonce
+		Nonce: sessionID,
+		Auth:  schnorr.NewScheme(&crypto.SchnorrSuite{Group: keyGroup}),
+		Log:   dkgLogger{address: d.publicURL},
+	}
+
+	d.board = NewDKGBoard(addresses)
+	phaser := dkg.NewTimePhaser(5 * time.Second)
+	protocol, err := dkg.NewProtocol(&config, d.board, phaser, false)
+	if err != nil {
+		return nil, err
+	}
+
+	go phaser.Start()
+	select {
+	case result := <-protocol.WaitEnd():
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		output, err := AsResult(d.scheme, numberOfNodes, result.Result)
+		return &output, err
+	case <-time.After(d.timeout):
+		return nil, fmt.Errorf("reshare with sessionID %s timed out", hex.EncodeToString(sessionID))
+	}
+}
+
+func prepareIdentities(scheme crypto.ThresholdScheme, identities []crypto.Identity) ([]dkg.Node, error) {
+	sort.SliceStable(identities, func(i, j int) bool {
+		return bytes.Compare(identities[i].Public, identities[j].Public) > 0
+	})
+
+	// then map them into magical DKG structs
+	nodes := make([]dkg.Node, len(identities))
+	for i, identity := range identities {
+		p := scheme.KeyGroup().Point()
+		err := p.UnmarshalBinary(identity.Public)
+		if err != nil {
+			return nil, err
+		}
+		nodes[i] = dkg.Node{
+			Index:  uint32(i),
+			Public: p,
+		}
+	}
+
+	return nodes, nil
+}
+
 func (d *Coordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
+	// maybe this should repeat? if a node responds error to the client, then subsequent attempts to do a DKG will fail
+	if d.board == nil {
+		return errors.New("DKG not started yet")
+	}
 	if packet.Deal != nil {
 		slog.Debug(fmt.Sprintf("received deal from %d", packet.Deal.DealerIndex))
 		bundle, err := packet.Deal.ToDomain(d.scheme)
@@ -145,19 +246,24 @@ func (d *Coordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 }
 
 type dkgLogger struct {
+	address string
 }
 
 func (d dkgLogger) Info(keyvals ...interface{}) {
-	slog.Info("dkg", "message", fmt.Sprintf("%s", keyvals))
+	slog.Info("dkg", "message", fmt.Sprintf("%s", keyvals), "address", d.address)
 }
 
 func (d dkgLogger) Error(keyvals ...interface{}) {
-	slog.Error("dkg", "error", fmt.Sprintf("%s", keyvals))
+	slog.Error("dkg", "error", fmt.Sprintf("%s", keyvals), "address", d.address)
 }
 
-func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error) {
+func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Result) (Output, error) {
 	if result == nil || result.Key == nil {
 		return Output{}, errors.New("DKG result was nil")
+	}
+
+	if countOfNodes != len(result.QUAL) {
+		return Output{}, fmt.Errorf("expected %d nodes to complete the DKG, but only %d completed it", countOfNodes, len(result.QUAL))
 	}
 
 	distKey, err := crypto.MarshalDistKey(result.Key.Share)
@@ -165,7 +271,7 @@ func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error)
 		return Output{}, err
 	}
 
-	pubPoly, err := crypto.MarshalPubPoly(share.NewPubPoly(scheme.KeyGroup(), result.Key.Public(), result.Key.Commits))
+	pubPoly, err := crypto.MarshalPubPoly(share.NewPubPoly(scheme.KeyGroup(), scheme.KeyGroup().Point().Base(), result.Key.Commits))
 	if err != nil {
 		return Output{}, err
 	}
@@ -176,7 +282,7 @@ func AsResult(scheme crypto.ThresholdScheme, result *dkg.Result) (Output, error)
 	}
 
 	// we fail the DKG if any node doesn't make it, so we can safely assume there will be a node at each index
-	sort.Slice(result.QUAL, func(i, j int) bool {
+	sort.SliceStable(result.QUAL, func(i, j int) bool {
 		return result.QUAL[i].Index < result.QUAL[j].Index
 	})
 	pubKeys := make([][]byte, len(result.QUAL))

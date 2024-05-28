@@ -6,6 +6,7 @@ import (
 
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/sidecar"
+	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
 	"github.com/spf13/cobra"
 )
 
@@ -46,8 +47,6 @@ func init() {
 	)
 }
 
-var KeypairFilename = "keypair.json"
-
 func createKey(_ *cobra.Command, args []string) {
 	var dir string
 	if len(args) > 1 {
@@ -60,18 +59,16 @@ func createKey(_ *cobra.Command, args []string) {
 		dir = DirectoryFlag
 	}
 
-	keyPath := path.Join(dir, KeypairFilename)
-	err := sidecar.GenerateKey(keyPath)
+	err := sidecar.GenerateKey(dir)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	fmt.Printf("Created a new keypair at %s\n", keyPath)
+	fmt.Printf("Created a new keypair at %s\n", path.Join(dir, util.KeySuffix))
 }
 
 func signKey(_ *cobra.Command, _ []string) {
-	keyPath := path.Join(DirectoryFlag, KeypairFilename)
-	signature, err := sidecar.SignKey(UrlFlag, ValidatorNonceFlag, keyPath)
+	signature, err := sidecar.SignKey(UrlFlag, ValidatorNonceFlag, DirectoryFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}

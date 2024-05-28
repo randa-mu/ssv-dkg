@@ -22,6 +22,8 @@ type ThresholdScheme interface {
 	VerifyPartial(public []byte, msg, sig []byte) error
 	AggregateSignatures(sigs ...[]byte) ([]byte, error)
 	AggregatePublicKeys(publicKeys ...[]byte) ([]byte, error)
+	RecoverSignature(message []byte, pubPoly []byte, sigs [][]byte, nodeCount int) ([]byte, error)
+	VerifyRecovered(message []byte, publicKey []byte, signature []byte) error
 }
 
 type EncryptionScheme interface {

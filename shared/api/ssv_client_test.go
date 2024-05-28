@@ -40,7 +40,7 @@ func TestHealthErr(t *testing.T) {
 	httpmock.RegisterResponder("GET", "https://example.org/health", httpmock.NewErrorResponder(expectedErr))
 
 	err := ssvClient.Health()
-	require.ErrorIs(t, err, expectedErr)
+	require.ErrorContains(t, err, expectedErr.Error())
 	require.Equal(t, 1, httpmock.GetTotalCallCount())
 }
 

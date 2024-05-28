@@ -2,9 +2,10 @@ package crypto
 
 import (
 	"encoding/hex"
+	"testing"
+
 	"github.com/drand/kyber/share"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMarshallingCommitments(t *testing.T) {

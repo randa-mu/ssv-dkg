@@ -3,10 +3,14 @@ package util
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"os"
+	"path"
 	"path/filepath"
+
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
+
+const KeySuffix = "keypair.json"
 
 func StoreKeypair(kp crypto.Keypair, path string) error {
 	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
@@ -38,10 +42,10 @@ func StoreKeypair(kp crypto.Keypair, path string) error {
 	return nil
 }
 
-func LoadKeypair(path string) (crypto.Keypair, error) {
-	file, err := os.ReadFile(path)
+func LoadKeypair(stateDir string) (crypto.Keypair, error) {
+	file, err := os.ReadFile(path.Join(stateDir, KeySuffix))
 	if err != nil {
-		return crypto.Keypair{}, fmt.Errorf("failed to read keypair at %s: %w", path, err)
+		return crypto.Keypair{}, fmt.Errorf("failed to read keypair at %s: %w", stateDir, err)
 	}
 
 	var keypair crypto.Keypair

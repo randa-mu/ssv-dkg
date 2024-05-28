@@ -78,7 +78,8 @@ func UnmarshalPubPoly(scheme ThresholdScheme, b []byte) (share.PubPoly, error) {
 	pointLen := group.PointLen()
 	base := group.Point()
 
-	if len(b) < pointLen {
+	l := len(b)
+	if l == 0 || l%pointLen != 0 {
 		return share.PubPoly{}, errors.New("invalid length for public polynomial")
 	}
 
@@ -87,7 +88,7 @@ func UnmarshalPubPoly(scheme ThresholdScheme, b []byte) (share.PubPoly, error) {
 		return share.PubPoly{}, err
 	}
 	var commits []kyber.Point
-	for i := pointLen; i+pointLen <= len(b); i += pointLen {
+	for i := pointLen; i+pointLen <= l; i += pointLen {
 		p := group.Point()
 		err = p.UnmarshalBinary(b[i : i+pointLen])
 		if err != nil {

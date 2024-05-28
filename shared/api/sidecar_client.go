@@ -44,12 +44,36 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 
 	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return SignResponse{}, fmt.Errorf("error reading response bytes: %w", err)
+		return SignResponse{}, fmt.Errorf("error reading Response bytes: %w", err)
 	}
 
 	var signResponse SignResponse
 	err = json.Unmarshal(responseBytes, &signResponse)
 	return signResponse, err
+}
+
+func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) {
+	j, err := json.Marshal(request)
+	if err != nil {
+		return ReshareResponse{}, err
+	}
+	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarResharePath), "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return ReshareResponse{}, fmt.Errorf("error resharing with validator %s: %w", s.url, err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return ReshareResponse{}, fmt.Errorf("error resharing with validator %s. Node returned status code %d", s.url, response.StatusCode)
+	}
+
+	responseBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return ReshareResponse{}, fmt.Errorf("error reading Response bytes: %w", err)
+	}
+
+	var reshareResponse ReshareResponse
+	err = json.Unmarshal(responseBytes, &reshareResponse)
+	return reshareResponse, err
 }
 
 func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error) {
@@ -63,18 +87,18 @@ func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentity
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return SidecarIdentityResponse{}, fmt.Errorf("error retrieving identity for %s. Node returned status code %d", s.url, res.StatusCode)
+		return SidecarIdentityResponse{}, fmt.Errorf("error retrieving Identity for %s. Node returned status code %d", s.url, res.StatusCode)
 	}
 
 	responseBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error reading response body: %w", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error reading Response body: %w", err)
 	}
 
 	var identity SidecarIdentityResponse
 	err = json.Unmarshal(responseBytes, &identity)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling response body: %w", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling Response body: %w", err)
 	}
 	return identity, nil
 }

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 
 	"github.com/randa-mu/ssv-dkg/sidecar"
@@ -17,6 +16,7 @@ import (
 var PortFlag uint
 var SsvURLFlag string
 var PublicURLFlag string
+var VerboseFlag bool
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the DKG sidecar",
@@ -36,7 +36,7 @@ func init() {
 		&SsvURLFlag,
 		"ssv-url",
 		"s",
-		"http://localhost:8888",
+		"http://127.0.0.1:8888",
 		"the hostname and port of the SSV binary you wish to connect to",
 	)
 	startCmd.PersistentFlags().StringVarP(
@@ -46,10 +46,24 @@ func init() {
 		"",
 		"the public endpoint you host your node on",
 	)
+	startCmd.PersistentFlags().BoolVarP(
+		&VerboseFlag,
+		"verbose",
+		"v",
+		false,
+		"enables more detailed logging if provided",
+	)
 }
 
 func Start(_ *cobra.Command, _ []string) {
-	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, path.Join(DirectoryFlag, KeypairFilename))
+	if VerboseFlag {
+		l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+		slog.SetDefault(l)
+	}
+
+	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, DirectoryFlag)
 	if err != nil {
 		slog.Error("error starting daemon", "err", err)
 		os.Exit(1)

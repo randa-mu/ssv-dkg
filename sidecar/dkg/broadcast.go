@@ -2,12 +2,15 @@ package dkg
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/drand/kyber/share/dkg"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"golang.org/x/exp/slog"
 )
 
 type DKGBoard struct {
+	lock           sync.Mutex
 	senders        []string
 	packetsSeen    map[string]bool
 	deals          chan dkg.DealBundle
@@ -16,16 +19,23 @@ type DKGBoard struct {
 }
 
 func NewDKGBoard(senders []string) *DKGBoard {
+	// we have filtered out our own address by senders
+	// but we actually receive a packet for ourself on each of these channels,
+	// so the capacity needs to be +1 or the channel listen will last forever
+	totalPackets := len(senders) + 1
 	return &DKGBoard{
 		senders:        senders,
-		deals:          make(chan dkg.DealBundle, len(senders)),
-		responses:      make(chan dkg.ResponseBundle, len(senders)),
-		justifications: make(chan dkg.JustificationBundle, len(senders)),
+		deals:          make(chan dkg.DealBundle, totalPackets),
+		responses:      make(chan dkg.ResponseBundle, totalPackets),
+		justifications: make(chan dkg.JustificationBundle, totalPackets),
 		packetsSeen:    make(map[string]bool),
 	}
 }
 
 func (d *DKGBoard) PushDeals(bundle *dkg.DealBundle) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
 	h := bundle.Hash()
 	hash := string(h)
 	if d.packetsSeen[hash] {
@@ -45,8 +55,12 @@ func (d *DKGBoard) PushDeals(bundle *dkg.DealBundle) {
 }
 
 func (d *DKGBoard) PushResponses(bundle *dkg.ResponseBundle) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
 	hash := string(bundle.Hash())
 	if d.packetsSeen[hash] {
+		slog.Debug("ignoring duplicate DKG packet")
 		return
 	}
 	d.packetsSeen[hash] = true
@@ -57,8 +71,12 @@ func (d *DKGBoard) PushResponses(bundle *dkg.ResponseBundle) {
 }
 
 func (d *DKGBoard) PushJustifications(bundle *dkg.JustificationBundle) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
 	hash := string(bundle.Hash())
 	if d.packetsSeen[hash] {
+		slog.Debug("ignoring duplicate DKG packet")
 		return
 	}
 	d.packetsSeen[hash] = true
@@ -86,12 +104,13 @@ func (d *DKGBoard) IncomingJustification() <-chan dkg.JustificationBundle {
 }
 
 func (d *DKGBoard) gossip(packet api.SidecarDKGPacket) {
+	slog.Debug("gossiping DKG packets", "to", d.senders)
 	for _, s := range d.senders {
 		go func(s string) {
 			client := api.NewSidecarClient(s)
 			err := client.BroadcastDKG(packet)
 			if err != nil {
-				slog.Error(fmt.Sprintf("error writing DKG packet to %s", s), err)
+				slog.Error(fmt.Sprintf("error writing DKG packet to %s", s), "err", err)
 			}
 		}(s)
 	}

@@ -1,20 +1,19 @@
 package sidecar
 
 import (
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestSignKey(t *testing.T) {
-	keyPath := path.Join(t.TempDir(), "key.json")
-	require.NoError(t, GenerateKey(keyPath))
+	stateDir := t.TempDir()
+	require.NoError(t, GenerateKey(stateDir))
 
 	type args struct {
 		url            string
 		validatorNonce uint32
-		keyPath        string
+		stateDir       string
 	}
 	tests := []struct {
 		name    string
@@ -26,7 +25,7 @@ func TestSignKey(t *testing.T) {
 			args: args{
 				url:            "https://example.com",
 				validatorNonce: 1,
-				keyPath:        keyPath,
+				stateDir:       stateDir,
 			},
 			wantErr: false,
 		},
@@ -35,7 +34,7 @@ func TestSignKey(t *testing.T) {
 			args: args{
 				url:            "",
 				validatorNonce: 1,
-				keyPath:        keyPath,
+				stateDir:       stateDir,
 			},
 			wantErr: true,
 		},
@@ -44,7 +43,7 @@ func TestSignKey(t *testing.T) {
 			args: args{
 				url:            "https://example.com",
 				validatorNonce: 0,
-				keyPath:        keyPath,
+				stateDir:       stateDir,
 			},
 			wantErr: true,
 		},
@@ -53,23 +52,21 @@ func TestSignKey(t *testing.T) {
 			args: args{
 				url:            "https://example.com",
 				validatorNonce: 1,
-				keyPath:        "some-fake-dir",
+				stateDir:       "some-fake-dir",
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			signedKey, err := SignKey(tt.args.url, tt.args.validatorNonce, tt.args.keyPath)
+			signedKey, err := SignKey(tt.args.url, tt.args.validatorNonce, tt.args.stateDir)
 			if tt.wantErr {
-				if err == nil {
-					t.Errorf("SignKey() error = %v, wantErr %v", err, tt.wantErr)
-					return
-				}
-				return
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, signedKey)
+				require.NotEmpty(t, signedKey)
 			}
-			require.NotNil(t, signedKey)
-			require.NotEmpty(t, signedKey)
 		})
 	}
 }

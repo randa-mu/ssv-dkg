@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/hex"
+	"errors"
 	"fmt"
-	"io"
 	"os"
-	"strings"
 
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
@@ -19,7 +19,7 @@ var stateDirectory string
 var signCmd = &cobra.Command{
 	Use:   "sign",
 	Short: "Signs ETH deposit data by forming a validator cluster",
-	Long:  "Signs ETH deposit data by forming a validator cluster that creates a distributed key.",
+	Long:  "Signs ETH deposit data by forming a validator cluster that creates a distributed key. Operators can be passed via stdin.",
 	Run:   Sign,
 }
 
@@ -38,33 +38,48 @@ func init() {
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
-	// if the operator flag isn't passed, we consume operator addresses from stdin
-	var args []string
-	if len(operatorFlag) == 0 {
-		stdin, err := io.ReadAll(cmd.InOrStdin())
-		if err != nil {
-			shared.Exit("error reading from stdin")
-		}
-
-		args = strings.Split(strings.Trim(string(stdin), "\n"), " ")
-	}
-
-	log := shared.QuietLogger{Quiet: shortFlag}
-
-	if inputPathFlag == "" {
-		shared.Exit("input path cannot be empty")
-	}
-
-	depositData, err := os.ReadFile(inputPathFlag)
-	if err != nil {
-		shared.Exit(fmt.Sprintf("error reading the deposit data file: %v", err))
-	}
-
-	groupSignature, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
+	args, depositData, err := verifyAndGetArgs(cmd)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	log.MaybeLog("✅ received signed deposit data!")
-	log.Log(base64.StdEncoding.EncodeToString(groupSignature))
+	log := shared.QuietLogger{Quiet: shortFlag}
+	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
+	if err != nil {
+		shared.Exit(fmt.Sprintf("%v", err))
+	}
+
+	log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! sessionID: %s", hex.EncodeToString(signingOutput.SessionID)))
+	log.Log(base64.StdEncoding.EncodeToString(signingOutput.GroupSignature))
+
+	path := cli.CreateFilename(stateDirectory, signingOutput)
+	bytes, err := cli.StoreStateIfNotExists(path, signingOutput)
+	if err != nil {
+		log.Log(fmt.Sprintf("⚠️  there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
+		log.Log(string(bytes))
+	}
+}
+
+func verifyAndGetArgs(cmd *cobra.Command) ([]string, []byte, error) {
+	// if the operator flag isn't passed, we consume operator addresses from stdin
+	operators, err := arrayOrReader(operatorFlag, cmd.InOrStdin())
+	if err != nil {
+		return nil, nil, errors.New("you must provider either the --operator flag or operators via stdin")
+	}
+
+	if inputPathFlag == "" {
+		return nil, nil, errors.New("input path cannot be empty")
+	}
+
+	// there is a default value, so this shouldn't really happen
+	if stateDirectory == "" {
+		return nil, nil, errors.New("you must provide a state directory")
+	}
+
+	depositData, err := os.ReadFile(inputPathFlag)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading the deposit data file: %v", err)
+	}
+
+	return operators, depositData, nil
 }
