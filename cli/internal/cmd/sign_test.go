@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"math/big"
 	"os"
 	"path"
 	"strings"
@@ -101,10 +100,10 @@ func TestSignCommand(t *testing.T) {
 
 func createdUnsignedDepositData(t *testing.T, filepath string) {
 	data := api.UnsignedDepositData{
-		WithdrawalCredentials: []byte("hello world"),
+		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
 		DepositDataRoot:       []byte("hello world"),
 		DepositMessageRoot:    []byte("hello world"),
-		Amount:                api.BigInt{Int: *big.NewInt(1)},
+		Amount:                1,
 		ForkVersion:           "somefork",
 		NetworkName:           "somenetwork",
 		DepositCLIVersion:     "somecli",

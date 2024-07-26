@@ -16,7 +16,7 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
-func Sign(operators []string, depositData []byte, log shared.QuietLogger) (api.SigningOutput, error) {
+func Sign(operators []string, depositData api.UnsignedDepositData, log shared.QuietLogger) (api.SigningOutput, error) {
 	numOfNodes := len(operators)
 	if numOfNodes != 3 && numOfNodes != 5 && numOfNodes != 7 {
 		return api.SigningOutput{}, errors.New("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
@@ -119,7 +119,7 @@ func parseOperator(input string) (uint32, string, error) {
 	return uint32(validatorNonce), parts[1], nil
 }
 
-func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.Identity, depositData []byte) ([]api.OperatorResponse, error) {
+func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.Identity, depositData api.UnsignedDepositData) ([]api.OperatorResponse, error) {
 	dkgResponses := shared.SafeList[api.OperatorResponse]{}
 	errs := make(chan error, len(identities))
 	wg := sync.WaitGroup{}
@@ -171,7 +171,7 @@ func createSessionID() ([]byte, error) {
 	return s.Sum(nil), nil
 }
 
-func getVerifiedPartial(suite crypto.ThresholdScheme, identity crypto.Identity, depositData []byte, identities []crypto.Identity, sessionID []byte) (api.SignResponse, error) {
+func getVerifiedPartial(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, identities []crypto.Identity, sessionID []byte) (api.SignResponse, error) {
 	client := api.NewSidecarClient(identity.Address)
 	data := api.SignRequest{
 		ValidatorNonce: identity.ValidatorNonce,
@@ -184,8 +184,12 @@ func getVerifiedPartial(suite crypto.ThresholdScheme, identity crypto.Identity, 
 		return api.SignResponse{}, fmt.Errorf("error signing: %w", err)
 	}
 
+	message, err := crypto.DepositDataMessage(depositData.ExtractRequired(), response.PublicPolynomial)
+	if err != nil {
+		return api.SignResponse{}, fmt.Errorf("error building final message: %w", err)
+	}
 	// verify that the signature over the deposit data verifies for the reported public key
-	if err = suite.VerifyPartial(response.PublicPolynomial, depositData, response.DepositDataPartialSignature); err != nil {
+	if err = suite.VerifyPartial(response.PublicPolynomial, message, response.DepositDataPartialSignature); err != nil {
 		return api.SignResponse{}, fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", identity.Address, err)
 	}
 	return response, nil
@@ -196,7 +200,7 @@ type groupSignature struct {
 	publicKey []byte
 }
 
-func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []api.OperatorResponse, depositData []byte) (groupSignature, error) {
+func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []api.OperatorResponse, depositData api.UnsignedDepositData) (groupSignature, error) {
 	// ensure everybody came up with the same polynomials
 	err := verifyPublicPolynomialSame(responses)
 	if err != nil {
@@ -205,15 +209,19 @@ func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []api.Opera
 
 	// as all the group public keys are the same, we can use the first to verify all the partials
 	groupPK := responses[0].Response.PublicPolynomial
+	depositDataMessage, err := crypto.DepositDataMessage(depositData.ExtractRequired(), groupPK)
+	if err != nil {
+		return groupSignature{}, err
+	}
 
 	partials := extractPartials(responses)
 
-	signature, err := suite.RecoverSignature(depositData, groupPK, partials, len(responses))
+	signature, err := suite.RecoverSignature(depositDataMessage, groupPK, partials, len(responses))
 	if err != nil {
 		return groupSignature{}, fmt.Errorf("error aggregating signature: %v", err)
 	}
 
-	err = suite.VerifyRecovered(depositData, groupPK, signature)
+	err = suite.VerifyRecovered(depositDataMessage, groupPK, signature)
 	if err != nil {
 		return groupSignature{}, fmt.Errorf("error verifying deposit data signature: %v", err)
 	}

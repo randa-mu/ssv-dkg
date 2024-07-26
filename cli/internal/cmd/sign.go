@@ -46,7 +46,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 
 	log := shared.QuietLogger{Quiet: shortFlag}
 	// TODO: this should probably sign something more than just the deposit data root
-	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData.DepositDataRoot, log)
+	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}

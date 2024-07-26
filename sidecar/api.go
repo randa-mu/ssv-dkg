@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/randa-mu/ssv-dkg/shared/api"
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	dkg "github.com/randa-mu/ssv-dkg/sidecar/dkg"
 	"golang.org/x/exp/slog"
 )
@@ -48,7 +49,11 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// sign the deposit data using the key share
-	partialSignature, err := d.thresholdScheme.SignWithPartial(result.KeyShare, request.Data)
+	depositDataMessage, err := crypto.DepositDataMessage(request.Data.ExtractRequired(), result.GroupPublicPoly)
+	if err != nil {
+		return api.SignResponse{}, err
+	}
+	partialSignature, err := d.thresholdScheme.SignWithPartial(result.KeyShare, depositDataMessage)
 	if err != nil {
 		slog.Error("error signing deposit data", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
