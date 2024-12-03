@@ -28,7 +28,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
-	depositData := []byte("hello world")
+	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
 	signingOutput, err := cli.Sign(operators, depositData, log)
@@ -75,7 +75,7 @@ func TestResharingNewNode(t *testing.T) {
 		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
-	depositData := []byte("hello world")
+	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
 	signingOutput, err := cli.Sign(operators, depositData, log)
@@ -108,7 +108,7 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
-	depositData := []byte("hello world")
+	depositData := createUnsignedDepositData()
 
 	_, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
 	require.Error(t, err)
@@ -126,7 +126,7 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
 	})
 
-	depositData := []byte("hello world")
+	depositData := createUnsignedDepositData()
 
 	_, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
 	require.Error(t, err)
@@ -241,4 +241,16 @@ func awaitHealthy(port uint) error {
 		time.Sleep(1 * time.Second)
 	}
 	return err
+}
+
+func createUnsignedDepositData() api.UnsignedDepositData {
+	return api.UnsignedDepositData{
+		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
+		DepositDataRoot:       []byte("hello world"),
+		DepositMessageRoot:    []byte("hello world"),
+		Amount:                1,
+		ForkVersion:           "somefork",
+		NetworkName:           "somenetwork",
+		DepositCLIVersion:     "somecli",
+	}
 }

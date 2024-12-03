@@ -1,18 +1,21 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/randa-mu/ssv-dkg/shared/api"
 )
 
 func TestSignCommand(t *testing.T) {
 	tmp := t.TempDir()
 	filepath := path.Join(tmp, "testfile")
-	createJunkFile(t, filepath)
+	createdUnsignedDepositData(t, filepath)
 
 	tests := []struct {
 		name        string
@@ -96,10 +99,22 @@ func TestSignCommand(t *testing.T) {
 	}
 }
 
-func createJunkFile(t *testing.T, filepath string) {
+func createdUnsignedDepositData(t *testing.T, filepath string) {
+	data := api.UnsignedDepositData{
+		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
+		DepositDataRoot:       []byte("hello world"),
+		DepositMessageRoot:    []byte("hello world"),
+		Amount:                1,
+		ForkVersion:           "somefork",
+		NetworkName:           "somenetwork",
+		DepositCLIVersion:     "somecli",
+	}
+
+	bytes, err := json.Marshal(data)
+	require.NoError(t, err)
 	file, err := os.Create(filepath)
 	require.NoError(t, err)
-	_, err = file.Write([]byte("hello"))
+	_, err = file.Write(bytes)
 	require.NoError(t, err)
 	err = file.Close()
 	require.NoError(t, err)

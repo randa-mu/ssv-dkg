@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
-	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
+	"github.com/randa-mu/ssv-dkg/shared/api"
 )
 
 var (
@@ -47,15 +48,17 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 
 	log := shared.QuietLogger{Quiet: shortFlag}
+	// TODO: this should probably sign something more than just the deposit data root
 	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! sessionID: %s", hex.EncodeToString(signingOutput.SessionID)))
+	path := cli.CreateFilename(stateDirectory, signingOutput)
+
+	log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
 	log.Log(base64.StdEncoding.EncodeToString(signingOutput.GroupSignature))
 
-	path := cli.CreateFilename(stateDirectory, signingOutput)
 	bytes, err := cli.StoreStateIfNotExists(path, signingOutput)
 	if err != nil {
 		log.Log(fmt.Sprintf("⚠️  there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
@@ -63,25 +66,31 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 }
 
-func verifyAndGetArgs(cmd *cobra.Command) ([]string, []byte, error) {
+func verifyAndGetArgs(cmd *cobra.Command) ([]string, api.UnsignedDepositData, error) {
 	// if the operator flag isn't passed, we consume operator addresses from stdin
 	operators, err := arrayOrReader(operatorFlag, cmd.InOrStdin())
 	if err != nil {
-		return nil, nil, errors.New("you must provider either the --operator flag or operators via stdin")
+		return nil, api.UnsignedDepositData{}, errors.New("you must provider either the --operator flag or operators via stdin")
 	}
 
 	if inputPathFlag == "" {
-		return nil, nil, errors.New("input path cannot be empty")
+		return nil, api.UnsignedDepositData{}, errors.New("input path cannot be empty")
 	}
 
 	// there is a default value, so this shouldn't really happen
 	if stateDirectory == "" {
-		return nil, nil, errors.New("you must provide a state directory")
+		return nil, api.UnsignedDepositData{}, errors.New("you must provide a state directory")
 	}
 
-	depositData, err := os.ReadFile(inputPathFlag)
+	depositBytes, err := os.ReadFile(inputPathFlag)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error reading the deposit data file: %v", err)
+		return nil, api.UnsignedDepositData{}, fmt.Errorf("error reading the deposit data file: %v", err)
+	}
+
+	var depositData api.UnsignedDepositData
+	err = json.Unmarshal(depositBytes, &depositData)
+	if err != nil {
+		return nil, api.UnsignedDepositData{}, err
 	}
 
 	return operators, depositData, nil
