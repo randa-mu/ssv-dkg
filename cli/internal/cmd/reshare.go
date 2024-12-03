@@ -67,24 +67,6 @@ func Reshare(cmd *cobra.Command, _ []string) {
 	log.MaybeLog(fmt.Sprintf("✅ reshare completed successfully. Encrypted shares stored in %s", stateFilePath))
 }
 
-func operatorsOrStdin(cmd *cobra.Command) ([]string, error) {
-	if len(operatorFlag) != 0 {
-		return operatorFlag, nil
-	}
-	// if the operator flag isn't passed, we consume operator addresses from stdin
-	stdin, err := io.ReadAll(cmd.InOrStdin())
-	if err != nil {
-		return nil, errors.New("error reading from stdin")
-	}
-
-	operatorString := strings.Trim(string(stdin), "\n")
-	if operatorString == "" {
-		return nil, errors.New("you must provider either the --operator flag or operators via stdin")
-	}
-
-	return strings.Split(operatorString, " "), nil
-}
-
 // arrayOrReader returns the array if it's non-empty, or reads an array of strings from the provided `Reader` if it's empty
 func arrayOrReader(arr []string, r io.Reader) ([]string, error) {
 	if len(arr) != 0 {
