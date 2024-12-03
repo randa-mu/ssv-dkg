@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share/dkg"
+
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 

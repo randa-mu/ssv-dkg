@@ -9,8 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var ssvBaseUrl = "https://example.org"
-var ssvClient = NewSsvClient(ssvBaseUrl)
+var (
+	ssvBaseUrl = "https://example.org"
+	ssvClient  = NewSsvClient(ssvBaseUrl)
+)
 
 func TestHealthUp(t *testing.T) {
 	httpmock.Activate()

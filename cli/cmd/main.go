@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/randa-mu/ssv-dkg/cli/internal/cmd"
 )
 

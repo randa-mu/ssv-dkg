@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/drand/kyber/share/dkg"
-	"github.com/randa-mu/ssv-dkg/shared/api"
 	"golang.org/x/exp/slog"
+
+	"github.com/drand/kyber/share/dkg"
+
+	"github.com/randa-mu/ssv-dkg/shared/api"
 )
 
 type DKGBoard struct {
@@ -67,7 +69,6 @@ func (d *DKGBoard) PushResponses(bundle *dkg.ResponseBundle) {
 
 	d.responses <- *bundle
 	d.gossip(api.SidecarDKGPacket{Response: &api.Response{ResponseBundle: *bundle}})
-
 }
 
 func (d *DKGBoard) PushJustifications(bundle *dkg.JustificationBundle) {

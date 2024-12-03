@@ -3,8 +3,9 @@ package crypto
 import (
 	"testing"
 
-	"github.com/drand/kyber/share"
 	"github.com/stretchr/testify/require"
+
+	"github.com/drand/kyber/share"
 )
 
 var scheme SigningScheme
@@ -17,7 +18,7 @@ func TestSigning(t *testing.T) {
 		t.Run("creating a key, signing it, and verifying the self-sign", CreatingAKeyAndSigningItAndVerifyingIt)
 		t.Run("verifying an invalid self-signature fails", CreatingAKeyAndSigningItAndModifyingTheSignature)
 		t.Run("verifying a valid self-signature with the wrong key fails", CreatingKeyAndSigningItAndModifyingKey)
-		t.Run("signing arbitary bytes can be verified", KeypairSigningArbitraryBytesVerifies)
+		t.Run("signing arbitrary bytes can be verified", KeypairSigningArbitraryBytesVerifies)
 		t.Run("invalid message fails for signature", InvalidMessageFailsForSignature)
 	}
 }

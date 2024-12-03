@@ -8,9 +8,10 @@ import (
 	"reflect"
 
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/exp/slog"
+
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	dkg "github.com/randa-mu/ssv-dkg/sidecar/dkg"
-	"golang.org/x/exp/slog"
 )
 
 func createAPI(d Daemon) *chi.Mux {

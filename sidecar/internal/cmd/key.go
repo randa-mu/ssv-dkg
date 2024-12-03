@@ -4,18 +4,21 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/spf13/cobra"
+
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
-	"github.com/spf13/cobra"
 )
 
-var UrlFlag string
-var ValidatorNonceFlag uint32
-var keyCmd = &cobra.Command{
-	Use:   "key",
-	Short: "All operations related to keys",
-}
+var (
+	UrlFlag            string
+	ValidatorNonceFlag uint32
+	keyCmd             = &cobra.Command{
+		Use:   "key",
+		Short: "All operations related to keys",
+	}
+)
 
 var keyCreateCmd = &cobra.Command{
 	Use:   "create",

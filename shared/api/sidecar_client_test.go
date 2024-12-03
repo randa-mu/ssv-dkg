@@ -2,14 +2,15 @@ package api
 
 import (
 	"errors"
-	"github.com/jarcoal/httpmock"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
+
 )
 
-var baseUrl = "https://example.org"
-var client = NewSidecarClient(baseUrl)
+var (
+	baseUrl = "https://example.org"
+	client  = NewSidecarClient(baseUrl)
+)
 
 func TestSidecarHealthUp(t *testing.T) {
 	httpmock.Activate()

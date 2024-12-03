@@ -33,7 +33,6 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 		return SignResponse{}, err
 	}
 	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarSignPath), "application/json", bytes.NewBuffer(j))
-
 	if err != nil {
 		return SignResponse{}, fmt.Errorf("error signing with validator %s: %w", s.url, err)
 	}

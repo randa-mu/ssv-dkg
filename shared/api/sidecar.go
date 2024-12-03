@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"golang.org/x/exp/slog"
+
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
 type Sidecar interface {
@@ -67,8 +68,10 @@ type ReshareResponse struct {
 	NodePK []byte `json:"node_pk"`
 }
 
-var SsvHealthPath = "/health"
-var SsvIdentityPath = "/identity"
+var (
+	SsvHealthPath   = "/health"
+	SsvIdentityPath = "/identity"
+)
 
 type SsvIdentityResponse struct {
 	PublicKey []byte `json:"publicKey"`
@@ -84,11 +87,13 @@ type SidecarIdentityResponse struct {
 	Signature []byte `json:"signature"`
 }
 
-var SidecarSignPath = "/sign"
-var SidecarResharePath = "/reshare"
-var SidecarHealthPath = "/health"
-var SidecarIdentityPath = "/identity"
-var SidecarDKGPath = "/dkg"
+var (
+	SidecarSignPath     = "/sign"
+	SidecarResharePath  = "/reshare"
+	SidecarHealthPath   = "/health"
+	SidecarIdentityPath = "/identity"
+	SidecarDKGPath      = "/dkg"
+)
 
 func BindSidecarAPI(router *chi.Mux, node Sidecar) {
 	router.Get(SidecarHealthPath, createHealthAPI(node))
@@ -234,5 +239,4 @@ func createSidecarDKGAPI(node Sidecar) http.HandlerFunc {
 		}
 		writer.WriteHeader(http.StatusNoContent)
 	}
-
 }

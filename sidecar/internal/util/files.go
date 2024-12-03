@@ -24,7 +24,7 @@ func StoreKeypair(kp crypto.Keypair, path string) error {
 	}
 	defer file.Close()
 
-	err = file.Chmod(0600)
+	err = file.Chmod(0o600)
 	if err != nil {
 		return fmt.Errorf("failed to set the correct file permissions for the keypair: %w", err)
 	}

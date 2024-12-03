@@ -11,11 +11,13 @@ import (
 	"reflect"
 	"sync"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share"
 	"github.com/drand/kyber/share/dkg"
+
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"golang.org/x/exp/slices"
 )
 
 type GroupFile struct {
@@ -78,7 +80,7 @@ func (f *FileStore) Save(group GroupFile) error {
 		return err
 	}
 
-	return os.WriteFile(p, b, 0644)
+	return os.WriteFile(p, b, 0o644)
 }
 
 // Load loads a set of group files associated with a given sessionID

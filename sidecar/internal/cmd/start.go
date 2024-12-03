@@ -8,21 +8,24 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slog"
+
+	"github.com/randa-mu/ssv-dkg/sidecar"
 )
 
-var PortFlag uint
-var SsvURLFlag string
-var PublicURLFlag string
-var VerboseFlag bool
-var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start the DKG sidecar",
-	Long:  "Start the DKG sidecar daemon, enabling the creation of validator clusters using a distributed key.",
-	Run:   Start,
-}
+var (
+	PortFlag      uint
+	SsvURLFlag    string
+	PublicURLFlag string
+	VerboseFlag   bool
+	startCmd      = &cobra.Command{
+		Use:   "start",
+		Short: "Start the DKG sidecar",
+		Long:  "Start the DKG sidecar daemon, enabling the creation of validator clusters using a distributed key.",
+		Run:   Start,
+	}
+)
 
 func init() {
 	startCmd.PersistentFlags().UintVarP(
