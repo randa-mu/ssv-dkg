@@ -34,3 +34,4 @@ $ ssv-sidecar start --port 443 --directory ~/.ssv --ssv-url http://127.0.0.1:888
 {"time":"2023-11-28T17:46:27+01:00","level":"info","message":"Keypair loaded from ~/ssv"}
 {"time":"2023-11-28T17:46:27+01:00","level":"info","message":"SSV sidecar started, serving on port 443"}
 ```
+the sidecar is using the SSV API exposed on the SSV node metrics port, e.g. 8888 above.
