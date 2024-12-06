@@ -67,8 +67,8 @@ type ReshareResponse struct {
 	NodePK []byte `json:"node_pk"`
 }
 
-var SsvHealthPath = "/health"
-var SsvIdentityPath = "/identity"
+var SsvHealthPath = "/health_check"
+var SsvIdentityPath = "/health_check"
 
 type SsvIdentityResponse struct {
 	PublicKey []byte `json:"publicKey"`
