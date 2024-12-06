@@ -42,7 +42,6 @@ func UnmarshalDistKey(scheme ThresholdScheme, bytes []byte) (share.PriShare, err
 		I: int(I),
 		V: V,
 	}, nil
-
 }
 
 func MarshalPubPoly(pub *share.PubPoly) ([]byte, error) {

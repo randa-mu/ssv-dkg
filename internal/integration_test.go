@@ -7,13 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/randa-mu/ssv-dkg/tools/stub"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSuccessfulSigningAndResharing(t *testing.T) {

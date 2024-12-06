@@ -12,7 +12,7 @@ This module contains an implementation of the distributed key generation sidecar
 ## example commands
 - generate a BLS12-381 keypair
 ```shell
-$ ssv-sidecar key create ~/.ssv 
+$ ssv-sidecar key create ~/.ssv
 ```
 
 - sign your key for uploading it to GitHub
@@ -30,7 +30,8 @@ $ ssv-sidecar key sign --validator-nonce 2 --directory ~/.ssv --url https://exam
 
 - start your sidecar node
 ```shell
-$ ssv-sidecar start --port 443 --directory ~/.ssv --ssv-url http://127.0.0.1:8888
+$ ssv-sidecar start --port 443 --directory ~/.ssv --ssv-url http://127.0.0.1:13001
 {"time":"2023-11-28T17:46:27+01:00","level":"info","message":"Keypair loaded from ~/ssv"}
 {"time":"2023-11-28T17:46:27+01:00","level":"info","message":"SSV sidecar started, serving on port 443"}
 ```
+the sidecar is using the SSV API exposed on the SSV node P2P TCP port, e.g. 13001 above.

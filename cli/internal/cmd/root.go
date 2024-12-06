@@ -6,13 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	rootCmd = &cobra.Command{
-		Use:   "ssv-dkg",
-		Short: "A CLI for creating distributed validators for Ethereum with SSV",
-		Long:  "A CLI for creating distributed validators for Ethereum with SSV",
-	}
-)
+var rootCmd = &cobra.Command{
+	Use:   "ssv-dkg",
+	Short: "A CLI for creating distributed validators for Ethereum with SSV",
+	Long:  "A CLI for creating distributed validators for Ethereum with SSV",
+}
 
 func init() {
 	rootCmd.AddCommand(versionCmd, operatorsCmd, signCmd, reshareCmd)

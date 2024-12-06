@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/drand/kyber/share"
 	"github.com/stretchr/testify/require"
+
+	"github.com/drand/kyber/share"
 )
 
 func TestMarshallingCommitments(t *testing.T) {

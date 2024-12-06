@@ -7,6 +7,5 @@
 ./sidecar/main
 ssv-sidecar
 ssv-cli
-stub
 main
 ssv-dkg

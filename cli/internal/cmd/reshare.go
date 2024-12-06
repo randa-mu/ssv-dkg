@@ -6,18 +6,21 @@ import (
 	"io"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
-	"github.com/spf13/cobra"
 )
 
-var stateFilePath string
-var reshareCmd = &cobra.Command{
-	Use:   "reshare",
-	Short: "Reshares the key for a validator cluster you have already created",
-	Long:  "Reshares the key for a validator cluster you have already created",
-	Run:   Reshare,
-}
+var (
+	stateFilePath string
+	reshareCmd    = &cobra.Command{
+		Use:   "reshare",
+		Short: "Reshares the key for a validator cluster you have already created",
+		Long:  "Reshares the key for a validator cluster you have already created",
+		Run:   Reshare,
+	}
+)
 
 func init() {
 	reshareCmd.PersistentFlags().StringArrayVarP(

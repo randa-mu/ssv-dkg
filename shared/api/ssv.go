@@ -13,6 +13,7 @@ type Ssv interface {
 	Identity() (SsvIdentityResponse, error)
 }
 
+// BindSSVApi is used for stubbing a node API
 func BindSSVApi(router *chi.Mux, node Ssv) {
 	router.Get(SsvHealthPath, createSsvHealthAPI(node))
 	router.Get(SsvIdentityPath, createSsvIdentityAPI(node))

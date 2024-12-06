@@ -8,8 +8,7 @@ import (
 	"crypto/x509"
 )
 
-type RsaSuite struct {
-}
+type RsaSuite struct{}
 
 func NewRSASuite() RsaSuite {
 	return RsaSuite{}

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"golang.org/x/exp/slog"
 )
 
 type SidecarClient struct {
@@ -17,7 +19,9 @@ func NewSidecarClient(url string) Sidecar {
 }
 
 func (s SidecarClient) Health() error {
-	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SidecarHealthPath))
+	url := fmt.Sprintf("%s%s", s.url, SidecarHealthPath)
+	slog.Info("Sidecar running health check against", "url", url)
+	res, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -33,7 +37,6 @@ func (s SidecarClient) Sign(request SignRequest) (SignResponse, error) {
 		return SignResponse{}, err
 	}
 	response, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarSignPath), "application/json", bytes.NewBuffer(j))
-
 	if err != nil {
 		return SignResponse{}, fmt.Errorf("error signing with validator %s: %w", s.url, err)
 	}

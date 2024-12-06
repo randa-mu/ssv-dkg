@@ -8,11 +8,12 @@ import (
 	"net/url"
 	"os"
 
+	"golang.org/x/exp/slog"
+
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
-	"golang.org/x/exp/slog"
 )
 
 type Daemon struct {
@@ -61,7 +62,6 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir strin
 	}
 
 	keypair, err := util.LoadKeypair(stateDir)
-
 	if err != nil {
 		return Daemon{}, fmt.Errorf("error loading keypair: %w", err)
 	}

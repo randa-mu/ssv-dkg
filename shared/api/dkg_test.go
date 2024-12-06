@@ -1,11 +1,14 @@
 package api
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share/dkg"
+
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestConversionOfDealPackets(t *testing.T) {

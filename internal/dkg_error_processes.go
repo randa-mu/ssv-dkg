@@ -8,8 +8,7 @@ import (
 	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 )
 
-type ErrorStartingDKG struct {
-}
+type ErrorStartingDKG struct{}
 
 func (e ErrorStartingDKG) RunDKG(identities []crypto.Identity, sessionID []byte, keypair crypto.Keypair) (*dkg.Output, error) {
 	return nil, errors.New("simulated error starting DKG")

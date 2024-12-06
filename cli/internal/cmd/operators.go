@@ -4,12 +4,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var sourceUrlFlag string
-var sourceFileFlag string
-var operatorsCmd = &cobra.Command{
-	Use:   "operators",
-	Short: "Commands relating to SSV node operators",
-}
+var (
+	sourceUrlFlag  string
+	sourceFileFlag string
+	operatorsCmd   = &cobra.Command{
+		Use:   "operators",
+		Short: "Commands relating to SSV node operators",
+	}
+)
 
 func init() {
 	operatorsCmd.AddCommand(operatorsListCmd)

@@ -9,12 +9,14 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/slog"
+
 	"github.com/drand/kyber/share"
 	"github.com/drand/kyber/share/dkg"
 	"github.com/drand/kyber/sign/schnorr"
+
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"golang.org/x/exp/slog"
 )
 
 type Coordinator struct {
@@ -164,7 +166,7 @@ func (d *Coordinator) RunReshare(identities []crypto.Identity, sessionID []byte,
 		OldThreshold:   oldThreshold,
 		UserReaderOnly: false,
 		FastSync:       false,
-		//TODO: this should probably be made an actual nonce
+		// TODO: this should probably be made an actual nonce
 		Nonce: sessionID,
 		Auth:  schnorr.NewScheme(&crypto.SchnorrSuite{Group: keyGroup}),
 		Log:   dkgLogger{address: d.publicURL},
@@ -225,11 +227,9 @@ func (d *Coordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 		}
 
 		d.board.PushDeals(&bundle)
-
 	} else if packet.Response != nil {
 		slog.Debug(fmt.Sprintf("received response from %d", packet.Response.ShareIndex))
 		d.board.PushResponses(&packet.Response.ResponseBundle)
-
 	} else if packet.Justification != nil {
 		slog.Debug(fmt.Sprintf("received justification from %d", packet.Justification.DealerIndex))
 		bundle, err := packet.Justification.ToDomain(d.scheme)
@@ -237,7 +237,6 @@ func (d *Coordinator) ProcessPacket(packet api.SidecarDKGPacket) error {
 			return err
 		}
 		d.board.PushJustifications(&bundle)
-
 	} else {
 		slog.Error("received a DKG packet with nothing in it")
 		return errors.New("DKG packet was empty")

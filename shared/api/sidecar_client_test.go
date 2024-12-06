@@ -9,17 +9,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var baseUrl = "https://example.org"
-var client = NewSidecarClient(baseUrl)
-var depositData = UnsignedDepositData{
-	WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
-	DepositDataRoot:       []byte("cafebabe"),
-	DepositMessageRoot:    []byte("b00b00b"),
-	Amount:                1,
-	ForkVersion:           "myfork123",
-	NetworkName:           "holesky",
-	DepositCLIVersion:     "1.2.3",
-}
+var (
+	baseUrl     = "https://example.org"
+	client      = NewSidecarClient(baseUrl)
+	depositData = UnsignedDepositData{
+		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
+		DepositDataRoot:       []byte("cafebabe"),
+		DepositMessageRoot:    []byte("b00b00b"),
+		Amount:                1,
+		ForkVersion:           "myfork123",
+		NetworkName:           "holesky",
+		DepositCLIVersion:     "1.2.3",
+	}
+)
 
 func TestSidecarHealthUp(t *testing.T) {
 	httpmock.Activate()

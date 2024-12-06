@@ -8,9 +8,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	"github.com/spf13/cobra"
 )
 
 var quietFlag bool
