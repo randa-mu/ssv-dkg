@@ -69,8 +69,8 @@ type ReshareResponse struct {
 }
 
 var (
-	SsvHealthPath   = "/health"
-	SsvIdentityPath = "/identity"
+	SsvHealthPath   = "/v1/node/health"
+	SsvIdentityPath = "/v1/node/identity"
 )
 
 type SsvIdentityResponse struct {
