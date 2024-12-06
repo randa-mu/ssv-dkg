@@ -1,8 +1,6 @@
 module github.com/randa-mu/ssv-dkg
 
-go 1.22.0
-
-toolchain go1.23.2
+go 1.22.10
 
 require (
 	github.com/drand/kyber v1.3.1

@@ -119,7 +119,7 @@ func printOperatorsPretty(log shared.QuietLogger, operators []crypto.Identity) {
 	success := make([]crypto.Identity, 0, len(operators))
 	failure := make([]crypto.Identity, 0, len(operators))
 	for _, o := range operators {
-		res, err := http.Get(fmt.Sprintf("%s/health", o.Address))
+		res, err := http.Get(fmt.Sprintf("%s/v1/node/health", o.Address))
 		if err != nil || res.StatusCode != 200 {
 			failure = append(failure, o)
 		} else {
