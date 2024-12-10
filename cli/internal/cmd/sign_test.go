@@ -31,9 +31,10 @@ func TestSignCommand(t *testing.T) {
 				"sign",
 				"--input", filepath,
 				"--output", filepath,
-				"--operator", "1,http://127.0.0.1:8081",
-				"--operator", "2,http://127.0.0.1:8082",
-				"--operator", "3,http://127.0.0.1:8083",
+				"--validator-nonce", "1",
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
 			},
 		},
 		{
@@ -44,11 +45,12 @@ func TestSignCommand(t *testing.T) {
 				"sign",
 				"--input", filepath,
 				"--output", filepath,
-				"--operator", "1,http://127.0.0.1:8081",
-				"--operator", "2,http://127.0.0.1:8082",
-				"--operator", "3,http://127.0.0.1:8083",
+				"--validator-nonce", "1",
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
 			},
-			stdin: strings.NewReader("1,http://127.0.0.1:8081 2,http://127.0.0.1:8082 3,http://127.0.0.1:8083"),
+			stdin: strings.NewReader("http://127.0.0.1:8081 http://127.0.0.1:8082 http://127.0.0.1:8083"),
 		},
 		{
 			name:        "no input returns error",
@@ -57,9 +59,10 @@ func TestSignCommand(t *testing.T) {
 				"ssv-dkg",
 				"sign",
 				"--output", filepath,
-				"--operator", "1,http://127.0.0.1:8081",
-				"--operator", "2,http://127.0.0.1:8082",
-				"--operator", "3,http://127.0.0.1:8083",
+				"--validator-nonce", "1",
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
 			},
 		},
 		{
@@ -68,8 +71,36 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
+				"--validator-nonce", "1",
 				"--input", filepath,
 				"--output", filepath,
+			},
+		},
+		{
+			name:        "missing validator nonce returns error",
+			shouldError: true,
+			args: []string{
+				"ssv-dkg",
+				"sign",
+				"--input", filepath,
+				"--output", filepath,
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
+			},
+		},
+		{
+			name:        "negative validator nonce returns error",
+			shouldError: true,
+			args: []string{
+				"ssv-dkg",
+				"sign",
+				"--input", filepath,
+				"--output", filepath,
+				"--validator-nonce", "-1",
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
 			},
 		},
 	}
@@ -89,6 +120,7 @@ func TestSignCommand(t *testing.T) {
 				inputPathFlag = ""
 				shortFlag = false
 				stateDirectory = ""
+				validatorNonceFlag = -1
 			})
 			if test.shouldError && err == nil {
 				t.Fatalf("expected err but got nil")

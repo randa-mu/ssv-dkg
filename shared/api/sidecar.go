@@ -20,10 +20,9 @@ type Sidecar interface {
 }
 
 type SignRequest struct {
-	SessionID      []byte              `json:"session_id"`
-	ValidatorNonce uint32              `json:"validator_nonce"`
-	Data           UnsignedDepositData `json:"data"`
-	Operators      []crypto.Identity   `json:"operators"`
+	SessionID []byte              `json:"session_id"`
+	Data      UnsignedDepositData `json:"data"`
+	Operators []crypto.Identity   `json:"operators"`
 }
 
 type SignResponse struct {
@@ -44,7 +43,6 @@ type SignResponse struct {
 }
 
 type ReshareRequest struct {
-	ValidatorNonce             uint32            `json:"validator_nonce"`
 	Operators                  []crypto.Identity `json:"operators"`
 	PreviousState              PreviousDKGState  `json:"previous_state"`
 	PreviousEncryptedShareHash []byte            `json:"previous_encrypted_share_hash"`
@@ -78,7 +76,6 @@ type SsvIdentityResponse struct {
 }
 
 type SidecarIdentityRequest struct {
-	ValidatorNonce uint32 `json:"validator_nonce"`
 }
 
 type SidecarIdentityResponse struct {

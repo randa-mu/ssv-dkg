@@ -12,9 +12,8 @@ import (
 )
 
 var (
-	UrlFlag            string
-	ValidatorNonceFlag uint32
-	keyCmd             = &cobra.Command{
+	UrlFlag string
+	keyCmd  = &cobra.Command{
 		Use:   "key",
 		Short: "All operations related to keys",
 	}
@@ -41,13 +40,6 @@ func init() {
 		"",
 		"The public URL of your sidecar node, including port and scheme",
 	)
-	keySignCmd.PersistentFlags().Uint32VarP(
-		&ValidatorNonceFlag,
-		"validator-nonce",
-		"n",
-		0,
-		"The validator nonce received when you registered your SSV node with the SSV contract",
-	)
 }
 
 func createKey(_ *cobra.Command, args []string) {
@@ -71,7 +63,7 @@ func createKey(_ *cobra.Command, args []string) {
 }
 
 func signKey(_ *cobra.Command, _ []string) {
-	signature, err := sidecar.SignKey(UrlFlag, ValidatorNonceFlag, DirectoryFlag)
+	signature, err := sidecar.SignKey(UrlFlag, DirectoryFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}

@@ -106,8 +106,7 @@ func runReshare(state api.SigningOutput, identities []crypto.Identity) ([]operat
 		go func(identity crypto.Identity) {
 			client := api.NewSidecarClient(identity.Address)
 			reshareResponse, err := client.Reshare(api.ReshareRequest{
-				ValidatorNonce: identity.ValidatorNonce,
-				Operators:      identities,
+				Operators: identities,
 				PreviousState: api.PreviousDKGState{
 					SessionID:                   hex.EncodeToString(state.SessionID),
 					Nodes:                       oldNodes,

@@ -2,7 +2,6 @@ package key_verifier
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
@@ -26,9 +25,6 @@ func VerifyKeys(filepath string) error {
 		return fmt.Errorf("error unmarshalling JSON in file: %w", err)
 	}
 	for _, identity := range f.Operators {
-		if identity.ValidatorNonce == 0 {
-			return errors.New("❌ missing validator nonce")
-		}
 		if err := identity.Verify(suite); err != nil {
 			return fmt.Errorf("❌ key verification failed for %s", identity.Address)
 		}

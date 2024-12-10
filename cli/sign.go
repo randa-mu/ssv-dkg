@@ -6,8 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
+	"net/url"
 	"sync"
 	"time"
 
@@ -60,7 +59,7 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 	identities := make([]crypto.Identity, len(operators))
 	for i, operator := range operators {
 		// first we extract the validatorNonce from the input
-		nonce, address, err := parseOperator(operator)
+		address, err := parseOperator(operator)
 		if err != nil {
 			return nil, err
 		}
@@ -68,15 +67,14 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 		// then we fetch the keys for the node
 		// perhaps these should be checked against the ones registered in the repo
 		client := api.NewSidecarClient(address)
-		response, err := client.Identity(api.SidecarIdentityRequest{ValidatorNonce: nonce})
+		response, err := client.Identity(api.SidecarIdentityRequest{})
 		if err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %w", operator, err)
 		}
 		identity := crypto.Identity{
-			ValidatorNonce: nonce,
-			Address:        address,
-			Public:         response.PublicKey,
-			Signature:      response.Signature,
+			Address:   address,
+			Public:    response.PublicKey,
+			Signature: response.Signature,
 		}
 		if err = identity.Verify(suite); err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %w", operator, err)
@@ -98,25 +96,11 @@ func extractEncryptedShares(arr []api.OperatorResponse) []api.OperatorShare {
 	return operators
 }
 
-// parseOperator takes a string in form `$validatorNonce,$address` and separates it out
-// e.g. "4,https://example.com" returns `4, https://example.com, nil`
-func parseOperator(input string) (uint32, string, error) {
-	parts := strings.Split(input, ",")
-	l := len(parts)
-
-	if l < 2 {
-		return 0, "", errors.New("operator tuple didn't have enough commas in it")
+func parseOperator(input string) (string, error) {
+	if _, err := url.Parse(input); err != nil {
+		return "", err
 	}
-	if l > 2 {
-		return 0, "", errors.New("operator tuple had too many commas in it")
-	}
-
-	validatorNonce, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, "", errors.New("validatorNonce for the operator must be a number")
-	}
-
-	return uint32(validatorNonce), parts[1], nil
+	return input, nil
 }
 
 func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.Identity, depositData api.UnsignedDepositData) ([]api.OperatorResponse, error) {
@@ -174,10 +158,9 @@ func createSessionID() ([]byte, error) {
 func getVerifiedPartial(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, identities []crypto.Identity, sessionID []byte) (api.SignResponse, error) {
 	client := api.NewSidecarClient(identity.Address)
 	data := api.SignRequest{
-		ValidatorNonce: identity.ValidatorNonce,
-		Data:           depositData,
-		Operators:      identities,
-		SessionID:      sessionID,
+		Data:      depositData,
+		Operators: identities,
+		SessionID: sessionID,
 	}
 	response, err := client.Sign(data)
 	if err != nil {

@@ -19,7 +19,6 @@ $ ssv-sidecar key create ~/.ssv
 ```shell
 $ ssv-sidecar key sign --validator-nonce 2 --directory ~/.ssv --url https://example.org | jq
 {
-  "validator_nonce": 2,
   "address": "https://example.org",
   "public": "Som3bas364stRing==",
   "signature": "Som3bas364stRing==",

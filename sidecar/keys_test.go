@@ -23,43 +23,31 @@ func TestSignKey(t *testing.T) {
 		{
 			name: "everything correct succeeds",
 			args: args{
-				url:            "https://example.com",
-				validatorNonce: 1,
-				stateDir:       stateDir,
+				url:      "https://example.com",
+				stateDir: stateDir,
 			},
 			wantErr: false,
 		},
 		{
 			name: "empty URL fails",
 			args: args{
-				url:            "",
-				validatorNonce: 1,
-				stateDir:       stateDir,
-			},
-			wantErr: true,
-		},
-		{
-			name: "0 validatorNonce fails",
-			args: args{
-				url:            "https://example.com",
-				validatorNonce: 0,
-				stateDir:       stateDir,
+				url:      "",
+				stateDir: stateDir,
 			},
 			wantErr: true,
 		},
 		{
 			name: "invalid dir fails",
 			args: args{
-				url:            "https://example.com",
-				validatorNonce: 1,
-				stateDir:       "some-fake-dir",
+				url:      "https://example.com",
+				stateDir: "some-fake-dir",
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			signedKey, err := SignKey(tt.args.url, tt.args.validatorNonce, tt.args.stateDir)
+			signedKey, err := SignKey(tt.args.url, tt.args.stateDir)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

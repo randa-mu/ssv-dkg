@@ -1,7 +1,6 @@
 package sidecar
 
 import (
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -67,12 +66,12 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 		return api.SignResponse{}, err
 	}
 
-	// encrypt the validator nonce
+	// sign the validator nonce
 	buf := make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, request.ValidatorNonce)
-	encryptedNonce, err := d.encryptionScheme.Encrypt(validatorIdentity.PublicKey, buf)
+	//TODO: GOD ABOVE ADD THE ACTUAL VALIDATOR NONCE HERE
+	signedNonce, err := d.thresholdScheme.Sign(d.key, buf)
 	if err != nil {
-		slog.Error("error encrypting nonce", "sessionID", sessionID, "err", err)
+		slog.Error("error signing nonce", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
 	}
 
@@ -81,7 +80,7 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 		NodePK:                         result.PublicKeyShare,
 		DepositDataPartialSignature:    partialSignature,
 		EncryptedShare:                 encryptedShare,
-		DepositValidatorNonceSignature: encryptedNonce,
+		DepositValidatorNonceSignature: signedNonce,
 	}
 
 	groupFile, err := dkg.NewGroupFile(sessionID, result.GroupPublicPoly, request.Operators, result.KeyShare, encryptedShare)
@@ -192,7 +191,7 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 }
 
 func (d Daemon) Identity(request api.SidecarIdentityRequest) (api.SidecarIdentityResponse, error) {
-	identity, err := d.key.SelfSign(d.thresholdScheme, d.publicURL, request.ValidatorNonce)
+	identity, err := d.key.SelfSign(d.thresholdScheme, d.publicURL)
 	if err != nil {
 		return api.SidecarIdentityResponse{}, err
 	}
