@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/randa-mu/ssv-dkg/shared"
-	"github.com/randa-mu/ssv-dkg/tools/stub"
 	"os"
 	"strconv"
+
+	"github.com/randa-mu/ssv-dkg/shared"
+	"github.com/randa-mu/ssv-dkg/tools/stub"
 )
 
 func main() {

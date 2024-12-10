@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/stretchr/testify/require"
+
+	"github.com/randa-mu/ssv-dkg/shared/api"
 )
 
 func TestSignCommand(t *testing.T) {

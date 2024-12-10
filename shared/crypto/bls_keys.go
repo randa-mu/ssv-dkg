@@ -12,10 +12,9 @@ import (
 	"github.com/drand/kyber/pairing"
 	"github.com/drand/kyber/share/dkg"
 	"github.com/drand/kyber/sign"
-	"github.com/drand/kyber/sign/tbls"
-
 	//nolint:staticcheck //only a rogue key attack if used wrong
 	signing "github.com/drand/kyber/sign/bls"
+	"github.com/drand/kyber/sign/tbls"
 	"github.com/drand/kyber/util/random"
 )
 

@@ -7,22 +7,25 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/randa-mu/ssv-dkg/cli"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
-	"github.com/spf13/cobra"
 )
 
-var operatorFlag []string
-var inputPathFlag string
-var shortFlag bool
-var stateDirectory string
-var signCmd = &cobra.Command{
-	Use:   "sign",
-	Short: "Signs ETH deposit data by forming a validator cluster",
-	Long:  "Signs ETH deposit data by forming a validator cluster that creates a distributed key. Operators can be passed via stdin.",
-	Run:   Sign,
-}
+var (
+	operatorFlag   []string
+	inputPathFlag  string
+	shortFlag      bool
+	stateDirectory string
+	signCmd        = &cobra.Command{
+		Use:   "sign",
+		Short: "Signs ETH deposit data by forming a validator cluster",
+		Long:  "Signs ETH deposit data by forming a validator cluster that creates a distributed key. Operators can be passed via stdin.",
+		Run:   Sign,
+	}
+)
 
 func init() {
 	signCmd.PersistentFlags().StringArrayVarP(

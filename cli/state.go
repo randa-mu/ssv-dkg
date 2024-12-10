@@ -36,7 +36,7 @@ func storeWithFlags(filepath string, output api.SigningOutput, flag int) ([]byte
 		return nil, err
 	}
 
-	file, err := os.OpenFile(filepath, flag, 0755)
+	file, err := os.OpenFile(filepath, flag, 0o755)
 	if err != nil {
 		return bytes, err
 	}
