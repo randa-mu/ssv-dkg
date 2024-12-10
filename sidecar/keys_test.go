@@ -11,9 +11,8 @@ func TestSignKey(t *testing.T) {
 	require.NoError(t, GenerateKey(stateDir))
 
 	type args struct {
-		url            string
-		validatorNonce uint32
-		stateDir       string
+		url      string
+		stateDir string
 	}
 	tests := []struct {
 		name    string

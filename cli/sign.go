@@ -58,7 +58,7 @@ func Sign(operators []string, depositData api.UnsignedDepositData, log shared.Qu
 func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto.Identity, error) {
 	identities := make([]crypto.Identity, len(operators))
 	for i, operator := range operators {
-		// first we extract the validatorNonce from the input
+		// first we parse the operator address to ensure it's correct
 		address, err := parseOperator(operator)
 		if err != nil {
 			return nil, err
