@@ -135,7 +135,7 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 func startStubSSVNode(t *testing.T, ssvPort uint) {
 	stop := stub.StartStub(ssvPort)
 	t.Cleanup(stop)
-	err := awaitHealthy(ssvPort)
+	err := awaitStubHealthy(ssvPort)
 	if err != nil {
 		t.Fatalf("error starting SSV stub: %v", err)
 	}
@@ -149,7 +149,7 @@ func startSidecars(t *testing.T, ports []uint, ssvPort uint) []sidecar.Daemon {
 		go func() {
 			d.Start()
 		}()
-		err := awaitHealthy(o)
+		err := awaitSidecarHealthy(o)
 		if err != nil {
 			t.Fatalf("error starting stub: %v", err)
 		}
@@ -170,7 +170,7 @@ func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordina
 		go func() {
 			d.Start()
 		}()
-		err := awaitHealthy(o)
+		err := awaitSidecarHealthy(o)
 		if err != nil {
 			t.Fatalf("error starting stub: %v", err)
 		}
@@ -231,16 +231,29 @@ func fmap[T any, U any](arr []T, f func(T) U) []U {
 	return out
 }
 
-func awaitHealthy(port uint) error {
-	c := api.NewSidecarClient(fmt.Sprintf("http://127.0.0.1:%d", port))
+type healthCheck interface {
+	Health() error
+}
+
+func awaitHealthy(h healthCheck) error {
 	var err error
 	for i := 0; i < 5; i++ {
-		if err = c.Health(); err == nil {
+		if err = h.Health(); err == nil {
 			return nil
 		}
 		time.Sleep(1 * time.Second)
 	}
 	return err
+}
+
+func awaitSidecarHealthy(port uint) error {
+	c := api.NewSidecarClient(fmt.Sprintf("http://127.0.0.1:%d", port))
+	return awaitHealthy(c)
+}
+
+func awaitStubHealthy(port uint) error {
+	c := api.NewSsvClient(fmt.Sprintf("http://127.0.0.1:%d", port))
+	return awaitHealthy(c)
 }
 
 func createUnsignedDepositData() api.UnsignedDepositData {
