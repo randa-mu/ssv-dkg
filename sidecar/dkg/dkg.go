@@ -166,10 +166,9 @@ func (d *Coordinator) RunReshare(identities []crypto.Identity, sessionID []byte,
 		OldThreshold:   oldThreshold,
 		UserReaderOnly: false,
 		FastSync:       false,
-		// TODO: this should probably be made an actual nonce
-		Nonce: sessionID,
-		Auth:  schnorr.NewScheme(&crypto.SchnorrSuite{Group: keyGroup}),
-		Log:   dkgLogger{address: d.publicURL},
+		Nonce:          sessionID,
+		Auth:           schnorr.NewScheme(&crypto.SchnorrSuite{Group: keyGroup}),
+		Log:            dkgLogger{address: d.publicURL},
 	}
 
 	d.board = NewDKGBoard(addresses)

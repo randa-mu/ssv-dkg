@@ -68,14 +68,14 @@ func init() {
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
-	args, depositData, err := verifyAndGetArgs(cmd)
+	args, depositData, validatorNonce, err := verifyAndGetArgs(cmd)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
 	log := shared.QuietLogger{Quiet: shortFlag}
 	// TODO: this should probably sign something more than just the deposit data root
-	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, log)
+	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, validatorNonce, log)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
@@ -92,36 +92,36 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 }
 
-func verifyAndGetArgs(cmd *cobra.Command) ([]string, api.UnsignedDepositData, error) {
+func verifyAndGetArgs(cmd *cobra.Command) ([]string, api.UnsignedDepositData, uint32, error) {
 	// if the operator flag isn't passed, we consume operator addresses from stdin
 	operators, err := arrayOrReader(operatorFlag, cmd.InOrStdin())
 	if err != nil {
-		return nil, api.UnsignedDepositData{}, errors.New("you must provider either the --operator flag or operators via stdin")
+		return nil, api.UnsignedDepositData{}, 0, errors.New("you must provider either the --operator flag or operators via stdin")
 	}
 
 	if inputPathFlag == "" {
-		return nil, api.UnsignedDepositData{}, errors.New("input path cannot be empty")
+		return nil, api.UnsignedDepositData{}, 0, errors.New("input path cannot be empty")
 	}
 
 	// there is a default value, so this shouldn't really happen
 	if stateDirectory == "" {
-		return nil, api.UnsignedDepositData{}, errors.New("you must provide a state directory")
+		return nil, api.UnsignedDepositData{}, 0, errors.New("you must provide a state directory")
 	}
 
 	if validatorNonceFlag < 0 {
-		return nil, api.UnsignedDepositData{}, errors.New("you must pass a validator nonce retrieved from the SSV contract")
+		return nil, api.UnsignedDepositData{}, 0, errors.New("you must pass a validator nonce retrieved from the SSV contract")
 	}
 
 	depositBytes, err := os.ReadFile(inputPathFlag)
 	if err != nil {
-		return nil, api.UnsignedDepositData{}, fmt.Errorf("error reading the deposit data file: %v", err)
+		return nil, api.UnsignedDepositData{}, 0, fmt.Errorf("error reading the deposit data file: %v", err)
 	}
 
 	var depositData api.UnsignedDepositData
 	err = json.Unmarshal(depositBytes, &depositData)
 	if err != nil {
-		return nil, api.UnsignedDepositData{}, err
+		return nil, api.UnsignedDepositData{}, 0, err
 	}
 
-	return operators, depositData, nil
+	return operators, depositData, uint32(validatorNonceFlag), nil
 }

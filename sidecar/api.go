@@ -66,10 +66,8 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 		return api.SignResponse{}, err
 	}
 
-	// sign the validator nonce
-	buf := make([]byte, 4)
-	//TODO: GOD ABOVE ADD THE ACTUAL VALIDATOR NONCE HERE
-	signedNonce, err := d.thresholdScheme.Sign(d.key, buf)
+	// sign the validator nonce to prevent replays
+	signedNonce, err := d.thresholdScheme.Sign(d.key, crypto.ValidatorNonceMessage(request.ValidatorNonce))
 	if err != nil {
 		slog.Error("error signing nonce", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err

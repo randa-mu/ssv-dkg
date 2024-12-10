@@ -29,3 +29,9 @@ func DepositDataMessage(data RequiredDepositFields, publicKey []byte) ([]byte, e
 	}
 	return append(publicKey, msg...), nil
 }
+
+func ValidatorNonceMessage(nonce uint32) []byte {
+	out := make([]byte, 8)
+	binary.BigEndian.PutUint32(out, nonce)
+	return out
+}
