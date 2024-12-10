@@ -25,7 +25,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	startSidecars(t, ports, stubPort)
 
 	operators := fmap(ports, func(o uint) string {
-		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
+		return fmt.Sprintf("http://127.0.0.1:%d", o)
 	})
 
 	depositData := createUnsignedDepositData()
@@ -55,7 +55,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 
 	// reshare a third time with a slightly different group
 	startSidecars(t, []uint{10004}, stubPort)
-	operators = append(operators[0:2], "10004,http://127.0.0.1:10004")
+	operators = append(operators[0:2], "http://127.0.0.1:10004")
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
@@ -72,7 +72,7 @@ func TestResharingNewNode(t *testing.T) {
 	startSidecars(t, ports, stubPort)
 
 	operators := fmap(ports, func(o uint) string {
-		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
+		return fmt.Sprintf("http://127.0.0.1:%d", o)
 	})
 
 	depositData := createUnsignedDepositData()
@@ -87,7 +87,7 @@ func TestResharingNewNode(t *testing.T) {
 
 	// reshare a third time with a slightly different group
 	startSidecars(t, []uint{10004}, stubPort)
-	operators = append(operators[0:2], "10004,http://127.0.0.1:10004")
+	operators = append(operators[0:2], "http://127.0.0.1:10004")
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
@@ -104,8 +104,8 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 	startSidecars(t, ports, stubPort)
 	startErrorSidecars(t, []uint{10013}, stubPort, ErrorStartingDKG{})
 
-	operators := fmap(append(ports, 10013), func(o uint) string {
-		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
+	operators := fmap(ports, func(o uint) string {
+		return fmt.Sprintf("http://127.0.0.1:%d", o)
 	})
 
 	depositData := createUnsignedDepositData()
@@ -122,8 +122,8 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 	startSidecars(t, ports, stubPort)
 	startErrorSidecars(t, []uint{10023}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://127.0.0.1:10023"})
 
-	operators := fmap(append(ports, 10023), func(o uint) string {
-		return fmt.Sprintf("%d,http://127.0.0.1:%d", o, o)
+	operators := fmap(ports, func(o uint) string {
+		return fmt.Sprintf("http://127.0.0.1:%d", o)
 	})
 
 	depositData := createUnsignedDepositData()
@@ -191,7 +191,7 @@ func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator s
 	}
 
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
-	_, err = sidecar.SignKey(url, 1, stateDir)
+	_, err = sidecar.SignKey(url, stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +211,7 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
 	}
 
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
-	_, err = sidecar.SignKey(url, uint32(port), stateDir)
+	_, err = sidecar.SignKey(url, stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}

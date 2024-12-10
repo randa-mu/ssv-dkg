@@ -128,17 +128,17 @@ func printOperatorsPretty(log shared.QuietLogger, operators []crypto.Identity) {
 	}
 
 	for _, s := range success {
-		log.Log(fmt.Sprintf("✅\t%d,%s", s.ValidatorNonce, s.Address))
+		log.Log(fmt.Sprintf("✅\t%s", s.Address))
 	}
 	for _, f := range failure {
-		log.Log(fmt.Sprintf("❌\t%d,%s", f.ValidatorNonce, f.Address))
+		log.Log(fmt.Sprintf("❌\t%s", f.Address))
 	}
 }
 
 func printOperatorsQuiet(log shared.QuietLogger, operators []crypto.Identity) {
 	entries := make([]string, len(operators))
 	for i, operator := range operators {
-		entries[i] = fmt.Sprintf("%d,%s", operator.ValidatorNonce, operator.Address)
+		entries[i] = fmt.Sprintf("%s", operator.Address)
 	}
 	log.Log(strings.Join(entries, " "))
 }

@@ -18,19 +18,20 @@ This module contains the CLI for creating distributed validator clusters of SSV 
 ```shell
 $ ssv-dkg operators list
 
-✅ 1,https://example.org
-✅ 2,https://muster.de
-✅ 3,https://exemple.fr
-❌ 4,https://esempio.it
+✅ https://example.org
+✅ https://muster.de
+✅ https://exemple.fr
+❌ https://esempio.it
 ```
 
 - Start a DKG and sign your deposit data
 ```shell
 $ ssv-dkg sign --input /path/to/deposit/data \
+      --validator-nonce 0 \
       --output /path/to/storing/permanent/data/for/reshares/etc \
-      --operator 1,https://example.org \
-      --operator 2,https://muster.de \
-      --operator 9,https://exemple.fr
+      --operator https://example.org \
+      --operator https://muster.de \
+      --operator https://exemple.fr
 
 ⏳ contacting nodes
 ⏳ starting distributed key generation
@@ -47,15 +48,16 @@ You will need to maintain this state file if you wish to reshare the key for thi
 
 - combine both in a single command
 ```shell
-$ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/to/deposit --quiet > signed_deposit.json 
+$ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/to/deposit --validator-nonce 0 --quiet > signed_deposit.json 
 ```
 
 - reshare the key of a validator cluster you've already created
 ```shell
 $ ssv-dkg reshare --state ~/.ssv/deadbeefcafebabe.json \
-      --operator 1,https://example.org \
-      --operator 2,https://muster.de \
-      --operator 9,https://exemple.fr
+      --validator-nonce 1 \
+      --operator https://example.org \
+      --operator https://muster.de \
+      --operator https://exemple.fr
 
 ⏳ contacting nodes
 ⏳ starting distributed key resharing

@@ -15,11 +15,12 @@ import (
 )
 
 var (
-	operatorFlag   []string
-	inputPathFlag  string
-	shortFlag      bool
-	stateDirectory string
-	signCmd        = &cobra.Command{
+	operatorFlag       []string
+	inputPathFlag      string
+	shortFlag          bool
+	stateDirectory     string
+	validatorNonceFlag int32 = -1
+	signCmd                  = &cobra.Command{
 		Use:   "sign",
 		Short: "Signs ETH deposit data by forming a validator cluster",
 		Long:  "Signs ETH deposit data by forming a validator cluster that creates a distributed key. Operators can be passed via stdin.",
@@ -36,9 +37,34 @@ func init() {
 		"SSV DKG node operators you wish to sign your ETH deposit data",
 	)
 
-	signCmd.PersistentFlags().StringVarP(&inputPathFlag, "input", "i", "", "The filepath of the ETH deposit data")
-	signCmd.PersistentFlags().StringVarP(&stateDirectory, "output", "d", "~/.ssv", "Where you wish the CLI to store its state")
-	signCmd.PersistentFlags().BoolVarP(&shortFlag, "quiet", "q", false, "Only print out the signed deposit data")
+	signCmd.PersistentFlags().StringVarP(
+		&inputPathFlag,
+		"input",
+		"i",
+		"",
+		"The filepath of the ETH deposit data",
+	)
+	signCmd.PersistentFlags().StringVarP(
+		&stateDirectory,
+		"output",
+		"d",
+		"~/.ssv",
+		"Where you wish the CLI to store its state",
+	)
+	signCmd.PersistentFlags().BoolVarP(
+		&shortFlag,
+		"quiet",
+		"q",
+		false,
+		"Only print out the signed deposit data",
+	)
+	signCmd.PersistentFlags().Int32VarP(
+		&validatorNonceFlag,
+		"validator-nonce",
+		"n",
+		-1, // default is -1 to ensure user MUST pass this flag (as -1 is invalid)
+		"The current validator cluster nonce for the user from SSV contract. Be _very_ sure about this or you'll lose your stake",
+	)
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
@@ -80,6 +106,10 @@ func verifyAndGetArgs(cmd *cobra.Command) ([]string, api.UnsignedDepositData, er
 	// there is a default value, so this shouldn't really happen
 	if stateDirectory == "" {
 		return nil, api.UnsignedDepositData{}, errors.New("you must provide a state directory")
+	}
+
+	if validatorNonceFlag < 0 {
+		return nil, api.UnsignedDepositData{}, errors.New("you must pass a validator nonce retrieved from the SSV contract")
 	}
 
 	depositBytes, err := os.ReadFile(inputPathFlag)

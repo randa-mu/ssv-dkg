@@ -75,7 +75,7 @@ func CreatingAKeyAndSigningItAndVerifyingIt(t *testing.T) {
 	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(scheme, "hello world", 0)
+	i, err := k.SelfSign(scheme, "hello world")
 	require.NoError(t, err)
 
 	require.NoError(t, i.Verify(scheme))
@@ -87,7 +87,7 @@ func CreatingAKeyAndSigningItAndModifyingTheSignature(t *testing.T) {
 	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(scheme, "hello world", 0)
+	i, err := k.SelfSign(scheme, "hello world")
 	require.NoError(t, err)
 
 	i.Signature = []byte("deadbeef")
@@ -101,7 +101,7 @@ func CreatingKeyAndSigningItAndModifyingKey(t *testing.T) {
 	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(scheme, "hello world", 0)
+	i, err := k.SelfSign(scheme, "hello world")
 	require.NoError(t, err)
 
 	i.Public = []byte("deadbeef")

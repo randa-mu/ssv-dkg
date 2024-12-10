@@ -37,8 +37,8 @@ type Keypair struct {
 }
 
 // SelfSign signs an address to attribute it to a given public key and returns an Identity
-func (k Keypair) SelfSign(suite SigningScheme, address string, nonce uint32) (Identity, error) {
-	message, err := digestFor(k.Public, address, nonce)
+func (k Keypair) SelfSign(suite SigningScheme, address string) (Identity, error) {
+	message, err := digestFor(k.Public, address)
 	if err != nil {
 		return Identity{}, err
 	}
@@ -49,30 +49,28 @@ func (k Keypair) SelfSign(suite SigningScheme, address string, nonce uint32) (Id
 	}
 
 	return Identity{
-		Address:        address,
-		Public:         k.Public,
-		Signature:      signature,
-		ValidatorNonce: nonce,
+		Address:   address,
+		Public:    k.Public,
+		Signature: signature,
 	}, nil
 }
 
 type Identity struct {
-	ValidatorNonce uint32 `json:"validator_nonce"`
-	Address        string `json:"address"`
-	Public         []byte `json:"public"`
-	Signature      []byte `json:"signature"`
+	Address   string `json:"address"`
+	Public    []byte `json:"public"`
+	Signature []byte `json:"signature"`
 }
 
 // Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file
 func (i Identity) Verify(suite SigningScheme) error {
-	m, err := digestFor(i.Public, i.Address, i.ValidatorNonce)
+	m, err := digestFor(i.Public, i.Address)
 	if err != nil {
 		return err
 	}
 	return suite.Verify(m, i.Public, i.Signature)
 }
 
-func digestFor(publicKey []byte, address string, validatorNonce uint32) ([]byte, error) {
+func digestFor(publicKey []byte, address string) ([]byte, error) {
 	buf := new(bytes.Buffer)
 
 	dst := []byte("ssv:randamu:sha256")
@@ -84,10 +82,6 @@ func digestFor(publicKey []byte, address string, validatorNonce uint32) ([]byte,
 	}
 
 	if err := binary.Write(buf, binary.BigEndian, []byte(address)); err != nil {
-		return nil, err
-	}
-
-	if err := binary.Write(buf, binary.BigEndian, validatorNonce); err != nil {
 		return nil, err
 	}
 
