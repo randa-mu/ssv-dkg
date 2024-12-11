@@ -16,8 +16,9 @@ import (
 )
 
 func Sign(operators []string, depositData api.UnsignedDepositData, validatorNonce uint32, log shared.QuietLogger) (api.SigningOutput, error) {
+	// SSV supports 3f+1 failures up to f=4
 	numOfNodes := len(operators)
-	if numOfNodes != 3 && numOfNodes != 5 && numOfNodes != 7 {
+	if numOfNodes != 4 && numOfNodes != 7 && numOfNodes != 10 && numOfNodes != 13 {
 		return api.SigningOutput{}, errors.New("you must pass either 3, 5, or 7 operators to ensure a majority threshold")
 	}
 
