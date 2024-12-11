@@ -31,7 +31,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
-	signingOutput, err := cli.Sign(operators, depositData, log)
+	signingOutput, err := cli.Sign(operators, depositData, 1, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.GroupSignature)
@@ -78,7 +78,7 @@ func TestResharingNewNode(t *testing.T) {
 	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
-	signingOutput, err := cli.Sign(operators, depositData, log)
+	signingOutput, err := cli.Sign(operators, depositData, 0, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.GroupSignature)
@@ -110,7 +110,7 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 
 	depositData := createUnsignedDepositData()
 
-	_, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
+	_, err := cli.Sign(operators, depositData, 0, shared.QuietLogger{Quiet: false})
 	require.Error(t, err)
 }
 
@@ -128,7 +128,7 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 
 	depositData := createUnsignedDepositData()
 
-	_, err := cli.Sign(operators, depositData, shared.QuietLogger{Quiet: false})
+	_, err := cli.Sign(operators, depositData, 0, shared.QuietLogger{Quiet: false})
 	require.Error(t, err)
 }
 

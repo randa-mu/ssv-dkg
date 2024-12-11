@@ -113,7 +113,7 @@ func TestSignCommand(t *testing.T) {
 			signCmd.SetArgs(test.args)
 			err := signCmd.ParseFlags(test.args)
 			require.NoError(t, err)
-			_, _, err = verifyAndGetArgs(signCmd)
+			_, _, _, err = verifyAndGetArgs(signCmd)
 
 			t.Cleanup(func() {
 				operatorFlag = nil
