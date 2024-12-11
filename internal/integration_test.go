@@ -21,7 +21,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	var stubPort uint = 10000
 	startStubSSVNode(t, stubPort)
 
-	ports := []uint{10001, 10002, 10003}
+	ports := []uint{10001, 10002, 10003, 10004}
 	startSidecars(t, ports, stubPort)
 
 	operators := fmap(ports, func(o uint) string {
@@ -54,8 +54,8 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a third time with a slightly different group
-	startSidecars(t, []uint{10004}, stubPort)
-	operators = append(operators[0:2], "http://127.0.0.1:10004")
+	startSidecars(t, []uint{10005}, stubPort)
+	operators = append(operators[0:3], "http://127.0.0.1:10005")
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
@@ -68,7 +68,7 @@ func TestResharingNewNode(t *testing.T) {
 	var stubPort uint = 10000
 	startStubSSVNode(t, stubPort)
 
-	ports := []uint{10001, 10002, 10003}
+	ports := []uint{10001, 10002, 10003, 10004}
 	startSidecars(t, ports, stubPort)
 
 	operators := fmap(ports, func(o uint) string {
@@ -86,8 +86,8 @@ func TestResharingNewNode(t *testing.T) {
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a third time with a slightly different group
-	startSidecars(t, []uint{10004}, stubPort)
-	operators = append(operators[0:2], "http://127.0.0.1:10004")
+	startSidecars(t, []uint{10006}, stubPort)
+	operators = append(operators[0:3], "http://127.0.0.1:10006")
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
@@ -100,9 +100,9 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 	var stubPort uint = 10010
 	startStubSSVNode(t, stubPort)
 
-	ports := []uint{10011, 10012}
+	ports := []uint{10011, 10012, 10013}
 	startSidecars(t, ports, stubPort)
-	startErrorSidecars(t, []uint{10013}, stubPort, ErrorStartingDKG{})
+	startErrorSidecars(t, []uint{10014}, stubPort, ErrorStartingDKG{})
 
 	operators := fmap(ports, func(o uint) string {
 		return fmt.Sprintf("http://127.0.0.1:%d", o)
@@ -118,9 +118,9 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 	var stubPort uint = 10020
 	startStubSSVNode(t, stubPort)
 
-	ports := []uint{10021, 10022}
+	ports := []uint{10021, 10022, 10023}
 	startSidecars(t, ports, stubPort)
-	startErrorSidecars(t, []uint{10023}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://127.0.0.1:10023"})
+	startErrorSidecars(t, []uint{10024}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://127.0.0.1:10023"})
 
 	operators := fmap(ports, func(o uint) string {
 		return fmt.Sprintf("http://127.0.0.1:%d", o)

@@ -31,7 +31,8 @@ $ ssv-dkg sign --input /path/to/deposit/data \
       --output /path/to/storing/permanent/data/for/reshares/etc \
       --operator https://example.org \
       --operator https://muster.de \
-      --operator https://exemple.fr
+      --operator https://exemple.fr \
+      --operator https://esempio.it 
 
 ⏳ contacting nodes
 ⏳ starting distributed key generation
@@ -57,7 +58,8 @@ $ ssv-dkg reshare --state ~/.ssv/deadbeefcafebabe.json \
       --validator-nonce 1 \
       --operator https://example.org \
       --operator https://muster.de \
-      --operator https://exemple.fr
+      --operator https://exemple.fr \ 
+      --operator https://esempio.it 
 
 ⏳ contacting nodes
 ⏳ starting distributed key resharing
