@@ -111,7 +111,7 @@ func runDKG(suite crypto.ThresholdScheme, sessionID []byte, validatorNonce uint3
 
 	for _, identity := range identities {
 		go func(identity crypto.Identity) {
-			dkgResponse, err := getVerifiedPartial(suite, identity, depositData, identities, sessionID, validatorNonce)
+			dkgResponse, err := singleNodeRunDKG(suite, identity, depositData, identities, sessionID, validatorNonce)
 			if err != nil {
 				errs <- err
 			} else {
@@ -155,7 +155,8 @@ func createSessionID() ([]byte, error) {
 	return s.Sum(nil), nil
 }
 
-func getVerifiedPartial(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, identities []crypto.Identity, sessionID []byte, validatorNonce uint32) (api.SignResponse, error) {
+// singleNodeRunDKG kicks off the DKG for a single node, waits for its response and verifies the necessary fields
+func singleNodeRunDKG(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, identities []crypto.Identity, sessionID []byte, validatorNonce uint32) (api.SignResponse, error) {
 	client := api.NewSidecarClient(identity.Address)
 	data := api.SignRequest{
 		Data:           depositData,
@@ -168,21 +169,29 @@ func getVerifiedPartial(suite crypto.ThresholdScheme, identity crypto.Identity, 
 		return api.SignResponse{}, fmt.Errorf("error signing: %w", err)
 	}
 
+	err = signatureResponseVerifies(suite, identity, depositData, validatorNonce, response)
+	if err != nil {
+		return api.SignResponse{}, fmt.Errorf("error verifying signing response: %w", err)
+	}
+
+	return response, nil
+}
+
+func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, validatorNonce uint32, response api.SignResponse) error {
 	// verify that the signature over the validator nonce verifies to prevent funky replays and such
-	if err = suite.Verify(crypto.ValidatorNonceMessage(validatorNonce), identity.Public, response.DepositValidatorNonceSignature); err != nil {
-		return api.SignResponse{}, fmt.Errorf("signature did not verify for the signed validator nonce for node %s: %w", identity.Address, err)
+	if err := suite.Verify(crypto.ValidatorNonceMessage(validatorNonce), identity.Public, response.DepositValidatorNonceSignature); err != nil {
+		return fmt.Errorf("signature did not verify for the signed validator nonce for node %s: %w", identity.Address, err)
 	}
 
 	// verify that the signature over the deposit data verifies for the reported public key
 	message, err := crypto.DepositDataMessage(depositData.ExtractRequired(), response.PublicPolynomial)
 	if err != nil {
-		return api.SignResponse{}, fmt.Errorf("error building final message: %w", err)
+		return fmt.Errorf("error building final message: %w", err)
 	}
 	if err = suite.VerifyPartial(response.PublicPolynomial, message, response.DepositDataPartialSignature); err != nil {
-		return api.SignResponse{}, fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", identity.Address, err)
+		return fmt.Errorf("signature did not verify for the signed deposit data for node %s: %w", identity.Address, err)
 	}
-
-	return response, nil
+	return nil
 }
 
 type groupSignature struct {
