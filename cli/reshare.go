@@ -69,7 +69,7 @@ func Reshare(operators []string, state api.SigningOutput, log shared.QuietLogger
 
 	return api.SigningOutput{
 		SessionID:             state.SessionID,
-		GroupSignature:        state.GroupSignature,
+		DepositDataSignature:  state.DepositDataSignature,
 		PolynomialCommitments: polynomialCommitments,
 		OperatorShares:        operatorShares,
 	}, nil
