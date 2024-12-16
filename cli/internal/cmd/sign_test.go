@@ -32,6 +32,7 @@ func TestSignCommand(t *testing.T) {
 				"--input", filepath,
 				"--output", filepath,
 				"--validator-nonce", "1",
+				"--owner-address", "0xdeadbeef",
 				"--operator", "http://127.0.0.1:8081",
 				"--operator", "http://127.0.0.1:8082",
 				"--operator", "http://127.0.0.1:8083",
@@ -46,6 +47,7 @@ func TestSignCommand(t *testing.T) {
 				"--input", filepath,
 				"--output", filepath,
 				"--validator-nonce", "1",
+				"--owner-address", "0xdeadbeef",
 				"--operator", "http://127.0.0.1:8081",
 				"--operator", "http://127.0.0.1:8082",
 				"--operator", "http://127.0.0.1:8083",
@@ -60,6 +62,7 @@ func TestSignCommand(t *testing.T) {
 				"sign",
 				"--output", filepath,
 				"--validator-nonce", "1",
+				"--owner-address", "0xdeadbeef",
 				"--operator", "http://127.0.0.1:8081",
 				"--operator", "http://127.0.0.1:8082",
 				"--operator", "http://127.0.0.1:8083",
@@ -71,6 +74,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
+				"--owner-address", "0xdeadbeef",
 				"--validator-nonce", "1",
 				"--input", filepath,
 				"--output", filepath,
@@ -98,6 +102,36 @@ func TestSignCommand(t *testing.T) {
 				"--input", filepath,
 				"--output", filepath,
 				"--validator-nonce", "-1",
+				"--owner-address", "0xdeadbeef",
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
+			},
+		},
+		{
+			name:        "no owner address returns error",
+			shouldError: true,
+			args: []string{
+				"ssv-dkg",
+				"sign",
+				"--input", filepath,
+				"--output", filepath,
+				"--validator-nonce", "1",
+				"--operator", "http://127.0.0.1:8081",
+				"--operator", "http://127.0.0.1:8082",
+				"--operator", "http://127.0.0.1:8083",
+			},
+		},
+		{
+			name:        "non-hex validator address returns error",
+			shouldError: true,
+			args: []string{
+				"ssv-dkg",
+				"sign",
+				"--input", filepath,
+				"--output", filepath,
+				"--validator-nonce", "1",
+				"--owner-address", "0xzzzzzzz",
 				"--operator", "http://127.0.0.1:8081",
 				"--operator", "http://127.0.0.1:8082",
 				"--operator", "http://127.0.0.1:8083",
@@ -113,13 +147,14 @@ func TestSignCommand(t *testing.T) {
 			signCmd.SetArgs(test.args)
 			err := signCmd.ParseFlags(test.args)
 			require.NoError(t, err)
-			_, _, _, err = verifyAndGetArgs(signCmd)
+			_, err = parseArgs(signCmd)
 
 			t.Cleanup(func() {
 				operatorFlag = nil
 				inputPathFlag = ""
 				shortFlag = false
-				stateDirectory = ""
+				stateDirectoryFlag = ""
+				ethAddressFlag = ""
 				validatorNonceFlag = -1
 			})
 			if test.shouldError && err == nil {

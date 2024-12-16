@@ -20,10 +20,10 @@ type Sidecar interface {
 }
 
 type SignRequest struct {
-	SessionID      []byte              `json:"session_id"`
-	Data           UnsignedDepositData `json:"data"`
-	Operators      []crypto.Identity   `json:"operators"`
-	ValidatorNonce uint32              `json:"validator_nonce"`
+	SessionID   []byte              `json:"session_id"`
+	DepositData UnsignedDepositData `json:"deposit_data"`
+	OwnerConfig OwnerConfig         `json:"owner_config"`
+	Operators   []crypto.Identity   `json:"operators"`
 }
 
 type SignResponse struct {

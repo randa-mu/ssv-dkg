@@ -15,9 +15,18 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
-func Sign(operators []string, depositData api.UnsignedDepositData, validatorNonce uint32, log shared.QuietLogger) (api.SigningOutput, error) {
+type SignatureConfig struct {
+	Operators   []string
+	DepositData api.UnsignedDepositData
+	Owner       api.OwnerConfig
+}
+
+// Sign performs a distributed key generation between the operators provided
+// then aggregates a group signature over the deposit data merkle root
+// then aggregates a group signature over the validator nonce
+func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, error) {
 	// SSV supports 3f+1 nodes up to f=4
-	numOfNodes := len(operators)
+	numOfNodes := len(config.Operators)
 	if numOfNodes != 4 && numOfNodes != 7 && numOfNodes != 10 && numOfNodes != 13 {
 		return api.SigningOutput{}, errors.New("you must pass either 4, 7, 10 or 13 operators to ensure a majority threshold")
 	}
@@ -26,7 +35,7 @@ func Sign(operators []string, depositData api.UnsignedDepositData, validatorNonc
 
 	// then fetch their signed public keys
 	log.MaybeLog("⏳ contacting nodes")
-	identities, err := fetchIdentities(suite, operators)
+	identities, err := fetchIdentities(suite, config.Operators)
 	if err != nil {
 		return api.SigningOutput{}, err
 	}
@@ -38,21 +47,43 @@ func Sign(operators []string, depositData api.UnsignedDepositData, validatorNonc
 
 	// then let's actually kick off the DKG
 	log.MaybeLog("⏳ starting distributed key generation")
-	responses, err := runDKG(suite, sessionID, validatorNonce, identities, depositData)
+	responses, err := runDKG(suite, sessionID, identities, config.DepositData, config.Owner)
 	if err != nil {
 		return api.SigningOutput{}, err
 	}
 
-	groupSig, err := aggregateGroupSignature(suite, responses, depositData)
+	if err := verifyPublicPolynomialSame(responses); err != nil {
+		return api.SigningOutput{}, fmt.Errorf("not every operator came up with the same public key: %v", err)
+	}
+
+	// as all the group public keys are the same, we can use the first to verify all the partials
+	groupPublicKey := responses[0].Response.PublicPolynomial
+
+	// aggregate the deposit data sig
+	depositDataMessage, err := crypto.DepositDataMessage(config.DepositData.ExtractRequired(), groupPublicKey)
 	if err != nil {
-		return api.SigningOutput{}, err
+		return api.SigningOutput{}, fmt.Errorf("failed to create deposit data message: %v", err)
+	}
+	depositDataPartials := extractDepositDataPartials(responses)
+	depositDataSignature, err := aggregateGroupSignature(suite, depositDataPartials, groupPublicKey, depositDataMessage)
+	if err != nil {
+		return api.SigningOutput{}, fmt.Errorf("error aggregating deposit data signature: %v", err)
+	}
+
+	// aggregate the validator nonce sig
+	validatorNoncePartials := extractValidatorNoncePartials(responses)
+	validatorNonceMessage := crypto.ValidatorNonceMessage(config.Owner.Address, config.Owner.ValidatorNonce)
+	validatorNonceSignature, err := aggregateGroupSignature(suite, validatorNoncePartials, groupPublicKey, validatorNonceMessage)
+	if err != nil {
+		return api.SigningOutput{}, fmt.Errorf("error aggregating validator nonce signature: %v", err)
 	}
 
 	return api.SigningOutput{
-		SessionID:             sessionID,
-		GroupSignature:        groupSig.signature,
-		PolynomialCommitments: groupSig.publicKey,
-		OperatorShares:        extractEncryptedShares(responses),
+		SessionID:               sessionID,
+		PolynomialCommitments:   groupPublicKey,
+		OperatorShares:          extractEncryptedShares(responses),
+		DepositDataSignature:    depositDataSignature,
+		ValidatorNonceSignature: validatorNonceSignature,
 	}, nil
 }
 
@@ -104,7 +135,7 @@ func parseOperator(input string) (string, error) {
 	return input, nil
 }
 
-func runDKG(suite crypto.ThresholdScheme, sessionID []byte, validatorNonce uint32, identities []crypto.Identity, depositData api.UnsignedDepositData) ([]api.OperatorResponse, error) {
+func runDKG(suite crypto.ThresholdScheme, sessionID []byte, identities []crypto.Identity, depositData api.UnsignedDepositData, owner api.OwnerConfig) ([]api.OperatorResponse, error) {
 	dkgResponses := shared.SafeList[api.OperatorResponse]{}
 	errs := make(chan error, len(identities))
 	wg := sync.WaitGroup{}
@@ -112,7 +143,7 @@ func runDKG(suite crypto.ThresholdScheme, sessionID []byte, validatorNonce uint3
 
 	for _, identity := range identities {
 		go func(identity crypto.Identity) {
-			dkgResponse, err := singleNodeRunDKG(suite, identity, depositData, identities, sessionID, validatorNonce)
+			dkgResponse, err := singleNodeRunDKG(suite, identity, sessionID, identities, depositData, owner)
 			if err != nil {
 				errs <- err
 			} else {
@@ -157,20 +188,21 @@ func createSessionID() ([]byte, error) {
 }
 
 // singleNodeRunDKG kicks off the DKG for a single node, waits for its response and verifies the necessary fields
-func singleNodeRunDKG(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, identities []crypto.Identity, sessionID []byte, validatorNonce uint32) (api.SignResponse, error) {
+func singleNodeRunDKG(suite crypto.ThresholdScheme, identity crypto.Identity, sessionID []byte, identities []crypto.Identity, depositData api.UnsignedDepositData, owner api.OwnerConfig) (api.SignResponse, error) {
 	client := api.NewSidecarClient(identity.Address)
+
 	data := api.SignRequest{
-		Data:           depositData,
-		Operators:      identities,
-		SessionID:      sessionID,
-		ValidatorNonce: validatorNonce,
+		DepositData: depositData,
+		Operators:   identities,
+		SessionID:   sessionID,
+		OwnerConfig: owner,
 	}
 	response, err := client.Sign(data)
 	if err != nil {
 		return api.SignResponse{}, fmt.Errorf("error signing: %w", err)
 	}
 
-	err = signatureResponseVerifies(suite, identity, depositData, validatorNonce, response)
+	err = signatureResponseVerifies(suite, identity, depositData, owner, response)
 	if err != nil {
 		return api.SignResponse{}, fmt.Errorf("error verifying signing response: %w", err)
 	}
@@ -178,9 +210,9 @@ func singleNodeRunDKG(suite crypto.ThresholdScheme, identity crypto.Identity, de
 	return response, nil
 }
 
-func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, validatorNonce uint32, response api.SignResponse) error {
-	// verify that the signature over the validator nonce verifies to prevent funky replays and such
-	if err := suite.Verify(crypto.ValidatorNonceMessage(validatorNonce), identity.Public, response.DepositValidatorNonceSignature); err != nil {
+func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, owner api.OwnerConfig, response api.SignResponse) error {
+	// verify that the signature over the validator nonce verifies to prevent attempts to register the same validator twice
+	if err := suite.VerifyPartial(response.PublicPolynomial, crypto.ValidatorNonceMessage(owner.Address, owner.ValidatorNonce), response.DepositValidatorNonceSignature); err != nil {
 		return fmt.Errorf("signature did not verify for the signed validator nonce for node %s: %w", identity.Address, err)
 	}
 
@@ -195,41 +227,19 @@ func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Ide
 	return nil
 }
 
-type groupSignature struct {
-	signature []byte
-	publicKey []byte
-}
-
-func aggregateGroupSignature(suite crypto.ThresholdScheme, responses []api.OperatorResponse, depositData api.UnsignedDepositData) (groupSignature, error) {
-	// ensure everybody came up with the same polynomials
-	err := verifyPublicPolynomialSame(responses)
+// aggregateGroupSignature aggregates partials from all the operators and verifies the output
+func aggregateGroupSignature(suite crypto.ThresholdScheme, partials [][]byte, groupPublicKey []byte, message []byte) ([]byte, error) {
+	signature, err := suite.RecoverSignature(message, groupPublicKey, partials, len(partials))
 	if err != nil {
-		return groupSignature{}, err
+		return nil, fmt.Errorf("error aggregating signature: %v", err)
 	}
 
-	// as all the group public keys are the same, we can use the first to verify all the partials
-	groupPK := responses[0].Response.PublicPolynomial
-	depositDataMessage, err := crypto.DepositDataMessage(depositData.ExtractRequired(), groupPK)
+	err = suite.VerifyRecovered(message, groupPublicKey, signature)
 	if err != nil {
-		return groupSignature{}, err
+		return nil, fmt.Errorf("error verifying deposit data signature: %v", err)
 	}
 
-	partials := extractDepositDataPartials(responses)
-
-	signature, err := suite.RecoverSignature(depositDataMessage, groupPK, partials, len(responses))
-	if err != nil {
-		return groupSignature{}, fmt.Errorf("error aggregating signature: %v", err)
-	}
-
-	err = suite.VerifyRecovered(depositDataMessage, groupPK, signature)
-	if err != nil {
-		return groupSignature{}, fmt.Errorf("error verifying deposit data signature: %v", err)
-	}
-
-	return groupSignature{
-		signature: signature,
-		publicKey: groupPK,
-	}, nil
+	return signature, nil
 }
 
 func verifyPublicPolynomialSame(arr []api.OperatorResponse) error {
@@ -248,6 +258,14 @@ func extractDepositDataPartials(arr []api.OperatorResponse) [][]byte {
 	partials := make([][]byte, len(arr))
 	for i, o := range arr {
 		partials[i] = o.Response.DepositDataPartialSignature
+	}
+	return partials
+}
+
+func extractValidatorNoncePartials(arr []api.OperatorResponse) [][]byte {
+	partials := make([][]byte, len(arr))
+	for i, o := range arr {
+		partials[i] = o.Response.DepositValidatorNonceSignature
 	}
 	return partials
 }

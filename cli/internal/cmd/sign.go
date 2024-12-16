@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -18,9 +21,10 @@ var (
 	operatorFlag       []string
 	inputPathFlag      string
 	shortFlag          bool
-	stateDirectory     string
+	stateDirectoryFlag string
 	validatorNonceFlag int32 = -1
-	signCmd                  = &cobra.Command{
+	ethAddressFlag     string
+	signCmd            = &cobra.Command{
 		Use:   "sign",
 		Short: "Signs ETH deposit data by forming a validator cluster",
 		Long:  "Signs ETH deposit data by forming a validator cluster that creates a distributed key. Operators can be passed via stdin.",
@@ -45,7 +49,7 @@ func init() {
 		"The filepath of the ETH deposit data",
 	)
 	signCmd.PersistentFlags().StringVarP(
-		&stateDirectory,
+		&stateDirectoryFlag,
 		"output",
 		"d",
 		"~/.ssv",
@@ -65,25 +69,31 @@ func init() {
 		-1, // default is -1 to ensure user MUST pass this flag (as -1 is invalid)
 		"The current validator cluster nonce for the user from SSV contract. Be _very_ sure about this or you'll lose your stake",
 	)
+	signCmd.PersistentFlags().StringVarP(
+		&ethAddressFlag,
+		"owner-address",
+		"a",
+		"",
+		"The ETH address of the user creating the cluster in hex format",
+	)
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
-	args, depositData, validatorNonce, err := verifyAndGetArgs(cmd)
+	signingConfig, err := parseArgs(cmd)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
 	log := shared.QuietLogger{Quiet: shortFlag}
-	// TODO: this should probably sign something more than just the deposit data root
-	signingOutput, err := cli.Sign(shared.Uniq(append(args, operatorFlag...)), depositData, validatorNonce, log)
+	signingOutput, err := cli.Sign(signingConfig, log)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	path := cli.CreateFilename(stateDirectory, signingOutput)
+	path := cli.CreateFilename(stateDirectoryFlag, signingOutput)
 
 	log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
-	log.Log(base64.StdEncoding.EncodeToString(signingOutput.GroupSignature))
+	log.Log(base64.StdEncoding.EncodeToString(signingOutput.DepositDataSignature))
 
 	bytes, err := cli.StoreStateIfNotExists(path, signingOutput)
 	if err != nil {
@@ -92,36 +102,91 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 }
 
-func verifyAndGetArgs(cmd *cobra.Command) ([]string, api.UnsignedDepositData, uint32, error) {
+func parseArgs(cmd *cobra.Command) (cli.SignatureConfig, error) {
 	// if the operator flag isn't passed, we consume operator addresses from stdin
-	operators, err := arrayOrReader(operatorFlag, cmd.InOrStdin())
+	operators, err := parseOperators(operatorFlag, cmd.InOrStdin())
 	if err != nil {
-		return nil, api.UnsignedDepositData{}, 0, errors.New("you must provider either the --operator flag or operators via stdin")
+		return cli.SignatureConfig{}, fmt.Errorf("error parsing the operators: %v", err)
 	}
 
+	depositData, err := parseUnsignedInputData(inputPathFlag, stateDirectoryFlag)
+	if err != nil {
+		return cli.SignatureConfig{}, fmt.Errorf("error parsing deposit data: %v", err)
+	}
+
+	ownerConfig, err := parseOwnerConfig(validatorNonceFlag, ethAddressFlag)
+	if err != nil {
+		return cli.SignatureConfig{}, fmt.Errorf("error parsing owner details: %v", err)
+	}
+
+	return cli.SignatureConfig{
+		Operators:   operators,
+		DepositData: depositData,
+		Owner:       ownerConfig,
+	}, nil
+}
+
+// parseOperators returns the array if it's non-empty, or reads an array of strings from the provided `Reader` if it's empty
+func parseOperators(arr []string, r io.Reader) ([]string, error) {
+	if len(arr) != 0 {
+		return arr, nil
+	}
+
+	bytes, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Trim(string(bytes), "\n")
+	if lines == "" {
+		return nil, errors.New("reader was empty")
+	}
+
+	return shared.Uniq(strings.Split(lines, " ")), nil
+}
+
+func parseUnsignedInputData(inputPathFlag string, stateDirectory string) (api.UnsignedDepositData, error) {
 	if inputPathFlag == "" {
-		return nil, api.UnsignedDepositData{}, 0, errors.New("input path cannot be empty")
+		return api.UnsignedDepositData{}, errors.New("input path cannot be empty")
 	}
 
 	// there is a default value, so this shouldn't really happen
 	if stateDirectory == "" {
-		return nil, api.UnsignedDepositData{}, 0, errors.New("you must provide a state directory")
-	}
-
-	if validatorNonceFlag < 0 {
-		return nil, api.UnsignedDepositData{}, 0, errors.New("you must pass a validator nonce retrieved from the SSV contract")
+		return api.UnsignedDepositData{}, errors.New("you must provide a state directory")
 	}
 
 	depositBytes, err := os.ReadFile(inputPathFlag)
 	if err != nil {
-		return nil, api.UnsignedDepositData{}, 0, fmt.Errorf("error reading the deposit data file: %v", err)
+		return api.UnsignedDepositData{}, fmt.Errorf("error reading the deposit data file: %v", err)
 	}
 
 	var depositData api.UnsignedDepositData
 	err = json.Unmarshal(depositBytes, &depositData)
 	if err != nil {
-		return nil, api.UnsignedDepositData{}, 0, err
+		return api.UnsignedDepositData{}, err
 	}
 
-	return operators, depositData, uint32(validatorNonceFlag), nil
+	return depositData, nil
+}
+
+func parseOwnerConfig(validatorNonce int32, ethAddress string) (api.OwnerConfig, error) {
+	if validatorNonce < 0 {
+		return api.OwnerConfig{}, fmt.Errorf("validator nonce must be set")
+	}
+
+	// remove any preceding `0x` before parsing it
+	cleanAddress := strings.Trim(ethAddress, "0x")
+	if cleanAddress == "" {
+		return api.OwnerConfig{}, fmt.Errorf("owner address cannot be empty")
+	}
+
+	address, err := hex.DecodeString(cleanAddress)
+	if err != nil {
+		return api.OwnerConfig{}, fmt.Errorf("owner address must be valid hex: %v", err)
+	}
+
+	return api.OwnerConfig{
+		Address:        address,
+		ValidatorNonce: uint32(validatorNonce),
+	}, nil
 }

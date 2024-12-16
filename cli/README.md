@@ -27,6 +27,7 @@ $ ssv-dkg operators list
 - Start a DKG and sign your deposit data
 ```shell
 $ ssv-dkg sign --input /path/to/deposit/data \
+      --owner-address 0xsomehexencodedETHaddress \
       --validator-nonce 0 \
       --output /path/to/storing/permanent/data/for/reshares/etc \
       --operator https://example.org \
@@ -49,12 +50,13 @@ You will need to maintain this state file if you wish to reshare the key for thi
 
 - combine both in a single command
 ```shell
-$ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/to/deposit --validator-nonce 0 --quiet > signed_deposit.json 
+$ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --input /path/to/deposit --owner-address 0xsomehexencodedETHaddress  --validator-nonce 0 --quiet > signed_deposit.json 
 ```
 
 - reshare the key of a validator cluster you've already created
 ```shell
 $ ssv-dkg reshare --state ~/.ssv/deadbeefcafebabe.json \
+      --owner-address 0xsomehexencodedETHaddress \
       --validator-nonce 1 \
       --operator https://example.org \
       --operator https://muster.de \

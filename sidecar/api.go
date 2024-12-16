@@ -49,7 +49,7 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// sign the deposit data using the key share
-	depositDataMessage, err := crypto.DepositDataMessage(request.Data.ExtractRequired(), result.GroupPublicPoly)
+	depositDataMessage, err := crypto.DepositDataMessage(request.DepositData.ExtractRequired(), result.GroupPublicPoly)
 	if err != nil {
 		return api.SignResponse{}, err
 	}
@@ -66,8 +66,9 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 		return api.SignResponse{}, err
 	}
 
-	// sign the validator nonce to prevent replays
-	signedNonce, err := d.thresholdScheme.Sign(d.key, crypto.ValidatorNonceMessage(request.ValidatorNonce))
+	// sign the validator nonce to prevent operators signing up the same validator twice
+	validatorNonceMessage := crypto.ValidatorNonceMessage(request.OwnerConfig.Address, request.OwnerConfig.ValidatorNonce)
+	signedNonce, err := d.thresholdScheme.SignWithPartial(result.KeyShare, validatorNonceMessage)
 	if err != nil {
 		slog.Error("error signing nonce", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err

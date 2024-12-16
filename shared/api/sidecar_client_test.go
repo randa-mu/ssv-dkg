@@ -61,7 +61,7 @@ func TestSidecarSignErrReturned(t *testing.T) {
 
 	expectedErr := errors.New("downstream")
 	httpmock.RegisterResponder("POST", "https://example.org/sign", httpmock.NewErrorResponder(expectedErr))
-	signRequest := SignRequest{Data: depositData}
+	signRequest := SignRequest{DepositData: depositData}
 	_, err := client.Sign(signRequest)
 	require.Error(t, err)
 }
@@ -71,7 +71,7 @@ func TestSidecarInvalidJsonDoesntPanic(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 
 	httpmock.RegisterResponder("POST", "https://example.org/sign", httpmock.NewStringResponder(http.StatusOK, "{ invalid Json }"))
-	signRequest := SignRequest{Data: depositData}
+	signRequest := SignRequest{DepositData: depositData}
 	_, err := client.Sign(signRequest)
 	require.Error(t, err)
 }
