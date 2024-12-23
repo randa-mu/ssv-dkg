@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/hex"
 	"fmt"
 	"path"
 	"strconv"
@@ -31,17 +32,28 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
-	signingOutput, err := cli.Sign(operators, depositData, 1, log)
+	address, err := hex.DecodeString("deadbeef")
+	require.NoError(t, err)
+
+	args := cli.SignatureConfig{
+		Operators:   operators,
+		DepositData: depositData,
+		Owner: api.OwnerConfig{
+			ValidatorNonce: 1,
+			Address:        address,
+		},
+	}
+	signingOutput, err := cli.Sign(args, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
-	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.DepositDataSignature)
 	require.NotEmpty(t, signingOutput.PolynomialCommitments)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
-	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.DepositDataSignature)
 	require.NotEmpty(t, signingOutput.PolynomialCommitments)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
@@ -49,7 +61,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
-	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.DepositDataSignature)
 	require.NotEmpty(t, signingOutput.PolynomialCommitments)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
@@ -59,7 +71,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
-	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.DepositDataSignature)
 	require.NotEmpty(t, signingOutput.PolynomialCommitments)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 }
@@ -78,10 +90,21 @@ func TestResharingNewNode(t *testing.T) {
 	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
-	signingOutput, err := cli.Sign(operators, depositData, 0, log)
+
+	address, err := hex.DecodeString("deadbeef")
+	require.NoError(t, err)
+	args := cli.SignatureConfig{
+		Operators:   operators,
+		DepositData: depositData,
+		Owner: api.OwnerConfig{
+			ValidatorNonce: 0,
+			Address:        address,
+		},
+	}
+	signingOutput, err := cli.Sign(args, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
-	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.DepositDataSignature)
 	require.NotEmpty(t, signingOutput.PolynomialCommitments)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
@@ -91,7 +114,7 @@ func TestResharingNewNode(t *testing.T) {
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
-	require.NotEmpty(t, signingOutput.GroupSignature)
+	require.NotEmpty(t, signingOutput.DepositDataSignature)
 	require.NotEmpty(t, signingOutput.PolynomialCommitments)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 }
@@ -109,8 +132,17 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 	})
 
 	depositData := createUnsignedDepositData()
-
-	_, err := cli.Sign(operators, depositData, 0, shared.QuietLogger{Quiet: false})
+	address, err := hex.DecodeString("deadbeef")
+	require.NoError(t, err)
+	args := cli.SignatureConfig{
+		Operators:   operators,
+		DepositData: depositData,
+		Owner: api.OwnerConfig{
+			ValidatorNonce: 0,
+			Address:        address,
+		},
+	}
+	_, err = cli.Sign(args, shared.QuietLogger{Quiet: false})
 	require.Error(t, err)
 }
 
@@ -127,8 +159,17 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 	})
 
 	depositData := createUnsignedDepositData()
-
-	_, err := cli.Sign(operators, depositData, 0, shared.QuietLogger{Quiet: false})
+	address, err := hex.DecodeString("deadbeef")
+	require.NoError(t, err)
+	args := cli.SignatureConfig{
+		Operators:   operators,
+		DepositData: depositData,
+		Owner: api.OwnerConfig{
+			ValidatorNonce: 0,
+			Address:        address,
+		},
+	}
+	_, err = cli.Sign(args, shared.QuietLogger{Quiet: false})
 	require.Error(t, err)
 }
 

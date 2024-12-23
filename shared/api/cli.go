@@ -4,6 +4,11 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
+type OwnerConfig struct {
+	Address        []byte
+	ValidatorNonce uint32
+}
+
 type UnsignedDepositData struct {
 	WithdrawalCredentials []byte `json:"withdrawal_credentials"`
 	DepositDataRoot       []byte `json:"deposit_data_root"`
@@ -21,11 +26,11 @@ type SignedDepositData struct {
 }
 
 type SigningOutput struct {
-	SessionID             []byte            `json:"session_id"`
-	GroupSignature        []byte            `json:"group_signature"`
-	PolynomialCommitments []byte            `json:"group_public_commitments"`
-	OperatorShares        []OperatorShare   `json:"operator_shares"`
-	DepositData           SignedDepositData `json:"deposit_data"`
+	SessionID               []byte          `json:"session_id"`
+	PolynomialCommitments   []byte          `json:"group_public_commitments"`
+	OperatorShares          []OperatorShare `json:"operator_shares"`
+	DepositDataSignature    []byte          `json:"deposit_data_signature"`
+	ValidatorNonceSignature []byte          `json:"validator_nonce_signature"`
 }
 
 type OperatorShare struct {

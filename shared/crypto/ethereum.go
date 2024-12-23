@@ -2,7 +2,9 @@ package crypto
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -30,8 +32,6 @@ func DepositDataMessage(data RequiredDepositFields, publicKey []byte) ([]byte, e
 	return append(publicKey, msg...), nil
 }
 
-func ValidatorNonceMessage(nonce uint32) []byte {
-	out := make([]byte, 4)
-	binary.BigEndian.PutUint32(out, nonce)
-	return out
+func ValidatorNonceMessage(address []byte, validatorNonce uint32) []byte {
+	return []byte(fmt.Sprintf("%s:%d", hex.EncodeToString(address), validatorNonce))
 }
