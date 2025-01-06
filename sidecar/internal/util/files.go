@@ -88,6 +88,7 @@ func LoadSsvPublicKey(filepath string) ([]byte, error) {
 			return nil, fmt.Errorf("failed to parse PEM: %w", err)
 		}
 
+		// and try to parse the interior key as an RSA key
 		_, ok := out.(*rsa.PublicKey)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse public key bytes wrapped in PEM: %w", err)
