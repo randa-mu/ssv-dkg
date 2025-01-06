@@ -5,9 +5,9 @@ This module contains an implementation of the distributed key generation sidecar
 
 ## steps
 - sign public key and upload to repo
-- start your SSV node (or stub)
-- start your sidecar
-
+- generate an encrypted key for your SSV node
+- start your SSV node
+- start your sidecar with a link with the encrypted key JSON file for the SSV node
 
 ## example commands
 - generate a BLS12-381 keypair
@@ -25,7 +25,7 @@ $ ssv-sidecar key sign --directory ~/.ssv --url https://example.org | jq
 }
 ```
 
-- start your SSV node (or a stubbed node, which can be found in [../tools/stub](../tools/stub))
+- start your SSV node
 
 - start your sidecar node
 ```shell

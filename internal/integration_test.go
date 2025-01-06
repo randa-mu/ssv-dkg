@@ -172,7 +172,7 @@ func startSidecars(t *testing.T, ports []uint) []sidecar.Daemon {
 		}()
 		err := awaitSidecarHealthy(o)
 		if err != nil {
-			t.Fatalf("error starting stub: %v", err)
+			t.Fatalf("error starting sidecar: %v", err)
 		}
 	}
 	t.Cleanup(func() {
@@ -193,7 +193,7 @@ func startErrorSidecars(t *testing.T, ports []uint, errorCooordinator sidecar.DK
 		}()
 		err := awaitSidecarHealthy(o)
 		if err != nil {
-			t.Fatalf("error starting stub: %v", err)
+			t.Fatalf("error starting sidecar: %v", err)
 		}
 	}
 	t.Cleanup(func() {
@@ -277,11 +277,6 @@ func awaitHealthy(h healthCheck) error {
 
 func awaitSidecarHealthy(port uint) error {
 	c := api.NewSidecarClient(fmt.Sprintf("http://127.0.0.1:%d", port))
-	return awaitHealthy(c)
-}
-
-func awaitStubHealthy(port uint) error {
-	c := api.NewSsvClient(fmt.Sprintf("http://127.0.0.1:%d", port))
 	return awaitHealthy(c)
 }
 
