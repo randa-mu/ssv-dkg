@@ -19,11 +19,11 @@ import (
 type Daemon struct {
 	port             uint
 	publicURL        string
-	ssvClient        api.Ssv
 	server           *http.Server
 	dkg              DKGProtocol
 	db               *dkg.FileStore
 	key              crypto.Keypair
+	ssvKey           []byte
 	stateDir         string
 	thresholdScheme  crypto.ThresholdScheme
 	encryptionScheme crypto.EncryptionScheme
@@ -35,13 +35,13 @@ type DKGProtocol interface {
 	ProcessPacket(packet api.SidecarDKGPacket) error
 }
 
-func NewDaemon(port uint, publicURL string, ssvURL string, stateDir string) (Daemon, error) {
+func NewDaemon(port uint, publicURL string, stateDir string, publicKeyPath string) (Daemon, error) {
 	thresholdScheme := crypto.NewBLSSuite()
 	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
-	return NewDaemonWithDKG(port, publicURL, ssvURL, stateDir, dkgCoordinator)
+	return NewDaemonWithDKG(port, publicURL, stateDir, dkgCoordinator, publicKeyPath)
 }
 
-func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir string, coordinator DKGProtocol) (Daemon, error) {
+func NewDaemonWithDKG(port uint, publicURL string, stateDir string, coordinator DKGProtocol, publicKeyPath string) (Daemon, error) {
 	if port == 0 {
 		return Daemon{}, errors.New("you must provide a port")
 	}
@@ -50,8 +50,8 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir strin
 		return Daemon{}, errors.New("you must pass a valid path to a keypair")
 	}
 
-	if ssvURL == "" {
-		return Daemon{}, errors.New("you must pass the URL of the SSV node you wish to connect the sidecar to")
+	if publicKeyPath == "" {
+		return Daemon{}, errors.New("you must pass the path to your SSV node's public key")
 	}
 
 	if publicURL == "" {
@@ -66,6 +66,11 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir strin
 		return Daemon{}, fmt.Errorf("error loading keypair: %w", err)
 	}
 
+	ssvKey, err := util.LoadSsvPublicKey(publicKeyPath)
+	if err != nil {
+		return Daemon{}, fmt.Errorf("error loading ssv key: %w", err)
+	}
+
 	slog.Info(fmt.Sprintf("Keypair loaded from %s", stateDir))
 
 	thresholdScheme := crypto.NewBLSSuite()
@@ -73,7 +78,7 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir strin
 		port:             port,
 		key:              keypair,
 		publicURL:        publicURL,
-		ssvClient:        api.NewSsvClient(ssvURL),
+		ssvKey:           ssvKey,
 		stateDir:         stateDir,
 		dkg:              coordinator,
 		db:               dkg.NewFileStore(stateDir),
@@ -92,10 +97,6 @@ func NewDaemonWithDKG(port uint, publicURL string, ssvURL string, stateDir strin
 func (d Daemon) Start() chan error {
 	errs := make(chan error, 1)
 
-	err := d.ssvClient.Health()
-	if err != nil {
-		errs <- err
-	}
 	go func() {
 		err := d.server.ListenAndServe()
 		errs <- err

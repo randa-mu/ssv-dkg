@@ -11,7 +11,7 @@ import (
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	dkg "github.com/randa-mu/ssv-dkg/sidecar/dkg"
+	"github.com/randa-mu/ssv-dkg/sidecar/dkg"
 )
 
 func createAPI(d Daemon) *chi.Mux {
@@ -26,13 +26,6 @@ func (d Daemon) Health() error {
 
 func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	sessionID := hex.EncodeToString(request.SessionID)
-
-	// fetch the public key of the SSV node
-	validatorIdentity, err := d.ssvClient.Identity()
-	if err != nil {
-		slog.Error("error fetching SSV node public key", "err", err)
-		return api.SignResponse{}, err
-	}
 
 	// run the DKG protocol to retrieve a key share for signing
 	result, err := d.dkg.RunDKG(request.Operators, request.SessionID, d.key)
@@ -60,7 +53,7 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// encrypt the key share for use by the SSV node later via smart contract
-	encryptedShare, err := d.encryptionScheme.Encrypt(validatorIdentity.PublicKey, result.KeyShare)
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, result.KeyShare)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
@@ -111,13 +104,6 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 		return api.ReshareResponse{}, errors.New("sessionID cannot be nil for a reshare")
 	}
 
-	// fetch the public key of the SSV node
-	validatorIdentity, err := d.ssvClient.Identity()
-	if err != nil {
-		slog.Error("error fetching SSV node public key", "err", err)
-		return api.ReshareResponse{}, err
-	}
-
 	dkgState, err := d.db.LoadSingle(sessionIDHex, request.PreviousEncryptedShareHash)
 	if err != nil {
 		slog.Error("error loading previous state from database", "err", err)
@@ -161,7 +147,7 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 	}
 
 	// encrypt the key share for use by the SSV node later via smart contract
-	encryptedShare, err := d.encryptionScheme.Encrypt(validatorIdentity.PublicKey, result.KeyShare)
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, result.KeyShare)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionIDHex, "err", err)
 		return api.ReshareResponse{}, err

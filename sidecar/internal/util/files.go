@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -49,10 +50,33 @@ func LoadKeypair(stateDir string) (crypto.Keypair, error) {
 	}
 
 	var keypair crypto.Keypair
-	err = json.Unmarshal(file, &keypair)
-	if err != nil {
+
+	if err = json.Unmarshal(file, &keypair); err != nil {
 		return crypto.Keypair{}, fmt.Errorf("could not unmarshal key: %w", err)
 	}
 
 	return keypair, nil
+}
+
+type FileWithPublicKey struct {
+	PublicKey []byte `json:"pubKey"`
+}
+
+func LoadSsvPublicKey(filepath string) ([]byte, error) {
+	file, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read rsa public key from %s: %w", filepath, err)
+	}
+
+	var key FileWithPublicKey
+	if err = json.Unmarshal(file, &key); err != nil {
+		return nil, fmt.Errorf("could not unmarshal public key from json in %s: %w", filepath, err)
+	}
+
+	// we just do this here to validate it
+	if _, err := x509.ParsePKCS1PublicKey(key.PublicKey); err != nil {
+		return nil, fmt.Errorf("failed to parse public key bytes as JSON from %s: %w", filepath, err)
+	}
+
+	return key.PublicKey, nil
 }
