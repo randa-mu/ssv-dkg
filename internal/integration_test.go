@@ -2,7 +2,9 @@ package internal
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"os"
 	"path"
 	"strconv"
 	"testing"
@@ -15,15 +17,11 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/sidecar"
-	"github.com/randa-mu/ssv-dkg/tools/stub"
 )
 
 func TestSuccessfulSigningAndResharing(t *testing.T) {
-	var stubPort uint = 10000
-	startStubSSVNode(t, stubPort)
-
 	ports := []uint{10001, 10002, 10003, 10004}
-	startSidecars(t, ports, stubPort)
+	startSidecars(t, ports)
 
 	operators := fmap(ports, func(o uint) string {
 		return fmt.Sprintf("http://127.0.0.1:%d", o)
@@ -66,7 +64,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a third time with a slightly different group
-	startSidecars(t, []uint{10005}, stubPort)
+	startSidecars(t, []uint{10005})
 	operators = append(operators[0:3], "http://127.0.0.1:10005")
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
@@ -77,11 +75,8 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 }
 
 func TestResharingNewNode(t *testing.T) {
-	var stubPort uint = 10000
-	startStubSSVNode(t, stubPort)
-
 	ports := []uint{10001, 10002, 10003, 10004}
-	startSidecars(t, ports, stubPort)
+	startSidecars(t, ports)
 
 	operators := fmap(ports, func(o uint) string {
 		return fmt.Sprintf("http://127.0.0.1:%d", o)
@@ -109,7 +104,7 @@ func TestResharingNewNode(t *testing.T) {
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a third time with a slightly different group
-	startSidecars(t, []uint{10006}, stubPort)
+	startSidecars(t, []uint{10006})
 	operators = append(operators[0:3], "http://127.0.0.1:10006")
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
@@ -120,12 +115,9 @@ func TestResharingNewNode(t *testing.T) {
 }
 
 func TestErroneousNodeOnStartup(t *testing.T) {
-	var stubPort uint = 10010
-	startStubSSVNode(t, stubPort)
-
 	ports := []uint{10011, 10012, 10013}
-	startSidecars(t, ports, stubPort)
-	startErrorSidecars(t, []uint{10014}, stubPort, ErrorStartingDKG{})
+	startSidecars(t, ports)
+	startErrorSidecars(t, []uint{10014}, ErrorStartingDKG{})
 
 	operators := fmap(ports, func(o uint) string {
 		return fmt.Sprintf("http://127.0.0.1:%d", o)
@@ -147,12 +139,9 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 }
 
 func TestErroneousNodeOnRunningDKG(t *testing.T) {
-	var stubPort uint = 10020
-	startStubSSVNode(t, stubPort)
-
 	ports := []uint{10021, 10022, 10023}
-	startSidecars(t, ports, stubPort)
-	startErrorSidecars(t, []uint{10024}, stubPort, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://127.0.0.1:10023"})
+	startSidecars(t, ports)
+	startErrorSidecars(t, []uint{10024}, ErrorDuringDKG{scheme: crypto.NewBLSSuite(), url: "http://127.0.0.1:10023"})
 
 	operators := fmap(ports, func(o uint) string {
 		return fmt.Sprintf("http://127.0.0.1:%d", o)
@@ -173,26 +162,17 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 	require.Error(t, err)
 }
 
-func startStubSSVNode(t *testing.T, ssvPort uint) {
-	stop := stub.StartStub(ssvPort)
-	t.Cleanup(stop)
-	err := awaitStubHealthy(ssvPort)
-	if err != nil {
-		t.Fatalf("error starting SSV stub: %v", err)
-	}
-}
-
-func startSidecars(t *testing.T, ports []uint, ssvPort uint) []sidecar.Daemon {
+func startSidecars(t *testing.T, ports []uint) []sidecar.Daemon {
 	out := make([]sidecar.Daemon, len(ports))
 	for i, o := range ports {
-		d := createDaemon(t, o, ssvPort)
+		d := createDaemon(t, o)
 		out[i] = d
 		go func() {
 			d.Start()
 		}()
 		err := awaitSidecarHealthy(o)
 		if err != nil {
-			t.Fatalf("error starting stub: %v", err)
+			t.Fatalf("error starting sidecar: %v", err)
 		}
 	}
 	t.Cleanup(func() {
@@ -203,17 +183,17 @@ func startSidecars(t *testing.T, ports []uint, ssvPort uint) []sidecar.Daemon {
 	return out
 }
 
-func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordinator sidecar.DKGProtocol) []sidecar.Daemon {
+func startErrorSidecars(t *testing.T, ports []uint, errorCooordinator sidecar.DKGProtocol) []sidecar.Daemon {
 	out := make([]sidecar.Daemon, len(ports))
 	for i, o := range ports {
-		d := createErrorDaemon(t, o, ssvPort, errorCooordinator)
+		d := createErrorDaemon(t, o, errorCooordinator)
 		out[i] = d
 		go func() {
 			d.Start()
 		}()
 		err := awaitSidecarHealthy(o)
 		if err != nil {
-			t.Fatalf("error starting stub: %v", err)
+			t.Fatalf("error starting sidecar: %v", err)
 		}
 	}
 	t.Cleanup(func() {
@@ -224,29 +204,38 @@ func startErrorSidecars(t *testing.T, ports []uint, ssvPort uint, errorCooordina
 	return out
 }
 
-func createErrorDaemon(t *testing.T, port uint, ssvPort uint, errorCoordinator sidecar.DKGProtocol) sidecar.Daemon {
+func createErrorDaemon(t *testing.T, port uint, errorCoordinator sidecar.DKGProtocol) sidecar.Daemon {
 	stateDir := path.Join(t.TempDir(), strconv.Itoa(int(port)))
 	err := sidecar.GenerateKey(stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	ssvKeyPath := path.Join(stateDir, "pub.json")
+	err = generateRSAKey(path.Join(stateDir, "pub.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
 	_, err = sidecar.SignKey(url, stateDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ssvURL := fmt.Sprintf("http://127.0.0.1:%d", ssvPort)
-	d, err := sidecar.NewDaemonWithDKG(port, url, ssvURL, stateDir, errorCoordinator)
+	d, err := sidecar.NewDaemonWithDKG(port, url, stateDir, errorCoordinator, ssvKeyPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return d
 }
 
-func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
+func createDaemon(t *testing.T, port uint) sidecar.Daemon {
 	stateDir := path.Join(t.TempDir(), strconv.Itoa(int(port)))
 	err := sidecar.GenerateKey(stateDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ssvKeyPath := path.Join(stateDir, "pub.json")
+	err = generateRSAKey(ssvKeyPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,8 +245,7 @@ func createDaemon(t *testing.T, port uint, ssvPort uint) sidecar.Daemon {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ssvURL := fmt.Sprintf("http://127.0.0.1:%d", ssvPort)
-	d, err := sidecar.NewDaemon(port, url, ssvURL, stateDir)
+	d, err := sidecar.NewDaemon(port, url, stateDir, ssvKeyPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -292,11 +280,6 @@ func awaitSidecarHealthy(port uint) error {
 	return awaitHealthy(c)
 }
 
-func awaitStubHealthy(port uint) error {
-	c := api.NewSsvClient(fmt.Sprintf("http://127.0.0.1:%d", port))
-	return awaitHealthy(c)
-}
-
 func createUnsignedDepositData() api.UnsignedDepositData {
 	return api.UnsignedDepositData{
 		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
@@ -307,4 +290,26 @@ func createUnsignedDepositData() api.UnsignedDepositData {
 		NetworkName:           "somenetwork",
 		DepositCLIVersion:     "somecli",
 	}
+}
+
+type fileWithPublicKey struct {
+	PublicKey []byte `json:"pubKey"`
+}
+
+func generateRSAKey(path string) error {
+	suite := crypto.NewRSASuite()
+	kp, err := suite.CreateKeypair()
+	if err != nil {
+		return err
+	}
+
+	file := fileWithPublicKey{
+		PublicKey: kp.Public,
+	}
+	bytes, err := json.Marshal(file)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, bytes, 0o644)
 }

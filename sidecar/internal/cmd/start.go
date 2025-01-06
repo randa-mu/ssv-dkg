@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	PortFlag      uint
-	SsvURLFlag    string
-	PublicURLFlag string
-	VerboseFlag   bool
-	startCmd      = &cobra.Command{
+	PortFlag          uint
+	PublicKeyPathFlag string
+	PublicURLFlag     string
+	VerboseFlag       bool
+	startCmd          = &cobra.Command{
 		Use:   "start",
 		Short: "Start the DKG sidecar",
 		Long:  "Start the DKG sidecar daemon, enabling the creation of validator clusters using a distributed key.",
@@ -36,11 +36,11 @@ func init() {
 		"the public port you wish to run the sidecar server on",
 	)
 	startCmd.PersistentFlags().StringVarP(
-		&SsvURLFlag,
-		"ssv-url",
-		"s",
-		"http://127.0.0.1:8888",
-		"the hostname and port of the SSV binary you wish to connect to",
+		&PublicKeyPathFlag,
+		"public-key",
+		"f",
+		"",
+		"the filepath of your SSV node's public key",
 	)
 	startCmd.PersistentFlags().StringVarP(
 		&PublicURLFlag,
@@ -66,7 +66,7 @@ func Start(_ *cobra.Command, _ []string) {
 		slog.SetDefault(l)
 	}
 
-	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, SsvURLFlag, DirectoryFlag)
+	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, DirectoryFlag, PublicKeyPathFlag)
 	if err != nil {
 		slog.Error("error starting daemon", "err", err)
 		os.Exit(1)
