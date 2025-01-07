@@ -78,13 +78,15 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 		return api.SigningOutput{}, fmt.Errorf("error aggregating validator nonce signature: %v", err)
 	}
 
-	return api.SigningOutput{
+	output := api.SigningOutput{
 		SessionID:               sessionID,
-		PolynomialCommitments:   groupPublicKey,
+		GroupPublicKey:          groupPublicKey,
 		OperatorShares:          extractEncryptedShares(responses),
 		DepositDataSignature:    depositDataSignature,
 		ValidatorNonceSignature: validatorNonceSignature,
-	}, nil
+	}
+
+	return output, nil
 }
 
 func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto.Identity, error) {

@@ -80,7 +80,7 @@ func (f *FileStore) Save(group GroupFile) error {
 		return err
 	}
 
-	return os.WriteFile(p, b, 0o644)
+	return os.WriteFile(p, b, 0o755)
 }
 
 // Load loads a set of group files associated with a given sessionID

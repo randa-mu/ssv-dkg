@@ -13,7 +13,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(versionCmd, operatorsCmd, signCmd, reshareCmd)
+	rootCmd.AddCommand(versionCmd, operatorsCmd, signCmd, reshareCmd, printCmd)
 }
 
 func Execute() error {
