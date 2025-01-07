@@ -1,10 +1,7 @@
 package util
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"os"
 	"path"
@@ -75,25 +72,5 @@ func LoadSsvPublicKey(filepath string) ([]byte, error) {
 		return nil, fmt.Errorf("could not unmarshal public key from json in %s: %w", filepath, err)
 	}
 
-	// if it's not in pkcs1 format
-	if _, err := x509.ParsePKCS1PublicKey(key.PublicKey); err != nil {
-		// we try unwrapping the PEM format
-		block, _ := pem.Decode(key.PublicKey)
-		if block == nil {
-			return nil, fmt.Errorf("could not decode the public key - not in PEM or PKCS1 format")
-		}
-
-		out, err := x509.ParsePKIXPublicKey(block.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse PEM: %w", err)
-		}
-
-		// and try to parse the interior key as an RSA key
-		_, ok := out.(*rsa.PublicKey)
-		if !ok {
-			return nil, fmt.Errorf("failed to parse public key bytes wrapped in PEM: %w", err)
-		}
-		return block.Bytes, nil
-	}
-	return key.PublicKey, nil
+	return crypto.NormalisePublicKeyBytes(key.PublicKey)
 }
