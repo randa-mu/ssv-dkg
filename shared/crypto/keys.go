@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 
 	"github.com/drand/kyber"
+	"github.com/randa-mu/ssv-dkg/shared/json"
 )
 
 // SigningScheme represents a cryptographic scheme used for signing and verification operations
@@ -56,9 +57,9 @@ func (k Keypair) SelfSign(suite SigningScheme, address string) (Identity, error)
 }
 
 type Identity struct {
-	Address   string `json:"address"`
-	Public    []byte `json:"public"`
-	Signature []byte `json:"signature"`
+	Address   string             `json:"address"`
+	Public    json.UnpaddedBytes `json:"public"`
+	Signature json.UnpaddedBytes `json:"signature"`
 }
 
 // Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file

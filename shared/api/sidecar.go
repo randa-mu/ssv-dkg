@@ -116,6 +116,7 @@ func createSignAPI(node Sidecar) http.HandlerFunc {
 		bytes, err := io.ReadAll(request.Body)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
+			slog.Debug("error reading signing body", "body", bytes, "err", err)
 			return
 		}
 
@@ -123,6 +124,7 @@ func createSignAPI(node Sidecar) http.HandlerFunc {
 		err = json.Unmarshal(bytes, &requestBody)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
+			slog.Debug("error marshalling signing body", "body", bytes, "err", err)
 			return
 		}
 
