@@ -80,7 +80,6 @@ func digestFor(publicKey []byte, address string) ([]byte, error) {
 	if err := binary.Write(buf, binary.BigEndian, publicKey); err != nil {
 		return nil, err
 	}
-
 	if err := binary.Write(buf, binary.BigEndian, []byte(address)); err != nil {
 		return nil, err
 	}

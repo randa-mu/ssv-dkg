@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -10,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/randa-mu/ssv-dkg/cli/internal/state"
 	"github.com/spf13/cobra"
 
 	"github.com/randa-mu/ssv-dkg/cli"
@@ -84,22 +84,34 @@ func Sign(cmd *cobra.Command, _ []string) {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
+	// run a DKG and get the signed output
 	log := shared.QuietLogger{Quiet: shortFlag}
 	signingOutput, err := cli.Sign(signingConfig, log)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	path := cli.CreateFilename(stateDirectoryFlag, signingOutput)
+	path := state.CreateFilename(stateDirectoryFlag, signingOutput)
 
-	log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
-	log.Log(base64.StdEncoding.EncodeToString(signingOutput.DepositDataSignature))
-
-	bytes, err := cli.StoreStateIfNotExists(path, signingOutput)
-	if err != nil {
-		log.Log(fmt.Sprintf("⚠️  there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
-		log.Log(string(bytes))
+	nextState := state.StoredState{
+		OwnerConfig:   signingConfig.Owner,
+		SigningOutput: signingOutput,
 	}
+	bytes, err := state.StoreStateIfNotExists(path, nextState)
+	if err != nil {
+		log.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
+		log.Log(string(bytes))
+	} else {
+		log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
+	}
+
+	keyshareFile := state.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput)
+	j, err := json.Marshal(keyshareFile)
+	if err != nil {
+		shared.Exit(fmt.Sprintf("couldn't turn the keyshare into json: %v", err))
+	}
+	log.MaybeLog("keyfile JSON for use with the SSV UI:")
+	log.Log(string(j))
 }
 
 func parseArgs(cmd *cobra.Command) (cli.SignatureConfig, error) {
