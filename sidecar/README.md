@@ -5,9 +5,9 @@ This module contains an implementation of the distributed key generation sidecar
 
 ## steps
 - sign public key and upload to repo
-- generate an encrypted key for your SSV node
+- generate an encrypted key for your SSV node (as per [the SSV docs](https://docs.ssv.network/operator-user-guides/operator-node/installation#generate-operator-keys-encrypted))
 - start your SSV node
-- start your sidecar with a link with the encrypted key JSON file for the SSV node
+- start your sidecar passing the path to the encrypted key file of your SSV node using the `--ssv-key` flag
 
 ## example commands
 - generate a BLS12-381 keypair
@@ -29,7 +29,7 @@ $ ssv-sidecar key sign --directory ~/.ssv --url https://example.org | jq
 
 - start your sidecar node
 ```shell
-$ ssv-sidecar start --port 443 --directory ~/.ssv --public-key /some/path/to/public/key
+$ ssv-sidecar start --port 443 --directory ~/.ssv --ssv-key /some/path/to/ssv/key/file
 {"time":"2023-11-28T17:46:27+01:00","level":"info","message":"Keypair loaded from ~/.ssv"}
 {"time":"2023-11-28T17:46:27+01:00","level":"info","message":"SSV sidecar started, serving on port 443"}
 ```
