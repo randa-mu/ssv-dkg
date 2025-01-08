@@ -37,10 +37,10 @@ func init() {
 	)
 	startCmd.PersistentFlags().StringVarP(
 		&PublicKeyPathFlag,
-		"public-key",
-		"f",
+		"ssv-key",
+		"s",
 		"",
-		"the filepath of your SSV node's public key",
+		"the filepath of your SSV node's encrypted key file",
 	)
 	startCmd.PersistentFlags().StringVarP(
 		&PublicURLFlag,
