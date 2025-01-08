@@ -2,11 +2,12 @@ package api
 
 import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
+	"github.com/randa-mu/ssv-dkg/shared/json"
 )
 
 type OwnerConfig struct {
-	Address        []byte
-	ValidatorNonce uint32
+	Address        json.HexBytes `json:"address"`
+	ValidatorNonce uint32        `json:"validator_nonce"`
 }
 
 type UnsignedDepositData struct {
@@ -26,16 +27,16 @@ type SignedDepositData struct {
 }
 
 type SigningOutput struct {
-	SessionID               []byte          `json:"session_id"`
-	GroupPublicKey          []byte          `json:"group_public_commitments"`
-	OperatorShares          []OperatorShare `json:"operator_shares"`
-	DepositDataSignature    []byte          `json:"deposit_data_signature"`
-	ValidatorNonceSignature []byte          `json:"validator_nonce_signature"`
+	SessionID               json.UnpaddedBytes `json:"session_id"`
+	GroupPublicKey          json.UnpaddedBytes `json:"group_public_commitments"`
+	OperatorShares          []OperatorShare    `json:"operator_shares"`
+	DepositDataSignature    json.UnpaddedBytes `json:"deposit_data_signature"`
+	ValidatorNonceSignature json.UnpaddedBytes `json:"validator_nonce_signature"`
 }
 
 type OperatorShare struct {
-	Identity       crypto.Identity `json:"identity"`
-	EncryptedShare []byte          `json:"encrypted_share"`
+	Identity       crypto.Identity    `json:"identity"`
+	EncryptedShare json.UnpaddedBytes `json:"encrypted_share"`
 }
 
 type OperatorResponse struct {

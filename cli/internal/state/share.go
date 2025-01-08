@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -46,16 +47,22 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
+	var publicKeys []byte
+	var encryptedShares []byte
 
 	for i, share := range signingOutput.OperatorShares {
-		operatorKey := make([]byte, base64.StdEncoding.EncodedLen(len(share.Identity.Public)))
-		base64.StdEncoding.Encode(operatorKey, share.Identity.Public)
+		operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(share.Identity.Public)))
+		base64.RawStdEncoding.Encode(operatorKey, share.Identity.Public)
 		operators[i] = operator{
 			Id:          uint32(i),
 			OperatorKey: operatorKey,
 		}
 		operatorIDs[i] = uint32(i)
+		publicKeys = append(publicKeys, share.Identity.Public...)
+		encryptedShares = append(encryptedShares, share.EncryptedShare...)
 	}
+
+	sharesData := append(append(signingOutput.ValidatorNonceSignature, publicKeys...), encryptedShares...)
 
 	return KeyshareFile{
 		Version:   KeyshareFileVersion,
@@ -64,15 +71,14 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 			{
 				Data: data{
 					OwnerNonce:   ownerConfig.ValidatorNonce,
-					OwnerAddress: hex.EncodeToString(ownerConfig.Address),
+					OwnerAddress: fmt.Sprintf("0x%s", hex.EncodeToString(ownerConfig.Address)),
 					PublicKey:    publicKey,
 					Operators:    operators,
 				},
 				Payload: payload{
 					PublicKey:   publicKey,
 					OperatorIDs: operatorIDs,
-					// TODO: work out how this is actually encoded from the encrypted sahres
-					SharesData: "0xdeadbeefdeadbeef",
+					SharesData:  fmt.Sprintf("0x%s", hex.EncodeToString(sharesData)),
 				},
 			},
 		},
