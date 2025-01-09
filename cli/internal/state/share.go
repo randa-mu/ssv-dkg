@@ -3,7 +3,6 @@ package state
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -43,26 +42,17 @@ type payload struct {
 // CreateKeyshareFile takes output from the DKG/signing and creates the keyshare file required
 // to register a validator cluster using the SSV portal
 func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput) KeyshareFile {
-	publicKey := hex.EncodeToString(signingOutput.GroupPublicKey)
-
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
 	var publicKeys []byte
 	var encryptedShares []byte
 
 	for i, share := range signingOutput.OperatorShares {
-		operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(share.Identity.Public)))
-		base64.RawStdEncoding.Encode(operatorKey, share.Identity.Public)
-		operators[i] = operator{
-			Id:          share.Identity.OperatorID,
-			OperatorKey: operatorKey,
-		}
+		operators[i] = createOperatorFromShare(share)
 		operatorIDs[i] = share.Identity.OperatorID
 		publicKeys = append(publicKeys, share.Identity.Public...)
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
 	}
-
-	sharesData := append(append(signingOutput.ValidatorNonceSignature, publicKeys...), encryptedShares...)
 
 	return KeyshareFile{
 		Version:   KeyshareFileVersion,
@@ -71,16 +61,31 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 			{
 				Data: data{
 					OwnerNonce:   ownerConfig.ValidatorNonce,
-					OwnerAddress: fmt.Sprintf("0x%s", hex.EncodeToString(ownerConfig.Address)),
-					PublicKey:    publicKey,
+					OwnerAddress: hex.EncodeToString(ownerConfig.Address),
+					PublicKey:    hex.EncodeToString(signingOutput.GroupPublicKey),
 					Operators:    operators,
 				},
 				Payload: payload{
-					PublicKey:   publicKey,
+					PublicKey:   hex.EncodeToString(signingOutput.GroupPublicKey),
 					OperatorIDs: operatorIDs,
-					SharesData:  fmt.Sprintf("0x%s", hex.EncodeToString(sharesData)),
+					SharesData:  createSharesData(signingOutput, publicKeys, encryptedShares),
 				},
 			},
 		},
 	}
+}
+
+// createOperatorFromShare creates the operator with base64 public keys, while everything else is hex
+func createOperatorFromShare(share api.OperatorShare) operator {
+	operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(share.Identity.Public)))
+	base64.RawStdEncoding.Encode(operatorKey, share.Identity.Public)
+	return operator{
+		Id:          share.Identity.OperatorID,
+		OperatorKey: operatorKey,
+	}
+}
+
+// createSharesData combines the validator nonce signature with the public keys in order then the encrypted shares in order
+func createSharesData(signingOutput api.SigningOutput, publicKeys []byte, encryptedShares []byte) string {
+	return hex.EncodeToString(append(append(signingOutput.ValidatorNonceSignature, publicKeys...), encryptedShares...))
 }
