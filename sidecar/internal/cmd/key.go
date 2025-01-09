@@ -12,24 +12,23 @@ import (
 )
 
 var (
-	UrlFlag string
-	keyCmd  = &cobra.Command{
+	UrlFlag        string
+	OperatorIDFlag uint32
+	keyCmd         = &cobra.Command{
 		Use:   "key",
 		Short: "All operations related to keys",
 	}
+	keyCreateCmd = &cobra.Command{
+		Use:   "create",
+		Short: "Creates an RSA key for this node",
+		Run:   createKey,
+	}
+	keySignCmd = &cobra.Command{
+		Use:   "sign",
+		Short: "Writes the signed public key and address to stdout",
+		Run:   signKey,
+	}
 )
-
-var keyCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Creates an RSA key for this node",
-	Run:   createKey,
-}
-
-var keySignCmd = &cobra.Command{
-	Use:   "sign",
-	Short: "Writes the signed public key and address to stdout",
-	Run:   signKey,
-}
 
 func init() {
 	keyCmd.AddCommand(keyCreateCmd, keySignCmd)
@@ -39,6 +38,13 @@ func init() {
 		"u",
 		"",
 		"The public URL of your sidecar node, including port and scheme",
+	)
+	keySignCmd.PersistentFlags().Uint32VarP(
+		&OperatorIDFlag,
+		"operator-id",
+		"i",
+		0,
+		"The operatorID you received when registering your SSV node",
 	)
 }
 
@@ -63,7 +69,11 @@ func createKey(_ *cobra.Command, args []string) {
 }
 
 func signKey(_ *cobra.Command, _ []string) {
-	signature, err := sidecar.SignKey(UrlFlag, DirectoryFlag)
+	if OperatorIDFlag == 0 {
+		shared.Exit("`operator-id` must be set and greater than 0")
+	}
+
+	signature, err := sidecar.SignKey(UrlFlag, DirectoryFlag, OperatorIDFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}

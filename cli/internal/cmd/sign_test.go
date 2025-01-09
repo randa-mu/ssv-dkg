@@ -29,7 +29,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 				"--validator-nonce", "1",
 				"--owner-address", "0xdeadbeef",
@@ -44,7 +44,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 				"--validator-nonce", "1",
 				"--owner-address", "0xdeadbeef",
@@ -76,7 +76,7 @@ func TestSignCommand(t *testing.T) {
 				"sign",
 				"--owner-address", "0xdeadbeef",
 				"--validator-nonce", "1",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 			},
 		},
@@ -86,7 +86,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 				"--operator", "http://127.0.0.1:8081",
 				"--operator", "http://127.0.0.1:8082",
@@ -99,7 +99,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 				"--validator-nonce", "-1",
 				"--owner-address", "0xdeadbeef",
@@ -114,7 +114,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 				"--validator-nonce", "1",
 				"--operator", "http://127.0.0.1:8081",
@@ -128,7 +128,7 @@ func TestSignCommand(t *testing.T) {
 			args: []string{
 				"ssv-dkg",
 				"sign",
-				"--input", filepath,
+				"--deposit-file", filepath,
 				"--output", filepath,
 				"--validator-nonce", "1",
 				"--owner-address", "0xzzzzzzz",

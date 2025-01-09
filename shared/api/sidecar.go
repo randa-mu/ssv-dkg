@@ -80,9 +80,10 @@ type SidecarIdentityRequest struct {
 }
 
 type SidecarIdentityResponse struct {
-	PublicKey []byte `json:"data"`
-	Address   string `json:"address"`
-	Signature []byte `json:"signature"`
+	OperatorID uint32 `json:"operator_id"`
+	PublicKey  []byte `json:"data"`
+	Address    string `json:"address"`
+	Signature  []byte `json:"signature"`
 }
 
 var (

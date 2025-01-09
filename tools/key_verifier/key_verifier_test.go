@@ -14,15 +14,17 @@ func TestValidKeyValidates(t *testing.T) {
 	valid := `
 {
   "operators": [
+    {
+      "operator_id": 4,
+      "address": "http://127.0.0.1:8084",
+      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
+      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
+    },
 	{
-		"address":"http://localhost:8001",
-		"public":"kFUFd29egtHp/jt17PyGm1RQp8cXFG3ADp3Dcd/vuhVfq0cOJYz2sZkM9EM3ZnZC",
-		"signature":"hk3XmrO+XCT6hc51hQDaw1gLyxXyQTcIog/iTRTYZmBlgr7H5MvkXxNO0QiDb1mECjYFKV/+Qmw+GkoxoNbmpYn97HXt840VcRH7S9hcQMn63VOhDu8GwRaV/SLfQ9JV"
-	},
-	{
-		"address":"http://localhost:8002",
-		"public":"kjO7jmSZWj/GftWDZvjaC5W0m+03+eNlo9HWLutfc51B51A5Aofxo+kqYr4Ny3Bc",
-		"signature":"hJnAukpvzUpesOvp3bhIfYqIDuEoJe3mj+HoJykCGcnmHp09BotZSOGjPMH//v8dGJVAkowbCayCFdW8fds/f8hHGodhmwjvMKmQAVrvYrmuiXAzmBH2FH1Y+uRp6sk2"
+      "operator_id": 3,
+      "address": "http://127.0.0.1:8083",
+      "public": "tEGKf8Lm3pRPrOCNBRtQJBkRybNenn7vmAOJvOCiCODxp86nwILFTYQRl3xk5tum",
+      "signature": "pdUnns3/Au56zgUTdoiFYX4YW7i8WK83yrzw13ZkHCY3Wquy5psLkwmRyB2K/9DfFJj9HOy8FQ0ojM1SCoKv6k/++XlYLSGQMYpeVmiRjvwIYvhMMSUEF1rbcubYz6fE"
 	}
   ]
 }`
@@ -48,12 +50,41 @@ func TestInvalidAddressReturnsError(t *testing.T) {
 {
   "operators": [
     {
-      	"address": "http://notthesameaddressaspublickey:8080",
-		"public":"kFUFd29egtHp/jt17PyGm1RQp8cXFG3ADp3Dcd/vuhVfq0cOJYz2sZkM9EM3ZnZC",
-		"signature":"hk3XmrO+XCT6hc51hQDaw1gLyxXyQTcIog/iTRTYZmBlgr7H5MvkXxNO0QiDb1mECjYFKV/+Qmw+GkoxoNbmpYn97HXt840VcRH7S9hcQMn63VOhDu8GwRaV/SLfQ9JV"
-	}
+      "operator_id": 4,
+      address": "http://notthesameaddressaspublickey:8080",
+      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
+      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
+    }
   ]
 }`
+
+	p := path.Join(t.TempDir(), "keys.json")
+	f, err := os.Create(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = f.Write([]byte(invalid))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	require.Error(t, VerifyKeys(p))
+}
+
+func TestMissingOperatorIDReturnsError(t *testing.T) {
+	t.Parallel()
+
+	invalid := `
+    {
+      "operators": [
+        {
+          "address": "http://127.0.0.1:8084",
+          "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
+          "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
+        }
+      ]
+    }`
 
 	p := path.Join(t.TempDir(), "keys.json")
 	f, err := os.Create(p)
@@ -75,11 +106,12 @@ func TestInvalidSignatureReturnsError(t *testing.T) {
 	invalid := `
 {
   "operators": [
-	{
-		"address":"http://localhost:8001",
-		"public":"kFUFd29egtHp/jt17PyGm1RQp8cXFG3ADp3Dcd/vuhVfq0cOJYz2sZkM9EM3ZnZC",
-		"signature":"notvalidrO+XCT6hc51hQDaw1gLyxXyQTcIog/iTRTYZmBlgr7H5MvkXxNO0QiDb1mECjYFKV/+Qmw+GkoxoNbmpYn97HXt840VcRH7S9hcQMn63VOhDu8GwRaV/SLfQ9JV"
-	}
+    {
+      "operator_id": 4,
+      "address": "http://127.0.0.1:8084",
+      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
+      "signature": "notvalidRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
+    }
   ]
 }`
 
@@ -104,11 +136,12 @@ func TestInvalidJsonReturnsError(t *testing.T) {
 	invalid := `
 {
   "operators": [
-	{
-		"address":"http://localhost:8001",
-		"public":"kFUFd29egtHp/jt17PyGm1RQp8cXFG3ADp3Dcd/vuhVfq0cOJYz2sZkM9EM3ZnZC",
-		"signature":"hk3XmrO+XCT6hc51hQDaw1gLyxXyQTcIog/iTRTYZmBlgr7H5MvkXxNO0QiDb1mECjYFKV/+Qmw+GkoxoNbmpYn97HXt840VcRH7S9hcQMn63VOhDu8GwRaV/SLfQ9JV"
-	}
+    {
+      "operator_id": 4,
+      "address": "http://127.0.0.1:8084",
+      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
+      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
+    },
 }`
 
 	p := path.Join(t.TempDir(), "keys.json")

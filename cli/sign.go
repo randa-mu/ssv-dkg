@@ -106,9 +106,10 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %w", operator, err)
 		}
 		identity := crypto.Identity{
-			Address:   address,
-			Public:    response.PublicKey,
-			Signature: response.Signature,
+			Address:    address,
+			OperatorID: response.OperatorID,
+			Public:     response.PublicKey,
+			Signature:  response.Signature,
 		}
 		if err = identity.Verify(suite); err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error verifying the identity of operator %s: %w", operator, err)

@@ -43,8 +43,8 @@ func init() {
 
 	signCmd.PersistentFlags().StringVarP(
 		&inputPathFlag,
-		"input",
-		"i",
+		"deposit-file",
+		"f",
 		"",
 		"The filepath of the ETH deposit data",
 	)
@@ -110,7 +110,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		shared.Exit(fmt.Sprintf("couldn't turn the keyshare into json: %v", err))
 	}
-	log.MaybeLog("📄 here is a keyfile JSON for use with the SSV UI >")
+	log.MaybeLog("📄 below is a keyfile JSON for use with the SSV UI:")
 	log.Log(string(j))
 }
 

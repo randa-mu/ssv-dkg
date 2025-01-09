@@ -23,6 +23,7 @@ type Daemon struct {
 	dkg              DKGProtocol
 	db               *dkg.FileStore
 	key              crypto.Keypair
+	operatorID       uint32
 	ssvKey           []byte
 	stateDir         string
 	thresholdScheme  crypto.ThresholdScheme
@@ -35,13 +36,13 @@ type DKGProtocol interface {
 	ProcessPacket(packet api.SidecarDKGPacket) error
 }
 
-func NewDaemon(port uint, publicURL string, stateDir string, publicKeyPath string) (Daemon, error) {
+func NewDaemon(port uint, publicURL string, stateDir string, publicKeyPath string, operatorID uint32) (Daemon, error) {
 	thresholdScheme := crypto.NewBLSSuite()
 	dkgCoordinator := dkg.NewDKGCoordinator(publicURL, thresholdScheme)
-	return NewDaemonWithDKG(port, publicURL, stateDir, dkgCoordinator, publicKeyPath)
+	return NewDaemonWithDKG(port, publicURL, stateDir, dkgCoordinator, publicKeyPath, operatorID)
 }
 
-func NewDaemonWithDKG(port uint, publicURL string, stateDir string, coordinator DKGProtocol, publicKeyPath string) (Daemon, error) {
+func NewDaemonWithDKG(port uint, publicURL string, stateDir string, coordinator DKGProtocol, publicKeyPath string, operatorID uint32) (Daemon, error) {
 	if port == 0 {
 		return Daemon{}, errors.New("you must provide a port")
 	}
@@ -52,6 +53,10 @@ func NewDaemonWithDKG(port uint, publicURL string, stateDir string, coordinator 
 
 	if publicKeyPath == "" {
 		return Daemon{}, errors.New("you must pass the path to your SSV node's public key")
+	}
+
+	if operatorID == 0 {
+		return Daemon{}, errors.New("you must provide SSV operator ID associated with your SSV node")
 	}
 
 	if publicURL == "" {
@@ -80,6 +85,7 @@ func NewDaemonWithDKG(port uint, publicURL string, stateDir string, coordinator 
 		publicURL:        publicURL,
 		ssvKey:           ssvKey,
 		stateDir:         stateDir,
+		operatorID:       operatorID,
 		dkg:              coordinator,
 		db:               dkg.NewFileStore(stateDir),
 		thresholdScheme:  thresholdScheme,

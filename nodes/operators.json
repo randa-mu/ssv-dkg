@@ -1,24 +1,28 @@
 {
   "operators": [
     {
-      "address": "http://localhost:8001",
-      "public": "kFUFd29egtHp/jt17PyGm1RQp8cXFG3ADp3Dcd/vuhVfq0cOJYz2sZkM9EM3ZnZC",
-      "signature": "hk3XmrO+XCT6hc51hQDaw1gLyxXyQTcIog/iTRTYZmBlgr7H5MvkXxNO0QiDb1mECjYFKV/+Qmw+GkoxoNbmpYn97HXt840VcRH7S9hcQMn63VOhDu8GwRaV/SLfQ9JV"
+      "operator_id": 1,
+      "address": "http://127.0.0.1:8081",
+      "public": "gjmHIyuZWSalRcSL0Px1G9OYnCTAR6LXxgelRiGXpvBxd/Xd3IacqB58xqfcIgg9",
+      "signature": "i53BLETdyH9tmA3oqiFO54XSE2cZoI/lAQDbllA+JWUypWto2PftOvg/UtJvdeO8EvrDaSu7gZ8YlYYva/5in+YP3gfg1Shx3VZ6RFy4Y/pIzUiP4mPFZ0VoKxGq+B1Z"
     },
     {
-      "address": "http://localhost:8002",
-      "public": "kjO7jmSZWj/GftWDZvjaC5W0m+03+eNlo9HWLutfc51B51A5Aofxo+kqYr4Ny3Bc",
-      "signature": "hJnAukpvzUpesOvp3bhIfYqIDuEoJe3mj+HoJykCGcnmHp09BotZSOGjPMH//v8dGJVAkowbCayCFdW8fds/f8hHGodhmwjvMKmQAVrvYrmuiXAzmBH2FH1Y+uRp6sk2"
+      "operator_id": 2,
+      "address": "http://127.0.0.1:8082",
+      "public": "jNYtEWnEciaxVoDuCIS3eEUmSwLXpljf2Lu/p/9u8vp6AT9ldRWpBAprZyl/mwBx",
+      "signature": "hKI8MX11Co3/WV9BQKcZNsIBwvC5q44nVQV0Qfc15qNYk5mUhgZGxXeHD4NG2BVuE57faw1tvTcuZbWBRWgEfAXoMRpeJ+c70UKG/N3xaAfbTWSF+A+ZJNbpuBY7inpj"
     },
     {
-      "address": "http://localhost:8003",
-      "public": "p1AzYPSPB0MSg94f64CKK5lv0VQim7eXkgFHuNpaWGaeg2mJIC6/Tx7aqVvTe62t",
-      "signature": "ig2c8ZrYHNVmBpB+okO6CzBgBNJi+dbKdqLuaLp8OZZIWqcALgREgreuNuE6dDPHCowyiBUxlvXXYwwv29FfysbLjKPXNwritD+vummsGwrubTL9khtXgS1ANXHM7WEE"
+      "operator_id": 3,
+      "address": "http://127.0.0.1:8083",
+      "public": "tEGKf8Lm3pRPrOCNBRtQJBkRybNenn7vmAOJvOCiCODxp86nwILFTYQRl3xk5tum",
+      "signature": "pdUnns3/Au56zgUTdoiFYX4YW7i8WK83yrzw13ZkHCY3Wquy5psLkwmRyB2K/9DfFJj9HOy8FQ0ojM1SCoKv6k/++XlYLSGQMYpeVmiRjvwIYvhMMSUEF1rbcubYz6fE"
     },
     {
-      "address": "http://localhost:8004",
-      "public": "mdkwiyRHEAPC33qS1HJT8+mAieEF5yTBtE0A2mqJPNfsAx1J9YSFZ/qqGN7N0AB3",
-      "signature": "pXPGhRZRf+LukV5AXXxglQPLd7DUrgQr9T0qWe8xITrfbeCkafAzldViNqMyjyK5FGBeW+WvP/cdmREUQyEx6nCd2pfaPH66h/9uzHV7cKihNLEFjCByjPpr6Bkg5Wja"
+      "operator_id": 4,
+      "address": "http://127.0.0.1:8084",
+      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
+      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
     }
   ]
 }
