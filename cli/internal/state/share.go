@@ -54,10 +54,10 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 		operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(share.Identity.Public)))
 		base64.RawStdEncoding.Encode(operatorKey, share.Identity.Public)
 		operators[i] = operator{
-			Id:          uint32(i),
+			Id:          share.Identity.OperatorID,
 			OperatorKey: operatorKey,
 		}
-		operatorIDs[i] = uint32(i)
+		operatorIDs[i] = share.Identity.OperatorID
 		publicKeys = append(publicKeys, share.Identity.Public...)
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
 	}
