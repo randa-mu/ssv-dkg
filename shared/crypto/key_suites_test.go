@@ -17,6 +17,7 @@ func TestSigning(t *testing.T) {
 		scheme = s
 		t.Run("creating a key, signing it, and verifying the self-sign", CreatingAKeyAndSigningItAndVerifyingIt)
 		t.Run("verifying an invalid self-signature fails", CreatingAKeyAndSigningItAndModifyingTheSignature)
+		t.Run("incorrect operatorID fails verification", InvalidOperatorIdFailsVerification)
 		t.Run("verifying a valid self-signature with the wrong key fails", CreatingKeyAndSigningItAndModifyingKey)
 		t.Run("signing arbitrary bytes can be verified", KeypairSigningArbitraryBytesVerifies)
 		t.Run("invalid message fails for signature", InvalidMessageFailsForSignature)
@@ -75,7 +76,7 @@ func CreatingAKeyAndSigningItAndVerifyingIt(t *testing.T) {
 	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(scheme, "hello world")
+	i, err := k.SelfSign(scheme, "hello world", 1)
 	require.NoError(t, err)
 
 	require.NoError(t, i.Verify(scheme))
@@ -87,7 +88,7 @@ func CreatingAKeyAndSigningItAndModifyingTheSignature(t *testing.T) {
 	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(scheme, "hello world")
+	i, err := k.SelfSign(scheme, "hello world", 1)
 	require.NoError(t, err)
 
 	i.Signature = []byte("deadbeef")
@@ -101,7 +102,7 @@ func CreatingKeyAndSigningItAndModifyingKey(t *testing.T) {
 	k, err := scheme.CreateKeypair()
 	require.NoError(t, err)
 
-	i, err := k.SelfSign(scheme, "hello world")
+	i, err := k.SelfSign(scheme, "hello world", 1)
 	require.NoError(t, err)
 
 	i.Public = []byte("deadbeef")
@@ -133,4 +134,18 @@ func InvalidMessageFailsForSignature(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Error(t, scheme.Verify([]byte("different message"), k.Public, sig))
+}
+
+func InvalidOperatorIdFailsVerification(t *testing.T) {
+	t.Parallel()
+
+	k, err := scheme.CreateKeypair()
+	require.NoError(t, err)
+
+	i, err := k.SelfSign(scheme, "hello world", 1)
+	require.NoError(t, err)
+
+	i.OperatorID = 2
+
+	require.Error(t, i.Verify(scheme))
 }

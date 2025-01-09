@@ -38,8 +38,8 @@ type Keypair struct {
 }
 
 // SelfSign signs an address to attribute it to a given public key and returns an Identity
-func (k Keypair) SelfSign(suite SigningScheme, address string) (Identity, error) {
-	message, err := digestFor(k.Public, address)
+func (k Keypair) SelfSign(suite SigningScheme, address string, operatorID uint32) (Identity, error) {
+	message, err := digestFor(k.Public, address, operatorID)
 	if err != nil {
 		return Identity{}, err
 	}
@@ -50,28 +50,30 @@ func (k Keypair) SelfSign(suite SigningScheme, address string) (Identity, error)
 	}
 
 	return Identity{
-		Address:   address,
-		Public:    k.Public,
-		Signature: signature,
+		OperatorID: operatorID,
+		Address:    address,
+		Public:     k.Public,
+		Signature:  signature,
 	}, nil
 }
 
 type Identity struct {
-	Address   string             `json:"address"`
-	Public    json.UnpaddedBytes `json:"public"`
-	Signature json.UnpaddedBytes `json:"signature"`
+	OperatorID uint32             `json:"operator_id"`
+	Address    string             `json:"address"`
+	Public     json.UnpaddedBytes `json:"public"`
+	Signature  json.UnpaddedBytes `json:"signature"`
 }
 
 // Verify checks the signature for a given identity is valid, if e.g. pulled from a remote file
 func (i Identity) Verify(suite SigningScheme) error {
-	m, err := digestFor(i.Public, i.Address)
+	m, err := digestFor(i.Public, i.Address, i.OperatorID)
 	if err != nil {
 		return err
 	}
 	return suite.Verify(m, i.Public, i.Signature)
 }
 
-func digestFor(publicKey []byte, address string) ([]byte, error) {
+func digestFor(publicKey []byte, address string, operatorID uint32) ([]byte, error) {
 	buf := new(bytes.Buffer)
 
 	dst := []byte("ssv:randamu:sha256")
@@ -82,6 +84,9 @@ func digestFor(publicKey []byte, address string) ([]byte, error) {
 		return nil, err
 	}
 	if err := binary.Write(buf, binary.BigEndian, []byte(address)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buf, binary.BigEndian, operatorID); err != nil {
 		return nil, err
 	}
 

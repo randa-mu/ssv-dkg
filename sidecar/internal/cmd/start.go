@@ -56,6 +56,13 @@ func init() {
 		false,
 		"enables more detailed logging if provided",
 	)
+	startCmd.PersistentFlags().Uint32VarP(
+		&OperatorIDFlag,
+		"operator-id",
+		"i",
+		0,
+		"the operator ID you received from the smart contract when registering your SSV node",
+	)
 }
 
 func Start(_ *cobra.Command, _ []string) {
@@ -66,7 +73,7 @@ func Start(_ *cobra.Command, _ []string) {
 		slog.SetDefault(l)
 	}
 
-	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, DirectoryFlag, PublicKeyPathFlag)
+	daemon, err := sidecar.NewDaemon(PortFlag, PublicURLFlag, DirectoryFlag, PublicKeyPathFlag, OperatorIDFlag)
 	if err != nil {
 		slog.Error("error starting daemon", "err", err)
 		os.Exit(1)

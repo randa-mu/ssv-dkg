@@ -66,7 +66,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 
 	return KeyshareFile{
 		Version:   KeyshareFileVersion,
-		CreatedAt: time.Now().UTC().String(),
+		CreatedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 		Shares: []keyShare{
 			{
 				Data: data{

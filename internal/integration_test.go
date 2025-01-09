@@ -216,11 +216,11 @@ func createErrorDaemon(t *testing.T, port uint, errorCoordinator sidecar.DKGProt
 		t.Fatal(err)
 	}
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
-	_, err = sidecar.SignKey(url, stateDir)
+	_, err = sidecar.SignKey(url, stateDir, uint32(port))
 	if err != nil {
 		t.Fatal(err)
 	}
-	d, err := sidecar.NewDaemonWithDKG(port, url, stateDir, errorCoordinator, ssvKeyPath)
+	d, err := sidecar.NewDaemonWithDKG(port, url, stateDir, errorCoordinator, ssvKeyPath, uint32(port))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,11 +240,11 @@ func createDaemon(t *testing.T, port uint) sidecar.Daemon {
 	}
 
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
-	_, err = sidecar.SignKey(url, stateDir)
+	_, err = sidecar.SignKey(url, stateDir, uint32(port))
 	if err != nil {
 		t.Fatal(err)
 	}
-	d, err := sidecar.NewDaemon(port, url, stateDir, ssvKeyPath)
+	d, err := sidecar.NewDaemon(port, url, stateDir, ssvKeyPath, uint32(port))
 	if err != nil {
 		t.Fatal(err)
 	}

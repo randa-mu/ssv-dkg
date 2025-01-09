@@ -25,9 +25,12 @@ func GenerateKey(stateDir string) error {
 	return nil
 }
 
-func SignKey(url string, stateDir string) ([]byte, error) {
+func SignKey(url string, stateDir string, operatorID uint32) ([]byte, error) {
 	if url == "" {
 		return nil, errors.New("you must pass a URL to associate the keypair with")
+	}
+	if operatorID == 0 {
+		return nil, errors.New("operatorID must be greater than 0")
 	}
 
 	keypair, err := util.LoadKeypair(stateDir)
@@ -37,7 +40,7 @@ func SignKey(url string, stateDir string) ([]byte, error) {
 	}
 
 	suite := crypto.NewBLSSuite()
-	identity, err := keypair.SelfSign(suite, url)
+	identity, err := keypair.SelfSign(suite, url, operatorID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign address: %w", err)
 	}
