@@ -26,8 +26,8 @@ type blsSuite struct {
 
 func NewBLSSuite() blsSuite {
 	suite := bls.NewBLS12381Suite()
-	scheme := signing.NewSchemeOnG2(suite)
-	return blsSuite{scheme: scheme, suite: suite, thresholdScheme: tbls.NewThresholdSchemeOnG2(suite)}
+	scheme := signing.NewSchemeOnG1(suite)
+	return blsSuite{scheme: scheme, suite: suite, thresholdScheme: tbls.NewThresholdSchemeOnG1(suite)}
 }
 
 func (b blsSuite) CreateKeypair() (Keypair, error) {
