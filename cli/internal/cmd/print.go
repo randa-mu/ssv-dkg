@@ -39,7 +39,10 @@ func Print(_ *cobra.Command, _ []string) {
 		shared.Exit(fmt.Sprintf("error loading state: %v", err))
 	}
 
-	keyshareFile := state.CreateKeyshareFile(s.OwnerConfig, s.SigningOutput)
+	keyshareFile, err := state.CreateKeyshareFile(s.OwnerConfig, s.SigningOutput)
+	if err != nil {
+		shared.Exit(fmt.Sprintf("error creating keyshare file: %v", err))
+	}
 	j, err := json.Marshal(keyshareFile)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("couldn't turn the keyshare into json: %v", err))

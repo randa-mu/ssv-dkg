@@ -40,8 +40,9 @@ type OperatorShare struct {
 }
 
 type OperatorResponse struct {
-	Identity crypto.Identity
-	Response SignResponse
+	Identity     crypto.Identity
+	SsvPublicKey []byte
+	Response     SignResponse
 }
 
 func (u UnsignedDepositData) ExtractRequired() crypto.RequiredDepositFields {

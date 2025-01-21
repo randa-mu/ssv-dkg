@@ -105,7 +105,11 @@ func Sign(cmd *cobra.Command, _ []string) {
 		log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
 	}
 
-	keyshareFile := state.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput)
+	keyshareFile, err := state.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput)
+	if err != nil {
+		shared.Exit(fmt.Sprintf("couldn't create keyshare file: %v", err))
+	}
+
 	j, err := json.Marshal(keyshareFile)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("couldn't turn the keyshare into json: %v", err))

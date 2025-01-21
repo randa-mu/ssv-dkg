@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -41,17 +42,21 @@ type payload struct {
 
 // CreateKeyshareFile takes output from the DKG/signing and creates the keyshare file required
 // to register a validator cluster using the SSV portal
-func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput) KeyshareFile {
+func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput) (KeyshareFile, error) {
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
 	var publicKeys []byte
 	var encryptedShares []byte
 
 	for i, share := range signingOutput.OperatorShares {
-		operators[i] = createOperatorFromShare(share)
 		operatorIDs[i] = share.Identity.OperatorID
 		publicKeys = append(publicKeys, share.Identity.Public...)
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
+		res, err := api.DefaultSsvClient().FetchPublicKeyFromSsv(share.Identity.OperatorID)
+		if err != nil {
+			return KeyshareFile{}, fmt.Errorf("error fetching operator public key: %v", err)
+		}
+		operators[i] = createOperatorFromShare(share, res.PublicKey)
 	}
 
 	return KeyshareFile{
@@ -72,13 +77,13 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 				},
 			},
 		},
-	}
+	}, nil
 }
 
 // createOperatorFromShare creates the operator with base64 public keys, while everything else is hex
-func createOperatorFromShare(share api.OperatorShare) operator {
-	operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(share.Identity.Public)))
-	base64.RawStdEncoding.Encode(operatorKey, share.Identity.Public)
+func createOperatorFromShare(share api.OperatorShare, ssvPublicKey []byte) operator {
+	operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(ssvPublicKey)))
+	base64.RawStdEncoding.Encode(operatorKey, ssvPublicKey)
 	return operator{
 		Id:          share.Identity.OperatorID,
 		OperatorKey: operatorKey,
