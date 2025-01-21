@@ -19,6 +19,7 @@ type SignatureConfig struct {
 	Operators   []string
 	DepositData api.UnsignedDepositData
 	Owner       api.OwnerConfig
+	SsvClient   api.SsvClient
 }
 
 // Sign performs a distributed key generation between the operators provided

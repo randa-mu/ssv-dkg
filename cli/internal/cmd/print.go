@@ -6,6 +6,7 @@ import (
 
 	"github.com/randa-mu/ssv-dkg/cli/internal/state"
 	"github.com/randa-mu/ssv-dkg/shared"
+	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,14 @@ func init() {
 		"",
 		"The filepath of the DKG output data to print",
 	)
+
+	printCmd.PersistentFlags().StringVarP(
+		&networkFlag,
+		"network",
+		"N",
+		"mainnet",
+		"mainnet or holesky",
+	)
 }
 
 func Print(_ *cobra.Command, _ []string) {
@@ -34,12 +43,21 @@ func Print(_ *cobra.Command, _ []string) {
 		shared.Exit("you must pass the input flag with the output of the DKG you wish to create a keyfile for")
 	}
 
+	var ssvClient api.SsvClient
+	if networkFlag == "mainnet" {
+		ssvClient = api.MainnetSsvClient()
+	} else if networkFlag == "holesky" {
+		ssvClient = api.HoleskySsvClient()
+	} else {
+		shared.Exit("you must select a network to run against - holesky or mainnet")
+	}
+
 	s, err := state.LoadState(dkgStateFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("error loading state: %v", err))
 	}
 
-	keyshareFile, err := state.CreateKeyshareFile(s.OwnerConfig, s.SigningOutput)
+	keyshareFile, err := state.CreateKeyshareFile(s.OwnerConfig, s.SigningOutput, ssvClient)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("error creating keyshare file: %v", err))
 	}

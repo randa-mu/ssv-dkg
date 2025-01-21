@@ -11,9 +11,15 @@ type SsvClient struct {
 	baseUrl string
 }
 
-func DefaultSsvClient() SsvClient {
+func MainnetSsvClient() SsvClient {
 	return SsvClient{
-		baseUrl: "https://api.ssv.network/api/v4",
+		baseUrl: "https://api.ssv.network/api/v4/mainnet",
+	}
+}
+
+func HoleskySsvClient() SsvClient {
+	return SsvClient{
+		baseUrl: "https://api.ssv.network/api/v4/holesky",
 	}
 }
 
@@ -22,7 +28,7 @@ type SsvApiResponse struct {
 }
 
 func (s SsvClient) FetchPublicKeyFromSsv(operatorID uint32) (SsvApiResponse, error) {
-	res, err := http.Get(fmt.Sprintf("%s/mainnet/operators/%d", s.baseUrl, operatorID))
+	res, err := http.Get(fmt.Sprintf("%s/operators/%d", s.baseUrl, operatorID))
 	if err != nil {
 		return SsvApiResponse{}, err
 	}

@@ -24,6 +24,7 @@ var (
 	stateDirectoryFlag string
 	validatorNonceFlag int32 = -1
 	ethAddressFlag     string
+	networkFlag        string
 	signCmd            = &cobra.Command{
 		Use:   "sign",
 		Short: "Signs ETH deposit data by forming a validator cluster",
@@ -76,6 +77,14 @@ func init() {
 		"",
 		"The ETH address of the user creating the cluster in hex format",
 	)
+
+	signCmd.PersistentFlags().StringVarP(
+		&networkFlag,
+		"network",
+		"N",
+		"mainnet",
+		"mainnet or holesky",
+	)
 }
 
 func Sign(cmd *cobra.Command, _ []string) {
@@ -105,7 +114,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 		log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
 	}
 
-	keyshareFile, err := state.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput)
+	keyshareFile, err := state.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("couldn't create keyshare file: %v", err))
 	}
@@ -135,10 +144,20 @@ func parseArgs(cmd *cobra.Command) (cli.SignatureConfig, error) {
 		return cli.SignatureConfig{}, fmt.Errorf("error parsing owner details: %v", err)
 	}
 
+	var ssvClient api.SsvClient
+	if networkFlag == "mainnet" {
+		ssvClient = api.MainnetSsvClient()
+	} else if networkFlag == "holesky" {
+		ssvClient = api.HoleskySsvClient()
+	} else {
+		return cli.SignatureConfig{}, fmt.Errorf("network must be either mainnet or holesky")
+	}
+
 	return cli.SignatureConfig{
 		Operators:   operators,
 		DepositData: depositData,
 		Owner:       ownerConfig,
+		SsvClient:   ssvClient,
 	}, nil
 }
 

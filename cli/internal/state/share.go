@@ -42,7 +42,7 @@ type payload struct {
 
 // CreateKeyshareFile takes output from the DKG/signing and creates the keyshare file required
 // to register a validator cluster using the SSV portal
-func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput) (KeyshareFile, error) {
+func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput, client api.SsvClient) (KeyshareFile, error) {
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
 	var publicKeys []byte
@@ -52,7 +52,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 		operatorIDs[i] = share.Identity.OperatorID
 		publicKeys = append(publicKeys, share.Identity.Public...)
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
-		res, err := api.DefaultSsvClient().FetchPublicKeyFromSsv(share.Identity.OperatorID)
+		res, err := client.FetchPublicKeyFromSsv(share.Identity.OperatorID)
 		if err != nil {
 			return KeyshareFile{}, fmt.Errorf("error fetching operator public key: %v", err)
 		}
