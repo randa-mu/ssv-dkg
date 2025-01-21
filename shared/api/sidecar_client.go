@@ -79,12 +79,8 @@ func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) 
 	return reshareResponse, err
 }
 
-func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error) {
-	j, err := json.Marshal(request)
-	if err != nil {
-		return SidecarIdentityResponse{}, err
-	}
-	res, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath), "application/json", bytes.NewBuffer(j))
+func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
+	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath))
 	if err != nil {
 		return SidecarIdentityResponse{}, fmt.Errorf("error making HTTP request: %w", err)
 	}

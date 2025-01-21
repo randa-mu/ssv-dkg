@@ -175,7 +175,7 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 	}, nil
 }
 
-func (d Daemon) Identity(_ api.SidecarIdentityRequest) (api.SidecarIdentityResponse, error) {
+func (d Daemon) Identity() (api.SidecarIdentityResponse, error) {
 	identity, err := d.key.SelfSign(d.thresholdScheme, d.publicURL, d.operatorID)
 	if err != nil {
 		return api.SidecarIdentityResponse{}, err

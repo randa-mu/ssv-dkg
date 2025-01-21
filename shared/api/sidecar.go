@@ -15,7 +15,7 @@ type Sidecar interface {
 	Health() error
 	Sign(request SignRequest) (SignResponse, error)
 	Reshare(request ReshareRequest) (ReshareResponse, error)
-	Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error)
+	Identity() (SidecarIdentityResponse, error)
 	BroadcastDKG(packet SidecarDKGPacket) error
 }
 
@@ -67,16 +67,8 @@ type ReshareResponse struct {
 	NodePK []byte `json:"node_pk"`
 }
 
-var (
-	SsvHealthPath   = "/v1/node/health"
-	SsvIdentityPath = "/v1/node/identity"
-)
-
 type SsvIdentityResponse struct {
 	PublicKey []byte `json:"publicKey"`
-}
-
-type SidecarIdentityRequest struct {
 }
 
 type SidecarIdentityResponse struct {
@@ -96,9 +88,9 @@ var (
 
 func BindSidecarAPI(router *chi.Mux, node Sidecar) {
 	router.Get(SidecarHealthPath, createHealthAPI(node))
+	router.Get(SidecarIdentityPath, createSidecarIdentityAPI(node))
 	router.Post(SidecarSignPath, createSignAPI(node))
 	router.Post(SidecarResharePath, createReshareAPI(node))
-	router.Post(SidecarIdentityPath, createSidecarIdentityAPI(node))
 	router.Post(SidecarDKGPath, createSidecarDKGAPI(node))
 }
 
@@ -185,19 +177,7 @@ func createReshareAPI(node Sidecar) http.HandlerFunc {
 
 func createSidecarIdentityAPI(node Sidecar) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		bytes, err := io.ReadAll(request.Body)
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var requestBody SidecarIdentityRequest
-		err = json.Unmarshal(bytes, &requestBody)
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		identity, err := node.Identity(requestBody)
+		identity, err := node.Identity()
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return

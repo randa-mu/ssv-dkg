@@ -30,7 +30,7 @@ Status	ID	Address
 ```shell
 $ ssv-dkg sign --deposit-file /path/to/deposit/data \
       --owner-address 0xsomehexencodedETHaddress \
-      --validator-nonce 1 \
+      --validator-nonce 0 \
       --output /path/to/storing/permanent/data/for/reshares/etc \
       --operator https://example.org \
       --operator https://muster.de \
@@ -57,7 +57,7 @@ $ ssv-dkg operators list --quiet | head --lines 3 | ssv-dkg sign --deposit-file 
 ```shell
 $ ssv-dkg reshare --state ~/.ssv/deadbeefcafebabe.json \
       --owner-address 0xsomehexencodedETHaddress \
-      --validator-nonce 1 \
+      --validator-nonce 0 \
       --operator https://example.org \
       --operator https://muster.de \
       --operator https://exemple.fr \ 

@@ -101,7 +101,7 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 		// then we fetch the keys for the node
 		// perhaps these should be checked against the ones registered in the repo
 		client := api.NewSidecarClient(address)
-		response, err := client.Identity(api.SidecarIdentityRequest{})
+		response, err := client.Identity()
 		if err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %w", operator, err)
 		}
