@@ -54,7 +54,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
 		res, err := client.FetchPublicKeyFromSsv(share.Identity.OperatorID)
 		if err != nil {
-			return KeyshareFile{}, fmt.Errorf("error fetching operator public key: %v", err)
+			return KeyshareFile{}, fmt.Errorf("error fetching operator public key for %d: %v", share.Identity.OperatorID, err)
 		}
 		operators[i] = createOperatorFromShare(share, res.PublicKey)
 	}

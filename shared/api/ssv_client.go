@@ -39,7 +39,7 @@ func (s SsvClient) FetchPublicKeyFromSsv(operatorID uint32) (SsvApiResponse, err
 
 	responseBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return SsvApiResponse{}, fmt.Errorf("error reading Response body: %w", err)
+		return SsvApiResponse{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	var apiResponse SsvApiResponse
