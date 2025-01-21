@@ -70,7 +70,7 @@ func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) err
 }
 
 func (b blsSuite) KeyGroup() kyber.Group {
-	return b.suite.G1()
+	return b.KeyGroup()
 }
 
 func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error) {
