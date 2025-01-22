@@ -50,7 +50,7 @@ func Reshare(operators []string, state api.SigningOutput, log shared.QuietLogger
 	if err != nil {
 		return api.SigningOutput{}, err
 	}
-	oldGroupPK, err := extractGroupPublicKey(suite, state.GroupPublicKey)
+	oldGroupPK, err := extractGroupPublicKey(suite, state.GroupPublicPolynomial)
 	if err != nil {
 		return api.SigningOutput{}, err
 	}
@@ -68,10 +68,10 @@ func Reshare(operators []string, state api.SigningOutput, log shared.QuietLogger
 	}
 
 	return api.SigningOutput{
-		SessionID:            state.SessionID,
-		DepositDataSignature: state.DepositDataSignature,
-		GroupPublicKey:       polynomialCommitments,
-		OperatorShares:       operatorShares,
+		SessionID:             state.SessionID,
+		DepositDataSignature:  state.DepositDataSignature,
+		GroupPublicPolynomial: polynomialCommitments,
+		OperatorShares:        operatorShares,
 	}, nil
 }
 
@@ -111,7 +111,7 @@ func runReshare(state api.SigningOutput, identities []crypto.Identity) ([]operat
 				PreviousState: api.PreviousDKGState{
 					SessionID:                   hex.EncodeToString(state.SessionID),
 					Nodes:                       oldNodes,
-					PublicPolynomialCommitments: state.GroupPublicKey,
+					PublicPolynomialCommitments: state.GroupPublicPolynomial,
 				},
 				PreviousEncryptedShareHash: hashedShares[identity.Address],
 			})

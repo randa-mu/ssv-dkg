@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
 const KeyshareFileVersion = "v0.0.1"
@@ -59,6 +60,9 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 		operators[i] = createOperatorFromShare(share, res.PublicKey)
 	}
 
+	scheme := crypto.NewBLSSuite()
+	groupPublicKey := signingOutput.GroupPublicPolynomial[0:scheme.KeyGroup().PointLen()]
+
 	return KeyshareFile{
 		Version:   KeyshareFileVersion,
 		CreatedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
@@ -67,11 +71,11 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 				Data: data{
 					OwnerNonce:   ownerConfig.ValidatorNonce,
 					OwnerAddress: hex.EncodeToString(ownerConfig.Address),
-					PublicKey:    hex.EncodeToString(signingOutput.GroupPublicKey),
+					PublicKey:    hex.EncodeToString(groupPublicKey),
 					Operators:    operators,
 				},
 				Payload: payload{
-					PublicKey:   hex.EncodeToString(signingOutput.GroupPublicKey),
+					PublicKey:   hex.EncodeToString(signingOutput.GroupPublicPolynomial),
 					OperatorIDs: operatorIDs,
 					SharesData:  createSharesData(signingOutput, publicKeys, encryptedShares),
 				},

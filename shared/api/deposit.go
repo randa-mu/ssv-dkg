@@ -28,7 +28,7 @@ type SignedDepositData struct {
 
 type SigningOutput struct {
 	SessionID               json.UnpaddedBytes `json:"session_id"`
-	GroupPublicKey          json.UnpaddedBytes `json:"group_public_commitments"`
+	GroupPublicPolynomial   json.UnpaddedBytes `json:"group_public_commitments"`
 	OperatorShares          []OperatorShare    `json:"operator_shares"`
 	DepositDataSignature    json.UnpaddedBytes `json:"deposit_data_signature"`
 	ValidatorNonceSignature json.UnpaddedBytes `json:"validator_nonce_signature"`

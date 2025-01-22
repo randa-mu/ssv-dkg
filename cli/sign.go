@@ -58,15 +58,15 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 	}
 
 	// as all the group public keys are the same, we can use the first to verify all the partials
-	groupPublicKey := responses[0].Response.PublicPolynomial
+	publicPolynomial := responses[0].Response.PublicPolynomial
 
 	// aggregate the deposit data sig
-	depositDataMessage, err := crypto.DepositDataMessage(config.DepositData.ExtractRequired(), groupPublicKey)
+	depositDataMessage, err := crypto.DepositDataMessage(config.DepositData.ExtractRequired(), publicPolynomial)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("failed to create deposit data message: %v", err)
 	}
 	depositDataPartials := extractDepositDataPartials(responses)
-	depositDataSignature, err := aggregateGroupSignature(suite, depositDataPartials, groupPublicKey, depositDataMessage)
+	depositDataSignature, err := aggregateGroupSignature(suite, depositDataPartials, publicPolynomial, depositDataMessage)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("error aggregating deposit data signature: %v", err)
 	}
@@ -74,14 +74,14 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 	// aggregate the validator nonce sig
 	validatorNoncePartials := extractValidatorNoncePartials(responses)
 	validatorNonceMessage := crypto.ValidatorNonceMessage(config.Owner.Address, config.Owner.ValidatorNonce)
-	validatorNonceSignature, err := aggregateGroupSignature(suite, validatorNoncePartials, groupPublicKey, validatorNonceMessage)
+	validatorNonceSignature, err := aggregateGroupSignature(suite, validatorNoncePartials, publicPolynomial, validatorNonceMessage)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("error aggregating validator nonce signature: %v", err)
 	}
 
 	output := api.SigningOutput{
 		SessionID:               sessionID,
-		GroupPublicKey:          groupPublicKey,
+		GroupPublicPolynomial:   publicPolynomial,
 		OperatorShares:          extractEncryptedShares(responses),
 		DepositDataSignature:    depositDataSignature,
 		ValidatorNonceSignature: validatorNonceSignature,

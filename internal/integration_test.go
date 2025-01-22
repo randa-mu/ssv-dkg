@@ -44,14 +44,14 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.DepositDataSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.GroupPublicPolynomial)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	signingOutput, err = cli.Reshare(operators, signingOutput, log)
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.DepositDataSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.GroupPublicPolynomial)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a second time with the same group just to confirm the polynomial commitments have been saved as expected
@@ -59,7 +59,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.DepositDataSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.GroupPublicPolynomial)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a third time with a slightly different group
@@ -69,7 +69,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.DepositDataSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.GroupPublicPolynomial)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 }
 
@@ -99,7 +99,7 @@ func TestResharingNewNode(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.DepositDataSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.GroupPublicPolynomial)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 
 	// reshare a third time with a slightly different group
@@ -109,7 +109,7 @@ func TestResharingNewNode(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, signingOutput)
 	require.NotEmpty(t, signingOutput.DepositDataSignature)
-	require.NotEmpty(t, signingOutput.GroupPublicKey)
+	require.NotEmpty(t, signingOutput.GroupPublicPolynomial)
 	require.NotEmpty(t, signingOutput.OperatorShares)
 }
 
