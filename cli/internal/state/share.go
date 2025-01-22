@@ -1,7 +1,6 @@
 package state
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -61,7 +60,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 	}
 
 	scheme := crypto.NewBLSSuite()
-	groupPublicKey := signingOutput.GroupPublicPolynomial[0:scheme.KeyGroup().PointLen()]
+	groupPublicKey := prefixedHex(signingOutput.GroupPublicPolynomial[0:scheme.KeyGroup().PointLen()])
 
 	return KeyshareFile{
 		Version:   KeyshareFileVersion,
@@ -70,12 +69,12 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 			{
 				Data: data{
 					OwnerNonce:   ownerConfig.ValidatorNonce,
-					OwnerAddress: hex.EncodeToString(ownerConfig.Address),
-					PublicKey:    hex.EncodeToString(groupPublicKey),
+					OwnerAddress: prefixedHex(ownerConfig.Address),
+					PublicKey:    groupPublicKey,
 					Operators:    operators,
 				},
 				Payload: payload{
-					PublicKey:   hex.EncodeToString(signingOutput.GroupPublicPolynomial),
+					PublicKey:   groupPublicKey,
 					OperatorIDs: operatorIDs,
 					SharesData:  createSharesData(signingOutput, publicKeys, encryptedShares),
 				},
@@ -86,15 +85,18 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 
 // createOperatorFromShare creates the operator with base64 public keys, while everything else is hex
 func createOperatorFromShare(share api.OperatorShare, ssvPublicKey []byte) operator {
-	operatorKey := make([]byte, base64.RawStdEncoding.EncodedLen(len(ssvPublicKey)))
-	base64.RawStdEncoding.Encode(operatorKey, ssvPublicKey)
 	return operator{
 		Id:          share.Identity.OperatorID,
-		OperatorKey: operatorKey,
+		OperatorKey: ssvPublicKey,
 	}
 }
 
 // createSharesData combines the validator nonce signature with the public keys in order then the encrypted shares in order
 func createSharesData(signingOutput api.SigningOutput, publicKeys []byte, encryptedShares []byte) string {
 	return hex.EncodeToString(append(append(signingOutput.ValidatorNonceSignature, publicKeys...), encryptedShares...))
+}
+
+// prefixedHex encodes as hex but with the `0x` prefix
+func prefixedHex(in []byte) string {
+	return fmt.Sprintf("0x%x", in)
 }
