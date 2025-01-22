@@ -26,8 +26,8 @@ type blsSuite struct {
 
 func NewBLSSuite() blsSuite {
 	suite := bls.NewBLS12381Suite()
-	scheme := signing.NewSchemeOnG1(suite)
-	return blsSuite{scheme: scheme, suite: suite, thresholdScheme: tbls.NewThresholdSchemeOnG1(suite)}
+	scheme := signing.NewSchemeOnG2(suite)
+	return blsSuite{scheme: scheme, suite: suite, thresholdScheme: tbls.NewThresholdSchemeOnG2(suite)}
 }
 
 func (b blsSuite) CreateKeypair() (Keypair, error) {
@@ -70,7 +70,7 @@ func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) err
 }
 
 func (b blsSuite) KeyGroup() kyber.Group {
-	return b.suite.G2()
+	return b.suite.G1()
 }
 
 func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error) {
