@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/randa-mu/ssv-dkg/cli/internal/state"
+	"github.com/randa-mu/ssv-dkg/cli/state"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/spf13/cobra"

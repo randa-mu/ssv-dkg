@@ -9,6 +9,7 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"golang.org/x/exp/slog"
 
 	"github.com/drand/kyber/share"
@@ -99,6 +100,7 @@ func (d *Coordinator) RunDKG(identities []crypto.Identity, sessionID []byte, key
 			return nil, err
 		}
 		return &output, result.Error
+
 	case <-time.After(d.timeout):
 		return nil, fmt.Errorf("DKG with sessionID %s timed out", hex.EncodeToString(sessionID))
 	}
@@ -199,13 +201,14 @@ func prepareIdentities(scheme crypto.ThresholdScheme, identities []crypto.Identi
 	// then map them into magical DKG structs
 	nodes := make([]dkg.Node, len(identities))
 	for i, identity := range identities {
-		p := scheme.KeyGroup().Point()
-		err := p.UnmarshalBinary(identity.Public)
+		ident := identity
+		p := scheme.KeyGroup().Point().Clone()
+		err := p.UnmarshalBinary(ident.Public)
 		if err != nil {
 			return nil, err
 		}
 		nodes[i] = dkg.Node{
-			Index:  uint32(i),
+			Index:  uint32(i + 1),
 			Public: p,
 		}
 	}
@@ -269,7 +272,7 @@ func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Resul
 		return Output{}, err
 	}
 
-	pubPoly, err := crypto.MarshalPubPoly(share.NewPubPoly(scheme.KeyGroup(), scheme.KeyGroup().Point().Base(), result.Key.Commits))
+	pubPoly, err := crypto.MarshalPubPoly(share.NewPubPoly(scheme.KeyGroup(), scheme.KeyGroup().Point().Base().Clone(), result.Key.Commits))
 	if err != nil {
 		return Output{}, err
 	}
@@ -280,12 +283,13 @@ func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Resul
 	}
 
 	// we fail the DKG if any node doesn't make it, so we can safely assume there will be a node at each index
-	sort.SliceStable(result.QUAL, func(i, j int) bool {
-		return result.QUAL[i].Index < result.QUAL[j].Index
+	slices.SortStableFunc(result.QUAL, func(a, b dkg.Node) int {
+		return int(a.Index - b.Index)
 	})
 	pubKeys := make([][]byte, len(result.QUAL))
 	for i, node := range result.QUAL {
-		pk, err := node.Public.MarshalBinary()
+		n := node
+		pk, err := n.Public.MarshalBinary()
 		if err != nil {
 			return Output{}, err
 		}

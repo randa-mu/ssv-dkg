@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/randa-mu/ssv-dkg/shared"
 	"golang.org/x/exp/slog"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -42,11 +43,12 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// sign the deposit data using the key share
-	depositDataMessage, err := crypto.DepositDataMessage(request.DepositData.ExtractRequired(), result.GroupPublicPoly)
+	groupPublicKey := crypto.ExtractGroupPublicKey(d.thresholdScheme, result.GroupPublicPoly)
+	depositDataMessage, err := crypto.DepositDataMessage(request.DepositData.ExtractRequired(), shared.Clone(groupPublicKey))
 	if err != nil {
 		return api.SignResponse{}, err
 	}
-	partialSignature, err := d.thresholdScheme.SignWithPartial(result.KeyShare, depositDataMessage)
+	depositDataPartialSignature, err := d.thresholdScheme.SignWithPartial(result.KeyShare, depositDataMessage)
 	if err != nil {
 		slog.Error("error signing deposit data", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
@@ -60,7 +62,11 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// sign the validator nonce to prevent operators signing up the same validator twice
-	validatorNonceMessage := crypto.ValidatorNonceMessage(request.OwnerConfig.Address, request.OwnerConfig.ValidatorNonce)
+	validatorNonceMessage, err := crypto.ValidatorNonceMessage(request.OwnerConfig.Address, request.OwnerConfig.ValidatorNonce)
+	if err != nil {
+		return api.SignResponse{}, fmt.Errorf("error creating validator nonce message: %v", err)
+	}
+
 	signedNonce, err := d.thresholdScheme.SignWithPartial(result.KeyShare, validatorNonceMessage)
 	if err != nil {
 		slog.Error("error signing nonce", "sessionID", sessionID, "err", err)
@@ -69,10 +75,9 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 
 	response := api.SignResponse{
 		PublicPolynomial:               result.GroupPublicPoly,
-		NodePK:                         result.PublicKeyShare,
-		DepositDataPartialSignature:    partialSignature,
+		DepositDataPartialSignature:    depositDataPartialSignature,
 		EncryptedShare:                 encryptedShare,
-		DepositValidatorNonceSignature: signedNonce,
+		ValidatorNoncePartialSignature: signedNonce,
 	}
 
 	groupFile, err := dkg.NewGroupFile(sessionID, result.GroupPublicPoly, request.Operators, result.KeyShare, encryptedShare)
@@ -171,7 +176,6 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 	return api.ReshareResponse{
 		EncryptedShare:   encryptedShare,
 		PublicPolynomial: result.GroupPublicPoly,
-		NodePK:           result.PublicKeyShare,
 	}, nil
 }
 

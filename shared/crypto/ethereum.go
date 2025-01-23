@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/randa-mu/ssv-dkg/shared"
 )
 
 type RequiredDepositFields struct {
@@ -21,17 +24,29 @@ func PreDKGDepositDataMessage(data RequiredDepositFields) ([]byte, error) {
 		return nil, errors.New("amount must be greater than zero")
 	}
 
-	return binary.BigEndian.AppendUint64(data.WithdrawalCredentials, data.Amount), nil
+	return binary.BigEndian.AppendUint64(shared.Clone(data.WithdrawalCredentials), data.Amount), nil
 }
 
-func DepositDataMessage(data RequiredDepositFields, publicKey []byte) ([]byte, error) {
+func DepositDataMessage(data RequiredDepositFields, groupPublicKey []byte) ([]byte, error) {
 	msg, err := PreDKGDepositDataMessage(data)
 	if err != nil {
 		return nil, err
 	}
-	return append(publicKey, msg...), nil
+	return append(groupPublicKey, msg...), nil
 }
 
-func ValidatorNonceMessage(address []byte, validatorNonce uint32) []byte {
-	return []byte(fmt.Sprintf("%s:%d", hex.EncodeToString(address), validatorNonce))
+func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error) {
+	addr, err := FormatAddress(address)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("%s:%d", addr, validatorNonce)), nil
+}
+
+func FormatAddress(address []byte) (string, error) {
+	ethAddress, err := common.NewMixedcaseAddressFromString(hex.EncodeToString(address))
+	if err != nil {
+		return "", err
+	}
+	return ethAddress.Address().Hex(), nil
 }

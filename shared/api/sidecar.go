@@ -33,14 +33,11 @@ type SignResponse struct {
 	// the BLS12-381 public key for the group created during the DKG
 	PublicPolynomial []byte `json:"public_polynomial"`
 
-	// the BLS12-381 public key for the specific validator node
-	NodePK []byte `json:"node_pk"`
-
 	// a partial signature over the deposit data's SHA256 hash
 	DepositDataPartialSignature []byte `json:"deposit_data_partial_signature"`
 
 	// a partial signature over the validator's nonce's SHA256 hash
-	DepositValidatorNonceSignature []byte `json:"deposit_validator_nonce_signature"`
+	ValidatorNoncePartialSignature []byte `json:"validator_nonce_partial_signature"`
 }
 
 type ReshareRequest struct {
@@ -62,9 +59,6 @@ type ReshareResponse struct {
 	// the BLS12-381 public key for the group created during the DKG
 	// it should be the same as the initial sharing, but always good to check
 	PublicPolynomial []byte `json:"public_polynomial"`
-
-	// the BLS12-381 public key for the specific validator node
-	NodePK []byte `json:"node_pk"`
 }
 
 type SsvIdentityResponse struct {

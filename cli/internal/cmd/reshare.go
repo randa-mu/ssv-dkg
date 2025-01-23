@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/randa-mu/ssv-dkg/cli/internal/state"
+	"github.com/randa-mu/ssv-dkg/cli/state"
 	"github.com/spf13/cobra"
 
 	"github.com/randa-mu/ssv-dkg/cli"

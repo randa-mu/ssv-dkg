@@ -59,3 +59,9 @@ func (s *SafeList[T]) Get() []T {
 	copy(out, s.delegate)
 	return out
 }
+
+func Clone[T any](a []T) []T {
+	b := make([]T, len(a))
+	copy(b, a)
+	return b
+}

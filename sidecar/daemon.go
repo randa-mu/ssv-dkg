@@ -77,6 +77,7 @@ func NewDaemonWithDKG(port uint, publicURL string, stateDir string, coordinator 
 	}
 
 	slog.Info(fmt.Sprintf("Keypair loaded from %s", stateDir))
+	slog.Info(fmt.Sprintf("PK: 0x%x", keypair.Public))
 
 	thresholdScheme := crypto.NewBLSSuite()
 	daemon := Daemon{

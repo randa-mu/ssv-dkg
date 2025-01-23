@@ -29,7 +29,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	depositData := createUnsignedDepositData()
 
 	log := shared.QuietLogger{Quiet: false}
-	address, err := hex.DecodeString("deadbeef")
+	address, err := hex.DecodeString("aA184b86B4cdb747F4A3BF6e6FCd5e27c1d92c5c")
 	require.NoError(t, err)
 
 	args := cli.SignatureConfig{
@@ -85,7 +85,7 @@ func TestResharingNewNode(t *testing.T) {
 
 	log := shared.QuietLogger{Quiet: false}
 
-	address, err := hex.DecodeString("deadbeef")
+	address, err := hex.DecodeString("aA184b86B4cdb747F4A3BF6e6FCd5e27c1d92c5c")
 	require.NoError(t, err)
 	args := cli.SignatureConfig{
 		Operators:   operators,

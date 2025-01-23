@@ -1,8 +1,8 @@
 package state
 
 import (
-	"encoding/hex"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -43,12 +43,24 @@ type payload struct {
 // CreateKeyshareFile takes output from the DKG/signing and creates the keyshare file required
 // to register a validator cluster using the SSV portal
 func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput, client api.SsvClient) (KeyshareFile, error) {
+	ethAddress, err := crypto.FormatAddress(ownerConfig.Address)
+	if err != nil {
+		return KeyshareFile{}, fmt.Errorf("error formatting eth address: %v", err)
+	}
+
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
 	var publicKeys []byte
 	var encryptedShares []byte
 
-	for i, share := range signingOutput.OperatorShares {
+	// first we sort the operator shares because that's how the SSV key tool does it
+	sortedOperatorShares := signingOutput.OperatorShares
+	slices.SortStableFunc(sortedOperatorShares, func(a, b api.OperatorShare) int {
+		return int(a.Identity.OperatorID - b.Identity.OperatorID)
+	})
+
+	// then we extract all the relevant bits for each share
+	for i, share := range sortedOperatorShares {
 		operatorIDs[i] = share.Identity.OperatorID
 		publicKeys = append(publicKeys, share.Identity.Public...)
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
@@ -60,6 +72,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 	}
 
 	scheme := crypto.NewBLSSuite()
+	// the group public key is the 0th point on the polynomial
 	groupPublicKey := prefixedHex(signingOutput.GroupPublicPolynomial[0:scheme.KeyGroup().PointLen()])
 
 	return KeyshareFile{
@@ -69,7 +82,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 			{
 				Data: data{
 					OwnerNonce:   ownerConfig.ValidatorNonce,
-					OwnerAddress: prefixedHex(ownerConfig.Address),
+					OwnerAddress: ethAddress,
 					PublicKey:    groupPublicKey,
 					Operators:    operators,
 				},
@@ -93,7 +106,8 @@ func createOperatorFromShare(share api.OperatorShare, ssvPublicKey []byte) opera
 
 // createSharesData combines the validator nonce signature with the public keys in order then the encrypted shares in order
 func createSharesData(signingOutput api.SigningOutput, publicKeys []byte, encryptedShares []byte) string {
-	return hex.EncodeToString(append(append(signingOutput.ValidatorNonceSignature, publicKeys...), encryptedShares...))
+	concatenatedBytes := append(append(signingOutput.ValidatorNonceSignature, publicKeys...), encryptedShares...)
+	return prefixedHex(concatenatedBytes)
 }
 
 // prefixedHex encodes as hex but with the `0x` prefix

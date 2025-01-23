@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/drand/kyber"
 	"github.com/drand/kyber/share"
@@ -47,16 +48,7 @@ func UnmarshalDistKey(scheme ThresholdScheme, bytes []byte) (share.PriShare, err
 func MarshalPubPoly(pub *share.PubPoly) ([]byte, error) {
 	buf := new(bytes.Buffer)
 
-	base, commits := pub.Info()
-	baseBytes, err := base.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
-
-	err = binary.Write(buf, binary.BigEndian, baseBytes)
-	if err != nil {
-		return nil, err
-	}
+	_, commits := pub.Info()
 
 	for _, commit := range commits {
 		commitBytes, err := commit.MarshalBinary()
@@ -79,15 +71,12 @@ func UnmarshalPubPoly(scheme ThresholdScheme, b []byte) (share.PubPoly, error) {
 
 	l := len(b)
 	if l == 0 || l%pointLen != 0 {
-		return share.PubPoly{}, errors.New("invalid length for public polynomial")
+		return share.PubPoly{}, fmt.Errorf("invalid length for public polynomial; expected multiple of %d, got %d (remainder %d)", pointLen, l, l%pointLen)
 	}
 
-	err := base.UnmarshalBinary(b[0:pointLen])
-	if err != nil {
-		return share.PubPoly{}, err
-	}
+	var err error
 	var commits []kyber.Point
-	for i := pointLen; i+pointLen <= l; i += pointLen {
+	for i := 0; i+pointLen <= l; i += pointLen {
 		p := group.Point()
 		err = p.UnmarshalBinary(b[i : i+pointLen])
 		if err != nil {
@@ -97,4 +86,8 @@ func UnmarshalPubPoly(scheme ThresholdScheme, b []byte) (share.PubPoly, error) {
 	}
 
 	return *share.NewPubPoly(group, base, commits), nil
+}
+
+func ExtractGroupPublicKey(scheme ThresholdScheme, publicPolynomial []byte) []byte {
+	return publicPolynomial[0:scheme.KeyGroup().PointLen()]
 }

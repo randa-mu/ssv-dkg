@@ -141,7 +141,7 @@ type Share struct {
 // PubPoly returns the public polynomial that can be used to verify any
 // individual partial signature
 func (s *Share) PubPoly() *share.PubPoly {
-	return share.NewPubPoly(s.Scheme.KeyGroup(), s.Scheme.KeyGroup().Point().Base(), s.Commits)
+	return share.NewPubPoly(s.Scheme.KeyGroup(), s.Scheme.KeyGroup().Point().Base().Clone(), s.Commits)
 }
 
 // PrivateShare returns the private share used to produce a partial signature

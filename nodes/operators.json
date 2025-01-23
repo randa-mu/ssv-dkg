@@ -3,26 +3,26 @@
     {
       "operator_id": 1,
       "address": "http://127.0.0.1:8081",
-      "public": "gjmHIyuZWSalRcSL0Px1G9OYnCTAR6LXxgelRiGXpvBxd/Xd3IacqB58xqfcIgg9",
-      "signature": "i53BLETdyH9tmA3oqiFO54XSE2cZoI/lAQDbllA+JWUypWto2PftOvg/UtJvdeO8EvrDaSu7gZ8YlYYva/5in+YP3gfg1Shx3VZ6RFy4Y/pIzUiP4mPFZ0VoKxGq+B1Z"
+      "public": "pvUt4159oI6qgIEa6zPnzx5NKyYVg+M9U2c3uhaZJqPNI2VW9IRH93xnVBnXaZVQ",
+      "signature": "j5iytl6MERyzQ0TYhHJO5joc1i1Xax4cQs54N5hFNOfdVW2HjiZLegiNPJUBibzVA4JmJb+QxD2Uf/SUSFwD/vCCEkYCJmiSxXAYHwgoNLHKh74ERW8kt+OorIcTUFmH"
     },
     {
       "operator_id": 2,
       "address": "http://127.0.0.1:8082",
-      "public": "jNYtEWnEciaxVoDuCIS3eEUmSwLXpljf2Lu/p/9u8vp6AT9ldRWpBAprZyl/mwBx",
-      "signature": "hKI8MX11Co3/WV9BQKcZNsIBwvC5q44nVQV0Qfc15qNYk5mUhgZGxXeHD4NG2BVuE57faw1tvTcuZbWBRWgEfAXoMRpeJ+c70UKG/N3xaAfbTWSF+A+ZJNbpuBY7inpj"
+      "public": "pQElFyKFEzutIr1Wu9DG1afrYi5i/QBcDWSNCxff4U9ZFKPhybDSuiNHD7PdqJ20",
+      "signature": "juooCy9Nm6/0sxHHbilp37BqyFAM6hL0XTbz7iVU1/RnTuRPhqlAN4wMDcW8HUvOGXndV721GYpkopQfkkR6SNzArQv+XS2oOnKGkvLMNCbAE0IK9C5meNcTDj6Xt0ka"
     },
     {
       "operator_id": 3,
       "address": "http://127.0.0.1:8083",
-      "public": "tEGKf8Lm3pRPrOCNBRtQJBkRybNenn7vmAOJvOCiCODxp86nwILFTYQRl3xk5tum",
-      "signature": "pdUnns3/Au56zgUTdoiFYX4YW7i8WK83yrzw13ZkHCY3Wquy5psLkwmRyB2K/9DfFJj9HOy8FQ0ojM1SCoKv6k/++XlYLSGQMYpeVmiRjvwIYvhMMSUEF1rbcubYz6fE"
+      "public": "qa49KGl9moW+GEHol+9lVZmniwKoeSgVTh6FAXQsENlIS8WTRWgO6mSfRXGUwo7D",
+      "signature": "gx7XWG4cc7gzPj/qB0rqNzzqChaOgrByxQ+bNJeHMRkBm1jyvcvmrWQGbOE4fzZID85edxt+4B1V1zctG75OL+7MOA2RKK8EAm44i7RCWsBwvXYOwDOc39yCtx9cdgwz"
     },
     {
       "operator_id": 4,
       "address": "http://127.0.0.1:8084",
-      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
-      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
+      "public": "kNe77jLEBddtf3Xdnzo0YBwovjHemgpN/enBPBNh/yjcozshAoAPlXB7ttkF+4fu",
+      "signature": "s9LiL2q1iqsNC2oWyM9mz8mrTnAAtHVv19BaXZXa1NSc1DGSfZjPpp686okVlrdyBMmnQgzYMegpuFgKZ2ZEDDj6Nw9ubrNQioGWOFtndbMUHQfQ82DTXTsb5hz0MJFX"
     }
   ]
 }
