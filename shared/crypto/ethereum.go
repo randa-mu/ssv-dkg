@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
@@ -36,17 +35,10 @@ func DepositDataMessage(data RequiredDepositFields, groupPublicKey []byte) ([]by
 }
 
 func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error) {
-	addr, err := FormatAddress(address)
-	if err != nil {
-		return nil, err
-	}
+	addr := FormatAddress(address)
 	return []byte(fmt.Sprintf("%s:%d", addr, validatorNonce)), nil
 }
 
-func FormatAddress(address []byte) (string, error) {
-	ethAddress, err := common.NewMixedcaseAddressFromString(hex.EncodeToString(address))
-	if err != nil {
-		return "", err
-	}
-	return ethAddress.Address().Hex(), nil
+func FormatAddress(address []byte) string {
+	return common.BytesToAddress(address).String()
 }

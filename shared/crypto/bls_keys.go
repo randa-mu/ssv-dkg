@@ -69,6 +69,7 @@ func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) err
 	}
 
 	m := b.Digest(message)
+
 	return b.scheme.Verify(pk, m, signature)
 }
 
@@ -83,6 +84,7 @@ func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error
 	}
 
 	m := b.Digest(message)
+
 	return b.thresholdScheme.Sign(&distKey, m)
 }
 

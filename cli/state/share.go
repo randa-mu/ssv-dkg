@@ -9,7 +9,7 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
-const KeyshareFileVersion = "v0.0.1"
+const KeyshareFileVersion = "v1.2.0"
 
 type KeyshareFile struct {
 	Version   string     `json:"version"`
@@ -43,11 +43,7 @@ type payload struct {
 // CreateKeyshareFile takes output from the DKG/signing and creates the keyshare file required
 // to register a validator cluster using the SSV portal
 func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOutput, client api.SsvClient) (KeyshareFile, error) {
-	ethAddress, err := crypto.FormatAddress(ownerConfig.Address)
-	if err != nil {
-		return KeyshareFile{}, fmt.Errorf("error formatting eth address: %v", err)
-	}
-
+	ethAddress := crypto.FormatAddress(ownerConfig.Address)
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
 	var publicKeys []byte
@@ -56,7 +52,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 	// first we sort the operator shares because that's how the SSV key tool does it
 	sortedOperatorShares := signingOutput.OperatorShares
 	slices.SortStableFunc(sortedOperatorShares, func(a, b api.OperatorShare) int {
-		return int(a.Identity.OperatorID - b.Identity.OperatorID)
+		return int(a.Identity.OperatorID) - int(b.Identity.OperatorID)
 	})
 
 	// then we extract all the relevant bits for each share

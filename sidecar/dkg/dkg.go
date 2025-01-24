@@ -1,12 +1,10 @@
 package dkg
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"sort"
 	"time"
 
 	"golang.org/x/exp/slices"
@@ -194,8 +192,9 @@ func (d *Coordinator) RunReshare(identities []crypto.Identity, sessionID []byte,
 }
 
 func prepareIdentities(scheme crypto.ThresholdScheme, identities []crypto.Identity) ([]dkg.Node, error) {
-	sort.SliceStable(identities, func(i, j int) bool {
-		return bytes.Compare(identities[i].Public, identities[j].Public) > 0
+	// sortby operatorID so everyone has a consistent view of the world
+	slices.SortStableFunc(identities, func(i, j crypto.Identity) int {
+		return int(i.OperatorID) - int(j.OperatorID)
 	})
 
 	// then map them into magical DKG structs
