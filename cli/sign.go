@@ -13,6 +13,7 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
+	"golang.org/x/exp/slices"
 )
 
 type SignatureConfig struct {
@@ -53,15 +54,20 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 		return api.SigningOutput{}, err
 	}
 
+	// we sort the responses by operatorID, though they ought to already be sorted
+	slices.SortStableFunc(responses, func(a, b api.OperatorResponse) int {
+		return int(a.Identity.OperatorID) - int(b.Identity.OperatorID)
+	})
+
+	// if all the group public keys are the same,
 	if err := verifyPublicPolynomialSame(responses); err != nil {
 		return api.SigningOutput{}, fmt.Errorf("not every operator came up with the same public key: %v", err)
 	}
-
-	// as all the group public keys are the same, we can use the first to verify all the partials
+	// we can use the first to verify all the partials
 	publicPolynomial := responses[0].Response.PublicPolynomial
 	groupPublicKey := crypto.ExtractGroupPublicKey(suite, shared.Clone(publicPolynomial))
 
-	// aggregate the deposit data sig
+	// then we aggregate and verify the deposit data signature
 	depositDataMessage, err := crypto.DepositDataMessage(config.DepositData.ExtractRequired(), shared.Clone(groupPublicKey))
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("failed to create deposit data message: %v", err)
@@ -80,7 +86,7 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 		return api.SigningOutput{}, fmt.Errorf("failed to verify deposit data signature: %v", err)
 	}
 
-	// aggregate the validator nonce sig
+	// then we aggregate and verify the validator nonce signature
 	validatorNonceMessage, err := crypto.ValidatorNonceMessage(config.Owner.Address, config.Owner.ValidatorNonce)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("your ethereum address wasn't correct: %v", err)
@@ -98,6 +104,7 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 		return api.SigningOutput{}, fmt.Errorf("failed to verify validator nonce signature: %v", err)
 	}
 
+	// and finally we extract some relevant bits before returning all the info
 	output := api.SigningOutput{
 		SessionID:               sessionID,
 		GroupPublicPolynomial:   publicPolynomial,
@@ -146,6 +153,7 @@ func extractEncryptedShares(arr []api.OperatorResponse) []api.OperatorShare {
 		operators[i] = api.OperatorShare{
 			Identity:       o.Identity,
 			EncryptedShare: o.Response.EncryptedShare,
+			SharePublicKey: o.Response.SharePublicKey,
 		}
 	}
 	return operators

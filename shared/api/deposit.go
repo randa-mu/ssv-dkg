@@ -37,6 +37,7 @@ type SigningOutput struct {
 type OperatorShare struct {
 	Identity       crypto.Identity    `json:"identity"`
 	EncryptedShare json.UnpaddedBytes `json:"encrypted_share"`
+	SharePublicKey json.UnpaddedBytes `json:"share_public_key"`
 }
 
 type OperatorResponse struct {

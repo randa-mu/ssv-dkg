@@ -30,6 +30,10 @@ type SignResponse struct {
 	// the key share encrypted with the validator's RSA key
 	EncryptedShare []byte `json:"encrypted_share"`
 
+	// the corresponding public key for the distributed key share
+	// this will be different to the node's own BLS public key
+	SharePublicKey []byte
+
 	// the BLS12-381 public key for the group created during the DKG
 	PublicPolynomial []byte `json:"public_polynomial"`
 
@@ -56,13 +60,14 @@ type ReshareResponse struct {
 	// the new key share encrypted with the validator's RSA key
 	EncryptedShare []byte `json:"encrypted_share"`
 
-	// the BLS12-381 public key for the group created during the DKG
-	// it should be the same as the initial sharing, but always good to check
-	PublicPolynomial []byte `json:"public_polynomial"`
-}
+	// the corresponding public key for the key share that has
+	// been encrypted
+	PublicKeyShare []byte `json:"share_public_key"`
 
-type SsvIdentityResponse struct {
-	PublicKey []byte `json:"publicKey"`
+	// the polynomial commitments for the group created during the DKG
+	// it should be the same as the initial sharing, but always good to check
+	// the 0th commitment is the group public key
+	PublicPolynomial []byte `json:"public_polynomial"`
 }
 
 type SidecarIdentityResponse struct {

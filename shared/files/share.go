@@ -1,4 +1,4 @@
-package state
+package files
 
 import (
 	"fmt"
@@ -9,6 +9,8 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
 
+// the SSV UI doesn't accept other versions even though it's not strictly the
+// version of this tool
 const KeyshareFileVersion = "v1.2.0"
 
 type KeyshareFile struct {
@@ -46,7 +48,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 	ethAddress := crypto.FormatAddress(ownerConfig.Address)
 	operators := make([]operator, len(signingOutput.OperatorShares))
 	operatorIDs := make([]uint32, len(signingOutput.OperatorShares))
-	var publicKeys []byte
+	var sharePublicKeys []byte
 	var encryptedShares []byte
 
 	// first we sort the operator shares because that's how the SSV key tool does it
@@ -58,7 +60,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 	// then we extract all the relevant bits for each share
 	for i, share := range sortedOperatorShares {
 		operatorIDs[i] = share.Identity.OperatorID
-		publicKeys = append(publicKeys, share.Identity.Public...)
+		sharePublicKeys = append(sharePublicKeys, share.SharePublicKey...)
 		encryptedShares = append(encryptedShares, share.EncryptedShare...)
 		res, err := client.FetchPublicKeyFromSsv(share.Identity.OperatorID)
 		if err != nil {
@@ -85,7 +87,7 @@ func CreateKeyshareFile(ownerConfig api.OwnerConfig, signingOutput api.SigningOu
 				Payload: payload{
 					PublicKey:   groupPublicKey,
 					OperatorIDs: operatorIDs,
-					SharesData:  createSharesData(signingOutput, publicKeys, encryptedShares),
+					SharesData:  createSharesData(signingOutput, sharePublicKeys, encryptedShares),
 				},
 			},
 		},

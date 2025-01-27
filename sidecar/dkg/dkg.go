@@ -26,9 +26,10 @@ type Coordinator struct {
 }
 
 type Output struct {
-	PublicKeyShare  []byte
+	GroupPublicKey  []byte
 	GroupPublicPoly []byte
 	KeyShare        []byte
+	PublicKeyShare  []byte
 	NodePublicKeys  [][]byte
 }
 
@@ -271,12 +272,17 @@ func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Resul
 		return Output{}, err
 	}
 
+	distPublicKey, err := scheme.KeyGroup().Point().Mul(result.Key.Share.V, scheme.KeyGroup().Point().Base()).MarshalBinary()
+	if err != nil {
+		return Output{}, err
+	}
+
 	pubPoly, err := crypto.MarshalPubPoly(share.NewPubPoly(scheme.KeyGroup(), scheme.KeyGroup().Point().Base().Clone(), result.Key.Commits))
 	if err != nil {
 		return Output{}, err
 	}
 
-	pubKey, err := result.Key.Public().MarshalBinary()
+	groupPublicKey, err := result.Key.Public().MarshalBinary()
 	if err != nil {
 		return Output{}, err
 	}
@@ -297,7 +303,8 @@ func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Resul
 
 	return Output{
 		KeyShare:        distKey,
-		PublicKeyShare:  pubKey,
+		PublicKeyShare:  distPublicKey,
+		GroupPublicKey:  groupPublicKey,
 		GroupPublicPoly: pubPoly,
 		NodePublicKeys:  pubKeys,
 	}, nil

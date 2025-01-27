@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/randa-mu/ssv-dkg/cli/state"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
+	"github.com/randa-mu/ssv-dkg/shared/files"
 	"github.com/spf13/cobra"
 )
 
@@ -52,12 +52,12 @@ func Print(_ *cobra.Command, _ []string) {
 		shared.Exit("you must select a network to run against - holesky or mainnet")
 	}
 
-	s, err := state.LoadState(dkgStateFlag)
+	s, err := files.LoadState(dkgStateFlag)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("error loading state: %v", err))
 	}
 
-	keyshareFile, err := state.CreateKeyshareFile(s.OwnerConfig, s.SigningOutput, ssvClient)
+	keyshareFile, err := files.CreateKeyshareFile(s.OwnerConfig, s.SigningOutput, ssvClient)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("error creating keyshare file: %v", err))
 	}

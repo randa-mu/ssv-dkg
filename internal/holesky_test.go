@@ -10,16 +10,18 @@ import (
 	"time"
 
 	"github.com/randa-mu/ssv-dkg/cli"
-	"github.com/randa-mu/ssv-dkg/cli/state"
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
+	cli2 "github.com/randa-mu/ssv-dkg/shared/files"
 	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/stretchr/testify/require"
 )
 
+// TestPrintHolesky runs a DKG and prints out the resulting SSV file for use in testing in holesky
 func TestPrintHolesky(t *testing.T) {
 	ownerAddress, err := hex.DecodeString("17B3cAb3cD7502C6b85ed2E11Fd5988AF76Cdd32")
+	validatorNonce := uint32(7)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,14 +41,14 @@ func TestPrintHolesky(t *testing.T) {
 		DepositData: depositData(t),
 		Owner: api.OwnerConfig{
 			Address:        ownerAddress,
-			ValidatorNonce: 0,
+			ValidatorNonce: validatorNonce,
 		},
 		SsvClient: api.HoleskySsvClient(),
 	}
 	res, err := cli.Sign(config, shared.QuietLogger{Quiet: false})
 	require.NoError(t, err)
 
-	file, err := state.CreateKeyshareFile(config.Owner, res, config.SsvClient)
+	file, err := cli2.CreateKeyshareFile(config.Owner, res, config.SsvClient)
 	require.NoError(t, err)
 
 	data, err := hex.DecodeString(file.Shares[0].Payload.SharesData[2:])
@@ -57,10 +59,7 @@ func TestPrintHolesky(t *testing.T) {
 	groupSig := data[0:sigLength]
 	pk, err := hex.DecodeString(file.Shares[0].Data.PublicKey[2:])
 	require.NoError(t, err)
-	address, err := hex.DecodeString("17B3cAb3cD7502C6b85ed2E11Fd5988AF76Cdd32")
-	require.NoError(t, err)
-	validatorNonce := uint32(0)
-	m, err := crypto.ValidatorNonceMessage(address, validatorNonce)
+	m, err := crypto.ValidatorNonceMessage(ownerAddress, validatorNonce)
 	require.NoError(t, err)
 	require.NoError(t, suite.Verify(m, pk, groupSig))
 

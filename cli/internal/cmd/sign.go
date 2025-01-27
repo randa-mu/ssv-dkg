@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/randa-mu/ssv-dkg/cli/state"
+	"github.com/randa-mu/ssv-dkg/shared/files"
 	"github.com/spf13/cobra"
 
 	"github.com/randa-mu/ssv-dkg/cli"
@@ -100,13 +100,13 @@ func Sign(cmd *cobra.Command, _ []string) {
 		shared.Exit(fmt.Sprintf("%v", err))
 	}
 
-	path := state.CreateFilename(stateDirectoryFlag, signingOutput)
+	path := files.CreateFilename(stateDirectoryFlag, signingOutput)
 
-	nextState := state.StoredState{
+	nextState := files.StoredState{
 		OwnerConfig:   signingConfig.Owner,
 		SigningOutput: signingOutput,
 	}
-	bytes, err := state.StoreStateIfNotExists(path, nextState)
+	bytes, err := files.StoreStateIfNotExists(path, nextState)
 	if err != nil {
 		log.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
 		log.Log(string(bytes))
@@ -114,7 +114,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 		log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
 	}
 
-	keyshareFile, err := state.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
+	keyshareFile, err := files.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
 	if err != nil {
 		shared.Exit(fmt.Sprintf("couldn't create keyshare file: %v", err))
 	}

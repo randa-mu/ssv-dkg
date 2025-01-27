@@ -64,6 +64,7 @@ func Reshare(operators []string, state api.SigningOutput, log shared.QuietLogger
 		operatorShares[i] = api.OperatorShare{
 			Identity:       r.identity,
 			EncryptedShare: r.response.EncryptedShare,
+			SharePublicKey: r.response.PublicKeyShare,
 		}
 	}
 

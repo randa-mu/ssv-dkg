@@ -45,6 +45,10 @@ func UnmarshalDistKey(scheme ThresholdScheme, bytes []byte) (share.PriShare, err
 	}, nil
 }
 
+func DistKeyWithoutIndex(bytes []byte) []byte {
+	return bytes[8:]
+}
+
 func MarshalPubPoly(pub *share.PubPoly) ([]byte, error) {
 	buf := new(bytes.Buffer)
 

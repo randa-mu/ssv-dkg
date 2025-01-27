@@ -54,12 +54,14 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 		return api.SignResponse{}, err
 	}
 
-	// encrypt the key share for use by the SSV node later via smart contract.
+	// we encrypt the secret key share for use by the SSV node later via smart contract.
 	// The first 64 bits are the index used in the DKG which are not in the spec
 	// for how SSV uses the keyshares, so we trim them off
-	shareWithoutIndex := result.KeyShare[8:]
-	shareAsHex := hex.EncodeToString(shareWithoutIndex)
-	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, []byte(shareAsHex))
+	share := crypto.DistKeyWithoutIndex(result.KeyShare)
+	// then for some reason it's encoded in hex and passed as a utf8 string
+	encodedShare := []byte(hex.EncodeToString(share))
+
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, encodedShare)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
@@ -81,6 +83,7 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 		PublicPolynomial:               result.GroupPublicPoly,
 		DepositDataPartialSignature:    depositDataPartialSignature,
 		EncryptedShare:                 encryptedShare,
+		SharePublicKey:                 result.PublicKeyShare,
 		ValidatorNoncePartialSignature: signedNonce,
 	}
 
@@ -155,8 +158,13 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 		return api.ReshareResponse{}, errors.New(msg)
 	}
 
-	// encrypt the key share for use by the SSV node later via smart contract
-	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, result.KeyShare)
+	// we encrypt the secret key share for use by the SSV node later via smart contract.
+	// The first 64 bits are the index used in the DKG which are not in the spec
+	// for how SSV uses the keyshares, so we trim them off
+	share := crypto.DistKeyWithoutIndex(result.KeyShare)
+	// then for some reason it's encoded in hex and passed as a utf8 string
+	encodedShare := []byte(hex.EncodeToString(share))
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, encodedShare)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionIDHex, "err", err)
 		return api.ReshareResponse{}, err
@@ -179,6 +187,7 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 
 	return api.ReshareResponse{
 		EncryptedShare:   encryptedShare,
+		PublicKeyShare:   result.PublicKeyShare,
 		PublicPolynomial: result.GroupPublicPoly,
 	}, nil
 }
