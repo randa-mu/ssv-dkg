@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ func init() {
 
 func listOperators(_ *cobra.Command, _ []string) {
 	if sourceFileFlag == "" && sourceUrlFlag == "" {
-		shared.Exit("you must provide either a `source-url` or `source-file`!")
+		log.Fatal("you must provide either a `source-url` or `source-file`!")
 	}
 
 	log := shared.QuietLogger{Quiet: quietFlag}
@@ -77,13 +78,13 @@ func listOperators(_ *cobra.Command, _ []string) {
 func readSourceFile(path string) []crypto.Identity {
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("there was an error reading the source file: %v", err))
+		log.Fatalf("there was an error reading the source file: %v", err)
 	}
 
 	var j operatorsJsonResponse
 	err = json.Unmarshal(contents, &j)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("there was an error unmarshalling the source file: %v", err))
+		log.Fatalf("there was an error unmarshalling the source file: %v", err)
 	}
 	return j.Operators
 }
@@ -91,30 +92,30 @@ func readSourceFile(path string) []crypto.Identity {
 func readSourceUrl(url string) []crypto.Identity {
 	res, err := http.Get(url)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("failed to reach URL %s: %v", url, err))
+		log.Fatalf("failed to reach URL %s: %v", url, err)
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		shared.Exit("failed to read response body")
+		log.Fatal("failed to read response body")
 	}
 
 	var j operatorsJsonResponse
 	err = json.Unmarshal(body, &j)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("there was an error unmarshalling the HTTP response: %v", err))
+		log.Fatalf("there was an error unmarshalling the HTTP response: %v", err)
 	}
 
 	return j.Operators
 }
 
-func printOperatorsPretty(log shared.QuietLogger, operators []crypto.Identity) {
+func printOperatorsPretty(logger shared.QuietLogger, operators []crypto.Identity) {
 	if len(operators) == 0 {
-		shared.Exit("Operator list was empty!")
+		log.Fatal("Operator list was empty!")
 	}
 
-	log.Log("⏳checking health of operators")
+	logger.Log("⏳checking health of operators")
 
 	success := make([]crypto.Identity, 0, len(operators))
 	failure := make([]crypto.Identity, 0, len(operators))
@@ -127,12 +128,12 @@ func printOperatorsPretty(log shared.QuietLogger, operators []crypto.Identity) {
 		}
 	}
 
-	log.Log(fmt.Sprintf("Status\tID\tAddress"))
+	logger.Log(fmt.Sprintf("Status\tID\tAddress"))
 	for _, s := range success {
-		log.Log(fmt.Sprintf("✅\t%d\t%s", s.OperatorID, s.Address))
+		logger.Log(fmt.Sprintf("✅\t%d\t%s", s.OperatorID, s.Address))
 	}
 	for _, f := range failure {
-		log.Log(fmt.Sprintf("❌\t%d\t%s", f.OperatorID, f.Address))
+		logger.Log(fmt.Sprintf("❌\t%d\t%s", f.OperatorID, f.Address))
 	}
 }
 

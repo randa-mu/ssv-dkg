@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/randa-mu/ssv-dkg/shared"
 	"golang.org/x/exp/slog"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
@@ -42,25 +43,36 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// sign the deposit data using the key share
-	depositDataMessage, err := crypto.DepositDataMessage(request.DepositData.ExtractRequired(), result.GroupPublicPoly)
+	groupPublicKey := crypto.ExtractGroupPublicKey(d.thresholdScheme, result.GroupPublicPoly)
+	depositDataMessage, err := crypto.DepositDataMessage(request.DepositData.ExtractRequired(), shared.Clone(groupPublicKey))
 	if err != nil {
 		return api.SignResponse{}, err
 	}
-	partialSignature, err := d.thresholdScheme.SignWithPartial(result.KeyShare, depositDataMessage)
+	depositDataPartialSignature, err := d.thresholdScheme.SignWithPartial(result.KeyShare, depositDataMessage)
 	if err != nil {
 		slog.Error("error signing deposit data", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
 	}
 
-	// encrypt the key share for use by the SSV node later via smart contract
-	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, result.KeyShare)
+	// we encrypt the secret key share for use by the SSV node later via smart contract.
+	// The first 64 bits are the index used in the DKG which are not in the spec
+	// for how SSV uses the keyshares, so we trim them off
+	share := crypto.DistKeyWithoutIndex(result.KeyShare)
+	// then for some reason it's encoded in hex and passed as a utf8 string
+	encodedShare := []byte(hex.EncodeToString(share))
+
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, encodedShare)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
 	}
 
 	// sign the validator nonce to prevent operators signing up the same validator twice
-	validatorNonceMessage := crypto.ValidatorNonceMessage(request.OwnerConfig.Address, request.OwnerConfig.ValidatorNonce)
+	validatorNonceMessage, err := crypto.ValidatorNonceMessage(request.OwnerConfig.Address, request.OwnerConfig.ValidatorNonce)
+	if err != nil {
+		return api.SignResponse{}, fmt.Errorf("error creating validator nonce message: %v", err)
+	}
+
 	signedNonce, err := d.thresholdScheme.SignWithPartial(result.KeyShare, validatorNonceMessage)
 	if err != nil {
 		slog.Error("error signing nonce", "sessionID", sessionID, "err", err)
@@ -69,10 +81,10 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 
 	response := api.SignResponse{
 		PublicPolynomial:               result.GroupPublicPoly,
-		NodePK:                         result.PublicKeyShare,
-		DepositDataPartialSignature:    partialSignature,
+		DepositDataPartialSignature:    depositDataPartialSignature,
 		EncryptedShare:                 encryptedShare,
-		DepositValidatorNonceSignature: signedNonce,
+		SharePublicKey:                 result.PublicKeyShare,
+		ValidatorNoncePartialSignature: signedNonce,
 	}
 
 	groupFile, err := dkg.NewGroupFile(sessionID, result.GroupPublicPoly, request.Operators, result.KeyShare, encryptedShare)
@@ -146,8 +158,13 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 		return api.ReshareResponse{}, errors.New(msg)
 	}
 
-	// encrypt the key share for use by the SSV node later via smart contract
-	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, result.KeyShare)
+	// we encrypt the secret key share for use by the SSV node later via smart contract.
+	// The first 64 bits are the index used in the DKG which are not in the spec
+	// for how SSV uses the keyshares, so we trim them off
+	share := crypto.DistKeyWithoutIndex(result.KeyShare)
+	// then for some reason it's encoded in hex and passed as a utf8 string
+	encodedShare := []byte(hex.EncodeToString(share))
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, encodedShare)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionIDHex, "err", err)
 		return api.ReshareResponse{}, err
@@ -170,12 +187,12 @@ func (d Daemon) Reshare(request api.ReshareRequest) (api.ReshareResponse, error)
 
 	return api.ReshareResponse{
 		EncryptedShare:   encryptedShare,
+		PublicKeyShare:   result.PublicKeyShare,
 		PublicPolynomial: result.GroupPublicPoly,
-		NodePK:           result.PublicKeyShare,
 	}, nil
 }
 
-func (d Daemon) Identity(_ api.SidecarIdentityRequest) (api.SidecarIdentityResponse, error) {
+func (d Daemon) Identity() (api.SidecarIdentityResponse, error) {
 	identity, err := d.key.SelfSign(d.thresholdScheme, d.publicURL, d.operatorID)
 	if err != nil {
 		return api.SidecarIdentityResponse{}, err

@@ -15,7 +15,7 @@ type Sidecar interface {
 	Health() error
 	Sign(request SignRequest) (SignResponse, error)
 	Reshare(request ReshareRequest) (ReshareResponse, error)
-	Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error)
+	Identity() (SidecarIdentityResponse, error)
 	BroadcastDKG(packet SidecarDKGPacket) error
 }
 
@@ -30,17 +30,18 @@ type SignResponse struct {
 	// the key share encrypted with the validator's RSA key
 	EncryptedShare []byte `json:"encrypted_share"`
 
+	// the corresponding public key for the distributed key share
+	// this will be different to the node's own BLS public key
+	SharePublicKey []byte
+
 	// the BLS12-381 public key for the group created during the DKG
 	PublicPolynomial []byte `json:"public_polynomial"`
-
-	// the BLS12-381 public key for the specific validator node
-	NodePK []byte `json:"node_pk"`
 
 	// a partial signature over the deposit data's SHA256 hash
 	DepositDataPartialSignature []byte `json:"deposit_data_partial_signature"`
 
 	// a partial signature over the validator's nonce's SHA256 hash
-	DepositValidatorNonceSignature []byte `json:"deposit_validator_nonce_signature"`
+	ValidatorNoncePartialSignature []byte `json:"validator_nonce_partial_signature"`
 }
 
 type ReshareRequest struct {
@@ -59,24 +60,14 @@ type ReshareResponse struct {
 	// the new key share encrypted with the validator's RSA key
 	EncryptedShare []byte `json:"encrypted_share"`
 
-	// the BLS12-381 public key for the group created during the DKG
+	// the corresponding public key for the key share that has
+	// been encrypted
+	PublicKeyShare []byte `json:"share_public_key"`
+
+	// the polynomial commitments for the group created during the DKG
 	// it should be the same as the initial sharing, but always good to check
+	// the 0th commitment is the group public key
 	PublicPolynomial []byte `json:"public_polynomial"`
-
-	// the BLS12-381 public key for the specific validator node
-	NodePK []byte `json:"node_pk"`
-}
-
-var (
-	SsvHealthPath   = "/v1/node/health"
-	SsvIdentityPath = "/v1/node/identity"
-)
-
-type SsvIdentityResponse struct {
-	PublicKey []byte `json:"publicKey"`
-}
-
-type SidecarIdentityRequest struct {
 }
 
 type SidecarIdentityResponse struct {
@@ -96,9 +87,9 @@ var (
 
 func BindSidecarAPI(router *chi.Mux, node Sidecar) {
 	router.Get(SidecarHealthPath, createHealthAPI(node))
+	router.Get(SidecarIdentityPath, createSidecarIdentityAPI(node))
 	router.Post(SidecarSignPath, createSignAPI(node))
 	router.Post(SidecarResharePath, createReshareAPI(node))
-	router.Post(SidecarIdentityPath, createSidecarIdentityAPI(node))
 	router.Post(SidecarDKGPath, createSidecarDKGAPI(node))
 }
 
@@ -185,19 +176,7 @@ func createReshareAPI(node Sidecar) http.HandlerFunc {
 
 func createSidecarIdentityAPI(node Sidecar) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		bytes, err := io.ReadAll(request.Body)
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var requestBody SidecarIdentityRequest
-		err = json.Unmarshal(bytes, &requestBody)
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		identity, err := node.Identity(requestBody)
+		identity, err := node.Identity()
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return

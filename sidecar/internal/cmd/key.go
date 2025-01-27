@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"path"
 
 	"github.com/spf13/cobra"
 
-	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/randa-mu/ssv-dkg/sidecar/internal/util"
 )
@@ -51,7 +51,7 @@ func init() {
 func createKey(_ *cobra.Command, args []string) {
 	var dir string
 	if len(args) > 1 {
-		shared.Exit(fmt.Sprintf("too many args - expected 1, got %d", len(args)))
+		log.Fatalf("too many args - expected 1, got %d", len(args))
 	}
 
 	if len(args) == 1 {
@@ -62,7 +62,7 @@ func createKey(_ *cobra.Command, args []string) {
 
 	err := sidecar.GenerateKey(dir)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		log.Fatalf("%v", err)
 	}
 
 	fmt.Printf("Created a new keypair at %s\n", path.Join(dir, util.KeySuffix))
@@ -70,12 +70,12 @@ func createKey(_ *cobra.Command, args []string) {
 
 func signKey(_ *cobra.Command, _ []string) {
 	if OperatorIDFlag == 0 {
-		shared.Exit("`operator-id` must be set and greater than 0")
+		log.Fatal("`operator-id` must be set and greater than 0")
 	}
 
 	signature, err := sidecar.SignKey(UrlFlag, DirectoryFlag, OperatorIDFlag)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		log.Fatalf("%v", err)
 	}
 	fmt.Println(string(signature))
 }

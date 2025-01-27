@@ -2,15 +2,8 @@ package shared
 
 import (
 	"fmt"
-	"os"
 	"sync"
 )
-
-// Exit is a helper function for bombing out of the process in CLI commands
-func Exit(message string) {
-	_, _ = fmt.Fprintln(os.Stderr, message)
-	os.Exit(1)
-}
 
 // Uniq takes an array and returns a new array without duplicates
 func Uniq[T comparable](input []T) []T {
@@ -58,4 +51,10 @@ func (s *SafeList[T]) Get() []T {
 	out := make([]T, len(s.delegate))
 	copy(out, s.delegate)
 	return out
+}
+
+func Clone[T any](a []T) []T {
+	b := make([]T, len(a))
+	copy(b, a)
+	return b
 }

@@ -13,12 +13,14 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
+	"golang.org/x/exp/slices"
 )
 
 type SignatureConfig struct {
 	Operators   []string
 	DepositData api.UnsignedDepositData
 	Owner       api.OwnerConfig
+	SsvClient   api.SsvClient
 }
 
 // Sign performs a distributed key generation between the operators provided
@@ -52,35 +54,60 @@ func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, er
 		return api.SigningOutput{}, err
 	}
 
+	// we sort the responses by operatorID, though they ought to already be sorted
+	slices.SortStableFunc(responses, func(a, b api.OperatorResponse) int {
+		return int(a.Identity.OperatorID) - int(b.Identity.OperatorID)
+	})
+
+	// if all the group public keys are the same,
 	if err := verifyPublicPolynomialSame(responses); err != nil {
 		return api.SigningOutput{}, fmt.Errorf("not every operator came up with the same public key: %v", err)
 	}
+	// we can use the first to verify all the partials
+	publicPolynomial := responses[0].Response.PublicPolynomial
+	groupPublicKey := crypto.ExtractGroupPublicKey(suite, shared.Clone(publicPolynomial))
 
-	// as all the group public keys are the same, we can use the first to verify all the partials
-	groupPublicKey := responses[0].Response.PublicPolynomial
-
-	// aggregate the deposit data sig
-	depositDataMessage, err := crypto.DepositDataMessage(config.DepositData.ExtractRequired(), groupPublicKey)
+	// then we aggregate and verify the deposit data signature
+	depositDataMessage, err := crypto.DepositDataMessage(config.DepositData.ExtractRequired(), shared.Clone(groupPublicKey))
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("failed to create deposit data message: %v", err)
 	}
-	depositDataPartials := extractDepositDataPartials(responses)
-	depositDataSignature, err := aggregateGroupSignature(suite, depositDataPartials, groupPublicKey, depositDataMessage)
+
+	depositDataPartials, err := extractDepositDataPartials(responses)
+	if err != nil {
+		return api.SigningOutput{}, fmt.Errorf("error extracting deposit data partials: %v", err)
+	}
+
+	depositDataSignature, err := aggregateGroupSignature(suite, depositDataPartials, publicPolynomial, depositDataMessage)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("error aggregating deposit data signature: %v", err)
 	}
+	if err = suite.Verify(depositDataMessage, groupPublicKey, depositDataSignature); err != nil {
+		return api.SigningOutput{}, fmt.Errorf("failed to verify deposit data signature: %v", err)
+	}
 
-	// aggregate the validator nonce sig
-	validatorNoncePartials := extractValidatorNoncePartials(responses)
-	validatorNonceMessage := crypto.ValidatorNonceMessage(config.Owner.Address, config.Owner.ValidatorNonce)
-	validatorNonceSignature, err := aggregateGroupSignature(suite, validatorNoncePartials, groupPublicKey, validatorNonceMessage)
+	// then we aggregate and verify the validator nonce signature
+	validatorNonceMessage, err := crypto.ValidatorNonceMessage(config.Owner.Address, config.Owner.ValidatorNonce)
+	if err != nil {
+		return api.SigningOutput{}, fmt.Errorf("your ethereum address wasn't correct: %v", err)
+	}
+	validatorNoncePartials, err := extractValidatorNoncePartials(responses)
+	if err != nil {
+		return api.SigningOutput{}, fmt.Errorf("error extracting partials for validator nonce signature: %v", err)
+	}
+	validatorNonceSignature, err := aggregateGroupSignature(suite, validatorNoncePartials, publicPolynomial, validatorNonceMessage)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("error aggregating validator nonce signature: %v", err)
 	}
 
+	if err = suite.Verify(validatorNonceMessage, groupPublicKey, validatorNonceSignature); err != nil {
+		return api.SigningOutput{}, fmt.Errorf("failed to verify validator nonce signature: %v", err)
+	}
+
+	// and finally we extract some relevant bits before returning all the info
 	output := api.SigningOutput{
 		SessionID:               sessionID,
-		GroupPublicKey:          groupPublicKey,
+		GroupPublicPolynomial:   publicPolynomial,
 		OperatorShares:          extractEncryptedShares(responses),
 		DepositDataSignature:    depositDataSignature,
 		ValidatorNonceSignature: validatorNonceSignature,
@@ -101,7 +128,7 @@ func fetchIdentities(suite crypto.ThresholdScheme, operators []string) ([]crypto
 		// then we fetch the keys for the node
 		// perhaps these should be checked against the ones registered in the repo
 		client := api.NewSidecarClient(address)
-		response, err := client.Identity(api.SidecarIdentityRequest{})
+		response, err := client.Identity()
 		if err != nil {
 			return nil, fmt.Errorf("☹️\tthere was an error health-checking %s: %w", operator, err)
 		}
@@ -126,6 +153,7 @@ func extractEncryptedShares(arr []api.OperatorResponse) []api.OperatorShare {
 		operators[i] = api.OperatorShare{
 			Identity:       o.Identity,
 			EncryptedShare: o.Response.EncryptedShare,
+			SharePublicKey: o.Response.SharePublicKey,
 		}
 	}
 	return operators
@@ -215,12 +243,17 @@ func singleNodeRunDKG(suite crypto.ThresholdScheme, identity crypto.Identity, se
 
 func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Identity, depositData api.UnsignedDepositData, owner api.OwnerConfig, response api.SignResponse) error {
 	// verify that the signature over the validator nonce verifies to prevent attempts to register the same validator twice
-	if err := suite.VerifyPartial(response.PublicPolynomial, crypto.ValidatorNonceMessage(owner.Address, owner.ValidatorNonce), response.DepositValidatorNonceSignature); err != nil {
+	validatorNonceMessage, err := crypto.ValidatorNonceMessage(owner.Address, owner.ValidatorNonce)
+	if err != nil {
+		return fmt.Errorf("your ETH address was not correct")
+	}
+	if err := suite.VerifyPartial(response.PublicPolynomial, validatorNonceMessage, response.ValidatorNoncePartialSignature); err != nil {
 		return fmt.Errorf("signature did not verify for the signed validator nonce for node %s: %w", identity.Address, err)
 	}
 
 	// verify that the signature over the deposit data verifies for the reported public key
-	message, err := crypto.DepositDataMessage(depositData.ExtractRequired(), response.PublicPolynomial)
+	groupPublicKey := crypto.ExtractGroupPublicKey(suite, response.PublicPolynomial)
+	message, err := crypto.DepositDataMessage(depositData.ExtractRequired(), shared.Clone(groupPublicKey))
 	if err != nil {
 		return fmt.Errorf("error building final message: %w", err)
 	}
@@ -231,13 +264,13 @@ func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Ide
 }
 
 // aggregateGroupSignature aggregates partials from all the operators and verifies the output
-func aggregateGroupSignature(suite crypto.ThresholdScheme, partials [][]byte, groupPublicKey []byte, message []byte) ([]byte, error) {
-	signature, err := suite.RecoverSignature(message, groupPublicKey, partials, len(partials))
+func aggregateGroupSignature(suite crypto.ThresholdScheme, partials [][]byte, groupPublicPolynomial []byte, message []byte) ([]byte, error) {
+	signature, err := suite.RecoverSignature(message, groupPublicPolynomial, partials, len(partials))
 	if err != nil {
 		return nil, fmt.Errorf("error aggregating signature: %v", err)
 	}
 
-	err = suite.VerifyRecovered(message, groupPublicKey, signature)
+	err = suite.VerifyRecovered(message, groupPublicPolynomial, signature)
 	if err != nil {
 		return nil, fmt.Errorf("error verifying deposit data signature: %v", err)
 	}
@@ -257,18 +290,22 @@ func verifyPublicPolynomialSame(arr []api.OperatorResponse) error {
 	return nil
 }
 
-func extractDepositDataPartials(arr []api.OperatorResponse) [][]byte {
+func extractDepositDataPartials(arr []api.OperatorResponse) ([][]byte, error) {
 	partials := make([][]byte, len(arr))
+
 	for i, o := range arr {
 		partials[i] = o.Response.DepositDataPartialSignature
+
 	}
-	return partials
+	return partials, nil
 }
 
-func extractValidatorNoncePartials(arr []api.OperatorResponse) [][]byte {
+func extractValidatorNoncePartials(arr []api.OperatorResponse) ([][]byte, error) {
 	partials := make([][]byte, len(arr))
+
 	for i, o := range arr {
-		partials[i] = o.Response.DepositValidatorNonceSignature
+		partials[i] = o.Response.ValidatorNoncePartialSignature
+
 	}
-	return partials
+	return partials, nil
 }

@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"crypto/cipher"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 
@@ -12,6 +11,8 @@ import (
 	"github.com/drand/kyber/pairing"
 	"github.com/drand/kyber/share/dkg"
 	"github.com/drand/kyber/sign"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	//nolint:staticcheck //only a rogue key attack if used wrong
 	signing "github.com/drand/kyber/sign/bls"
 	"github.com/drand/kyber/sign/tbls"
@@ -25,7 +26,7 @@ type blsSuite struct {
 }
 
 func NewBLSSuite() blsSuite {
-	suite := bls.NewBLS12381Suite()
+	suite := bls.NewBLS12381SuiteWithDST([]byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_POP_"), []byte("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"))
 	scheme := signing.NewSchemeOnG2(suite)
 	return blsSuite{scheme: scheme, suite: suite, thresholdScheme: tbls.NewThresholdSchemeOnG2(suite)}
 }
@@ -56,17 +57,20 @@ func (b blsSuite) Sign(keypair Keypair, message []byte) ([]byte, error) {
 		return nil, fmt.Errorf("failed to unmarshal private key: %w", err)
 	}
 
-	return b.scheme.Sign(sk, message)
+	m := b.Digest(message)
+	return b.scheme.Sign(sk, m)
 }
 
 func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) error {
-	pk := b.KeyGroup().Point()
+	pk := b.KeyGroup().Point().Base().Clone()
 	err := pk.UnmarshalBinary(publicKey)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal public key: %w", err)
 	}
 
-	return b.scheme.Verify(pk, message, signature)
+	m := b.Digest(message)
+
+	return b.scheme.Verify(pk, m, signature)
 }
 
 func (b blsSuite) KeyGroup() kyber.Group {
@@ -79,23 +83,13 @@ func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error
 		return nil, err
 	}
 
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.BigEndian, uint16(distKey.I)); err != nil {
-		return nil, err
-	}
 	m := b.Digest(message)
-	sig, err := b.scheme.Sign(distKey.V, m)
-	if err != nil {
-		return nil, err
-	}
-	if err := binary.Write(buf, binary.BigEndian, sig); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+
+	return b.thresholdScheme.Sign(&distKey, m)
 }
 
-func (b blsSuite) VerifyPartial(public []byte, msg, sig []byte) error {
-	pubPoly, err := UnmarshalPubPoly(b, public)
+func (b blsSuite) VerifyPartial(publicCoefficients []byte, msg, sig []byte) error {
+	pubPoly, err := UnmarshalPubPoly(b, publicCoefficients)
 	if err != nil {
 		return err
 	}
@@ -108,8 +102,8 @@ func (b blsSuite) VerifyPartial(public []byte, msg, sig []byte) error {
 	if err != nil {
 		return err
 	}
-	m := b.Digest(msg)
-	return b.Verify(m, V, sh.Value())
+	// `b.Verify` hashes the message, so we don't need to do it here
+	return b.Verify(msg, V, sh.Value())
 }
 
 func (b blsSuite) RecoverSignature(message []byte, pubPoly []byte, sigs [][]byte, nodeCount int) ([]byte, error) {
@@ -122,8 +116,8 @@ func (b blsSuite) RecoverSignature(message []byte, pubPoly []byte, sigs [][]byte
 	return b.thresholdScheme.Recover(&p, m, sigs, threshold, nodeCount)
 }
 
-func (b blsSuite) VerifyRecovered(message []byte, publicKey []byte, signature []byte) error {
-	p, err := UnmarshalPubPoly(b, publicKey)
+func (b blsSuite) VerifyRecovered(message []byte, publicCoefficients []byte, signature []byte) error {
+	p, err := UnmarshalPubPoly(b, publicCoefficients)
 	if err != nil {
 		return err
 	}
@@ -132,9 +126,7 @@ func (b blsSuite) VerifyRecovered(message []byte, publicKey []byte, signature []
 }
 
 func (b blsSuite) Digest(msg []byte) []byte {
-	h := sha256.New()
-	h.Write(msg)
-	return h.Sum(nil)
+	return crypto.Keccak256(msg)
 }
 
 func (b blsSuite) AggregateSignatures(sigs ...[]byte) ([]byte, error) {
@@ -168,6 +160,7 @@ func (s SigShare) Index() (int, error) {
 	return int(index), nil
 }
 
+// Value trims the first two bytes because they encode the DKG index
 func (s *SigShare) Value() []byte {
 	return []byte(*s)[2:]
 }

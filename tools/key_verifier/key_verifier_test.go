@@ -14,18 +14,17 @@ func TestValidKeyValidates(t *testing.T) {
 	valid := `
 {
   "operators": [
-    {
-      "operator_id": 4,
-      "address": "http://127.0.0.1:8084",
-      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
-      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
-    },
-	{
-      "operator_id": 3,
-      "address": "http://127.0.0.1:8083",
-      "public": "tEGKf8Lm3pRPrOCNBRtQJBkRybNenn7vmAOJvOCiCODxp86nwILFTYQRl3xk5tum",
-      "signature": "pdUnns3/Au56zgUTdoiFYX4YW7i8WK83yrzw13ZkHCY3Wquy5psLkwmRyB2K/9DfFJj9HOy8FQ0ojM1SCoKv6k/++XlYLSGQMYpeVmiRjvwIYvhMMSUEF1rbcubYz6fE"
-	}
+{
+  "operator_id": 4,
+  "address": "http://127.0.0.1:8084",
+  "public": "kNe77jLEBddtf3Xdnzo0YBwovjHemgpN/enBPBNh/yjcozshAoAPlXB7ttkF+4fu",
+  "signature": "s9LiL2q1iqsNC2oWyM9mz8mrTnAAtHVv19BaXZXa1NSc1DGSfZjPpp686okVlrdyBMmnQgzYMegpuFgKZ2ZEDDj6Nw9ubrNQioGWOFtndbMUHQfQ82DTXTsb5hz0MJFX"
+}, {
+  "operator_id": 3,
+  "address": "http://127.0.0.1:8083",
+  "public": "qa49KGl9moW+GEHol+9lVZmniwKoeSgVTh6FAXQsENlIS8WTRWgO6mSfRXGUwo7D",
+  "signature": "gx7XWG4cc7gzPj/qB0rqNzzqChaOgrByxQ+bNJeHMRkBm1jyvcvmrWQGbOE4fzZID85edxt+4B1V1zctG75OL+7MOA2RKK8EAm44i7RCWsBwvXYOwDOc39yCtx9cdgwz"
+}
   ]
 }`
 
@@ -49,12 +48,12 @@ func TestInvalidAddressReturnsError(t *testing.T) {
 	invalid := `
 {
   "operators": [
-    {
-      "operator_id": 4,
-      address": "http://notthesameaddressaspublickey:8080",
-      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
-      "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
-    }
+{
+  "operator_id": 3,
+  "address": "differentaddresstokey.com",,
+  "public": "qa49KGl9moW+GEHol+9lVZmniwKoeSgVTh6FAXQsENlIS8WTRWgO6mSfRXGUwo7D",
+  "signature": "gx7XWG4cc7gzPj/qB0rqNzzqChaOgrByxQ+bNJeHMRkBm1jyvcvmrWQGbOE4fzZID85edxt+4B1V1zctG75OL+7MOA2RKK8EAm44i7RCWsBwvXYOwDOc39yCtx9cdgwz"
+}
   ]
 }`
 
@@ -78,11 +77,11 @@ func TestMissingOperatorIDReturnsError(t *testing.T) {
 	invalid := `
     {
       "operators": [
-        {
-          "address": "http://127.0.0.1:8084",
-          "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
-          "signature": "iZMqMYRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
-        }
+		{
+  			"address": "http://127.0.0.1:8083",
+  			"public": "qa49KGl9moW+GEHol+9lVZmniwKoeSgVTh6FAXQsENlIS8WTRWgO6mSfRXGUwo7D",
+  			"signature": "gx7XWG4cc7gzPj/qB0rqNzzqChaOgrByxQ+bNJeHMRkBm1jyvcvmrWQGbOE4fzZID85edxt+4B1V1zctG75OL+7MOA2RKK8EAm44i7RCWsBwvXYOwDOc39yCtx9cdgwz"
+		}
       ]
     }`
 
@@ -106,12 +105,12 @@ func TestInvalidSignatureReturnsError(t *testing.T) {
 	invalid := `
 {
   "operators": [
-    {
-      "operator_id": 4,
-      "address": "http://127.0.0.1:8084",
-      "public": "kvlh/8NwkDszMLYKZ2NZfPUbTETUQATZjkVVJgsyDRfmPsG1ANeSpup0qBQmQeBg",
-      "signature": "notvalidRQ3p8pn3kyfatE4XKwzOOkBTKjbU1hn/5bXJn191Iny0m08lSfe4LRsWhvBvdwlYYt5imem2NVaNmoBLY3ydTl3EyXQS7GtF0aCMk+tkj6I94vbOx8YeHPdd59"
-    }
+{
+  "operator_id": 3,
+  "address": "http://127.0.0.1:8083",
+  "public": "qa49KGl9moW+GEHol+9lVZmniwKoeSgVTh6FAXQsENlIS8WTRWgO6mSfRXGUwo7D",
+  "signature": "notvalidcc7gzPj/qB0rqNzzqChaOgrByxQ+bNJeHMRkBm1jyvcvmrWQGbOE4fzZID85edxt+4B1V1zctG75OL+7MOA2RKK8EAm44i7RCWsBwvXYOwDOc39yCtx9cdgwz"
+}
   ]
 }`
 

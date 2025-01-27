@@ -1,4 +1,4 @@
-package state
+package files
 
 import (
 	"encoding/hex"

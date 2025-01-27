@@ -71,7 +71,7 @@ func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) 
 
 	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return ReshareResponse{}, fmt.Errorf("error reading Response bytes: %w", err)
+		return ReshareResponse{}, fmt.Errorf("error reading response bytes: %w", err)
 	}
 
 	var reshareResponse ReshareResponse
@@ -79,12 +79,8 @@ func (s SidecarClient) Reshare(request ReshareRequest) (ReshareResponse, error) 
 	return reshareResponse, err
 }
 
-func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentityResponse, error) {
-	j, err := json.Marshal(request)
-	if err != nil {
-		return SidecarIdentityResponse{}, err
-	}
-	res, err := http.Post(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath), "application/json", bytes.NewBuffer(j))
+func (s SidecarClient) Identity() (SidecarIdentityResponse, error) {
+	res, err := http.Get(fmt.Sprintf("%s%s", s.url, SidecarIdentityPath))
 	if err != nil {
 		return SidecarIdentityResponse{}, fmt.Errorf("error making HTTP request: %w", err)
 	}
@@ -95,13 +91,13 @@ func (s SidecarClient) Identity(request SidecarIdentityRequest) (SidecarIdentity
 
 	responseBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error reading Response body: %w", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	var identity SidecarIdentityResponse
 	err = json.Unmarshal(responseBytes, &identity)
 	if err != nil {
-		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling Response body: %w", err)
+		return SidecarIdentityResponse{}, fmt.Errorf("error marshalling response body: %w", err)
 	}
 	return identity, nil
 }

@@ -28,7 +28,7 @@ type SignedDepositData struct {
 
 type SigningOutput struct {
 	SessionID               json.UnpaddedBytes `json:"session_id"`
-	GroupPublicKey          json.UnpaddedBytes `json:"group_public_commitments"`
+	GroupPublicPolynomial   json.UnpaddedBytes `json:"group_public_commitments"`
 	OperatorShares          []OperatorShare    `json:"operator_shares"`
 	DepositDataSignature    json.UnpaddedBytes `json:"deposit_data_signature"`
 	ValidatorNonceSignature json.UnpaddedBytes `json:"validator_nonce_signature"`
@@ -37,11 +37,13 @@ type SigningOutput struct {
 type OperatorShare struct {
 	Identity       crypto.Identity    `json:"identity"`
 	EncryptedShare json.UnpaddedBytes `json:"encrypted_share"`
+	SharePublicKey json.UnpaddedBytes `json:"share_public_key"`
 }
 
 type OperatorResponse struct {
-	Identity crypto.Identity
-	Response SignResponse
+	Identity     crypto.Identity
+	SsvPublicKey []byte
+	Response     SignResponse
 }
 
 func (u UnsignedDepositData) ExtractRequired() crypto.RequiredDepositFields {
