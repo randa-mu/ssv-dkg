@@ -55,7 +55,10 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 	}
 
 	// encrypt the key share for use by the SSV node later via smart contract
-	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, result.KeyShare)
+	// the first two bytes are the index used in the DKG which are not in the spec
+	// for how SSV uses the keyshares
+	shareWithoutIndex := result.KeyShare[2:]
+	encryptedShare, err := d.encryptionScheme.Encrypt(d.ssvKey, shareWithoutIndex)
 	if err != nil {
 		slog.Error("error encrypting key share", "sessionID", sessionID, "err", err)
 		return api.SignResponse{}, err
