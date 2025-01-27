@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -90,14 +91,14 @@ func init() {
 func Sign(cmd *cobra.Command, _ []string) {
 	signingConfig, err := parseArgs(cmd)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		log.Fatalf("%v", err)
 	}
 
 	// run a DKG and get the signed output
-	log := shared.QuietLogger{Quiet: shortFlag}
-	signingOutput, err := cli.Sign(signingConfig, log)
+	logger := shared.QuietLogger{Quiet: shortFlag}
+	signingOutput, err := cli.Sign(signingConfig, logger)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("%v", err))
+		log.Fatalf("%v", err)
 	}
 
 	path := files.CreateFilename(stateDirectoryFlag, signingOutput)
@@ -108,23 +109,23 @@ func Sign(cmd *cobra.Command, _ []string) {
 	}
 	bytes, err := files.StoreStateIfNotExists(path, nextState)
 	if err != nil {
-		log.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
-		log.Log(string(bytes))
+		logger.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
+		logger.Log(string(bytes))
 	} else {
-		log.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
+		logger.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
 	}
 
 	keyshareFile, err := files.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("couldn't create keyshare file: %v", err))
+		log.Fatalf("couldn't create keyshare file: %v", err)
 	}
 
 	j, err := json.Marshal(keyshareFile)
 	if err != nil {
-		shared.Exit(fmt.Sprintf("couldn't turn the keyshare into json: %v", err))
+		log.Fatalf("couldn't turn the keyshare into json: %v", err)
 	}
-	log.MaybeLog("📄 below is a keyfile JSON for use with the SSV UI:")
-	log.Log(string(j))
+	logger.MaybeLog("📄 below is a keyfile JSON for use with the SSV UI:")
+	logger.Log(string(j))
 }
 
 func parseArgs(cmd *cobra.Command) (cli.SignatureConfig, error) {
