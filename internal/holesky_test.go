@@ -19,8 +19,7 @@ import (
 )
 
 func TestPrintHolesky(t *testing.T) {
-
-	ownerAddress, err := hex.DecodeString("71c7656ec7ab88b098defb751b7401b5f6d8976f")
+	ownerAddress, err := hex.DecodeString("17B3cAb3cD7502C6b85ed2E11Fd5988AF76Cdd32")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +57,7 @@ func TestPrintHolesky(t *testing.T) {
 	groupSig := data[0:sigLength]
 	pk, err := hex.DecodeString(file.Shares[0].Data.PublicKey[2:])
 	require.NoError(t, err)
-	address, err := hex.DecodeString("71c7656ec7ab88b098defb751b7401b5f6d8976f")
+	address, err := hex.DecodeString("17B3cAb3cD7502C6b85ed2E11Fd5988AF76Cdd32")
 	require.NoError(t, err)
 	validatorNonce := uint32(0)
 	m, err := crypto.ValidatorNonceMessage(address, validatorNonce)
