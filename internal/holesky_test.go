@@ -31,7 +31,7 @@ func TestPrintHolesky(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 
-	config := cli.SignatureConfig{
+	config := api.SignatureConfig{
 		Operators: []string{
 			"http://127.0.0.1:8881",
 			"http://127.0.0.1:8882",

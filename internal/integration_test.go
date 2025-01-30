@@ -32,7 +32,7 @@ func TestSuccessfulSigningAndResharing(t *testing.T) {
 	address, err := hex.DecodeString("aA184b86B4cdb747F4A3BF6e6FCd5e27c1d92c5c")
 	require.NoError(t, err)
 
-	args := cli.SignatureConfig{
+	args := api.SignatureConfig{
 		Operators:   operators,
 		DepositData: depositData,
 		Owner: api.OwnerConfig{
@@ -87,7 +87,7 @@ func TestResharingNewNode(t *testing.T) {
 
 	address, err := hex.DecodeString("aA184b86B4cdb747F4A3BF6e6FCd5e27c1d92c5c")
 	require.NoError(t, err)
-	args := cli.SignatureConfig{
+	args := api.SignatureConfig{
 		Operators:   operators,
 		DepositData: depositData,
 		Owner: api.OwnerConfig{
@@ -125,7 +125,7 @@ func TestErroneousNodeOnStartup(t *testing.T) {
 	depositData := createUnsignedDepositData()
 	address, err := hex.DecodeString("deadbeef")
 	require.NoError(t, err)
-	args := cli.SignatureConfig{
+	args := api.SignatureConfig{
 		Operators:   operators,
 		DepositData: depositData,
 		Owner: api.OwnerConfig{
@@ -149,7 +149,7 @@ func TestErroneousNodeOnRunningDKG(t *testing.T) {
 	depositData := createUnsignedDepositData()
 	address, err := hex.DecodeString("deadbeef")
 	require.NoError(t, err)
-	args := cli.SignatureConfig{
+	args := api.SignatureConfig{
 		Operators:   operators,
 		DepositData: depositData,
 		Owner: api.OwnerConfig{
