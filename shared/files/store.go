@@ -20,7 +20,7 @@ const DepositDataFileName = "signed_deposit_data.json"
 const KeyShareFileName = "keystore.json"
 
 func CreateFilename(stateDirectory string, output api.SigningOutput, filename string) string {
-	return path.Join(stateDirectory, fmt.Sprintf("%s/%s.json", hex.EncodeToString(output.SessionID), filename))
+	return path.Join(stateDirectory, fmt.Sprintf("%s/%s", hex.EncodeToString(output.SessionID), filename))
 }
 
 // StoreState stores the JSON encoded `StoredState` in a flat file.
@@ -31,7 +31,7 @@ func StoreState(filepath string, state StoredState) ([]byte, error) {
 	return storeWithFlags(filepath, state, os.O_WRONLY)
 }
 
-// StoreStateIfNotExists stores the JSON encoded `StoredState` in a flat file.
+// StoreStateIfNotExists stores the JSON encoded state in a flat file.
 // it will fail if a file with the given name already exists
 // it returns the json bytes on file write failure, so they can be printed to console
 // so users don't just lose their DKG state completely if e.g. they write somewhere without perms
