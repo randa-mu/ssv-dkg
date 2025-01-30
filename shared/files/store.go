@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/randa-mu/ssv-dkg/shared/api"
 )
@@ -39,13 +40,18 @@ func StoreStateIfNotExists(filepath string, state any) ([]byte, error) {
 	return storeWithFlags(filepath, state, os.O_WRONLY|os.O_CREATE|os.O_EXCL)
 }
 
-func storeWithFlags(filepath string, state any, flag int) ([]byte, error) {
+func storeWithFlags(path string, state any, flag int) ([]byte, error) {
 	bytes, err := json.Marshal(state)
 	if err != nil {
 		return nil, err
 	}
 
-	file, err := os.OpenFile(filepath, flag, 0o755)
+	err = os.Mkdir(filepath.Dir(path), os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.OpenFile(path, flag, 0o755)
 	if err != nil {
 		return bytes, err
 	}
