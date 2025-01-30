@@ -1,15 +1,15 @@
 package crypto
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ferranbt/fastssz/spectests"
+	eth "github.com/protolambda/zrnt/eth2/beacon/common"
+	"github.com/protolambda/ztyp/tree"
 )
 
 type DepositMessage struct {
@@ -24,7 +24,16 @@ func DepositMessageSignatureMessage(data DepositMessage, forkVersion string) ([]
 	if err != nil {
 		return nil, err
 	}
-	return hashWithDomain(m, forkVersion)
+
+	domain, err := hex.DecodeString(fmt.Sprintf("03000000%s", forkVersion))
+	if err != nil {
+		return nil, err
+	}
+	root := spectests.SigningRoot{
+		ObjectRoot: m,
+		Domain:     domain,
+	}
+	return root.MarshalSSZ()
 }
 
 // DepositMessageRoot is the merkle root included in the deposit data
@@ -41,15 +50,20 @@ func DepositMessageRoot(data DepositMessage) ([]byte, error) {
 		return nil, errors.New("group public key must be 48 bytes long")
 	}
 
-	b := bytes.Buffer{}
-	b.Write(data.PublicKey)
-	b.Write(data.WithdrawalCredentials)
-	err := binary.Write(&b, binary.LittleEndian, data.Amount)
-	if err != nil {
-		return nil, err
+	var pk [48]byte
+	var wc [32]byte
+
+	copy(pk[:], data.PublicKey)
+	copy(wc[:], data.WithdrawalCredentials)
+	d := eth.DepositMessage{
+		Pubkey:                pk,
+		WithdrawalCredentials: wc,
+		Amount:                eth.Gwei(data.Amount),
 	}
-	hashedRoot := sha256.Sum256(b.Bytes())
-	return hashedRoot[:], nil
+
+	root := d.HashTreeRoot(tree.Hash)
+
+	return root[:], nil
 }
 
 type DepositData struct {
@@ -77,32 +91,22 @@ func DepositDataRoot(data DepositData) ([]byte, error) {
 		return nil, errors.New("signature must be 96 bytes long")
 	}
 
-	b := bytes.Buffer{}
-	b.Write(data.PublicKey)
-	b.Write(data.WithdrawalCredentials)
-	err := binary.Write(&b, binary.LittleEndian, data.Amount)
-	if err != nil {
-		return nil, err
-	}
-	b.Write(data.Signature)
+	var pk [48]byte
+	var wc [32]byte
+	var sig [96]byte
 
-	hash := sha256.Sum256(b.Bytes())
-	return hash[:], nil
-}
-
-func hashWithDomain(b []byte, forkVersion string) ([]byte, error) {
-	domain, err := computeDomain(forkVersion)
-	if err != nil {
-		return nil, err
+	copy(pk[:], data.PublicKey)
+	copy(wc[:], data.WithdrawalCredentials)
+	copy(sig[:], data.Signature)
+	d := eth.DepositData{
+		Pubkey:                pk,
+		WithdrawalCredentials: wc,
+		Amount:                eth.Gwei(data.Amount),
+		Signature:             sig,
 	}
 
-	hash := sha256.Sum256(append(b[:], domain...))
-	return hash[:], nil
-}
-
-func computeDomain(forkVersion string) ([]byte, error) {
-	domainDeposit := "03000000"
-	return hex.DecodeString(fmt.Sprintf("%s%s00000000", domainDeposit, forkVersion))
+	root := d.HashTreeRoot(tree.Hash)
+	return root[:], nil
 }
 
 func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error) {
