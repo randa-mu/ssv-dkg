@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/randa-mu/ssv-dkg/shared/encoding"
 	"golang.org/x/exp/slices"
 
 	"github.com/drand/kyber"
@@ -21,11 +22,11 @@ import (
 )
 
 type GroupFile struct {
-	SessionID                   string            `json:"session_id"`
-	Nodes                       []crypto.Identity `json:"nodes"`
-	PublicPolynomialCommitments []byte            `json:"public_polynomial_commitments"`
-	KeyShare                    []byte            `json:"key_share"`
-	EncryptedKeyShareHash       []byte            `json:"encrypted_key_share_hash"`
+	SessionID                   string                 `json:"session_id"`
+	Nodes                       []crypto.Identity      `json:"nodes"`
+	PublicPolynomialCommitments encoding.UnpaddedBytes `json:"public_polynomial_commitments"`
+	KeyShare                    encoding.UnpaddedBytes `json:"key_share"`
+	EncryptedKeyShareHash       encoding.UnpaddedBytes `json:"encrypted_key_share_hash"`
 }
 
 type DistPublic struct {
