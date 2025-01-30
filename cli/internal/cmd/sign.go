@@ -8,8 +8,10 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"strings"
 
+	"github.com/randa-mu/ssv-dkg/shared/crypto"
 	"github.com/randa-mu/ssv-dkg/shared/files"
 	"github.com/spf13/cobra"
 
@@ -94,6 +96,7 @@ func Sign(cmd *cobra.Command, _ []string) {
 		log.Fatalf("%v", err)
 	}
 
+	suite := crypto.NewBLSSuite()
 	// run a DKG and get the signed output
 	logger := shared.QuietLogger{Quiet: shortFlag}
 	signingOutput, err := cli.Sign(signingConfig, logger)
@@ -101,48 +104,58 @@ func Sign(cmd *cobra.Command, _ []string) {
 		log.Fatalf("%v", err)
 	}
 
-	path := files.CreateFilename(stateDirectoryFlag, signingOutput)
+	statePath := files.CreateFilename(stateDirectoryFlag, signingOutput, files.StateFileName)
+	depositDataPath := files.CreateFilename(stateDirectoryFlag, signingOutput, files.DepositDataFileName)
+	keySharePath := files.CreateFilename(stateDirectoryFlag, signingOutput, files.KeyShareFileName)
 
-	nextState := files.StoredState{
-		OwnerConfig:   signingConfig.Owner,
-		SigningOutput: signingOutput,
-	}
-	bytes, err := files.StoreStateIfNotExists(path, nextState)
-	if err != nil {
-		logger.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
-		logger.Log(string(bytes))
-	} else {
-		logger.MaybeLog(fmt.Sprintf("✅ received signed deposit data! stored state in %s", path))
-	}
-
-	keyshareFile, err := files.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
+	nextState := files.StoredState{OwnerConfig: signingConfig.Owner, SigningOutput: signingOutput}
+	signedDepositData := files.CreateSignedDepositData(suite, signingConfig, signingOutput)
+	keyShareFile, err := files.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
 	if err != nil {
 		log.Fatalf("couldn't create keyshare file: %v", err)
 	}
 
-	j, err := json.Marshal(keyshareFile)
+	errored := false
+	bytes, err := files.StoreStateIfNotExists(statePath, nextState)
 	if err != nil {
-		log.Fatalf("couldn't turn the keyshare into json: %v", err)
+		errored = true
+		logger.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the state; you should store it somewhere for resharing. Error: %v", err))
+		logger.Log(string(bytes))
 	}
-	logger.MaybeLog("📄 below is a keyfile JSON for use with the SSV UI:")
-	logger.Log(string(j))
+	bytes, err = files.StoreStateIfNotExists(depositDataPath, signedDepositData)
+	if err != nil {
+		errored = true
+		logger.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the deposit data; you should store it somewhere for resharing. Error: %v", err))
+		logger.Log(string(bytes))
+	}
+	bytes, err = files.StoreStateIfNotExists(keySharePath, keyShareFile)
+	if err != nil {
+		errored = true
+		logger.Log(fmt.Sprintf("⚠️  DKG was successful but there was an error storing the keyshares file; you should store it somewhere for resharing. Error: %v", err))
+		logger.Log(string(bytes))
+	}
+
+	// we only want to say they've been stored if they all have
+	if !errored {
+		logger.Log(fmt.Sprintf("✅ your state, signed deposit data and keyshares files have been stored to %s", path.Join(stateDirectoryFlag, hex.EncodeToString(signingOutput.SessionID))))
+	}
 }
 
-func parseArgs(cmd *cobra.Command) (cli.SignatureConfig, error) {
+func parseArgs(cmd *cobra.Command) (api.SignatureConfig, error) {
 	// if the operator flag isn't passed, we consume operator addresses from stdin
 	operators, err := parseOperators(operatorFlag, cmd.InOrStdin())
 	if err != nil {
-		return cli.SignatureConfig{}, fmt.Errorf("error parsing the operators: %v", err)
+		return api.SignatureConfig{}, fmt.Errorf("error parsing the operators: %v", err)
 	}
 
 	depositData, err := parseUnsignedInputData(inputPathFlag, stateDirectoryFlag)
 	if err != nil {
-		return cli.SignatureConfig{}, fmt.Errorf("error parsing deposit data: %v", err)
+		return api.SignatureConfig{}, fmt.Errorf("error parsing deposit data: %v", err)
 	}
 
 	ownerConfig, err := parseOwnerConfig(validatorNonceFlag, ethAddressFlag)
 	if err != nil {
-		return cli.SignatureConfig{}, fmt.Errorf("error parsing owner details: %v", err)
+		return api.SignatureConfig{}, fmt.Errorf("error parsing owner details: %v", err)
 	}
 
 	var ssvClient api.SsvClient
@@ -151,10 +164,10 @@ func parseArgs(cmd *cobra.Command) (cli.SignatureConfig, error) {
 	} else if networkFlag == "holesky" {
 		ssvClient = api.HoleskySsvClient()
 	} else {
-		return cli.SignatureConfig{}, fmt.Errorf("network must be either mainnet or holesky")
+		return api.SignatureConfig{}, fmt.Errorf("network must be either mainnet or holesky")
 	}
 
-	return cli.SignatureConfig{
+	return api.SignatureConfig{
 		Operators:   operators,
 		DepositData: depositData,
 		Owner:       ownerConfig,

@@ -16,17 +16,10 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type SignatureConfig struct {
-	Operators   []string
-	DepositData api.UnsignedDepositData
-	Owner       api.OwnerConfig
-	SsvClient   api.SsvClient
-}
-
 // Sign performs a distributed key generation between the operators provided
 // then aggregates a group signature over the deposit data merkle root
 // then aggregates a group signature over the validator nonce
-func Sign(config SignatureConfig, log shared.QuietLogger) (api.SigningOutput, error) {
+func Sign(config api.SignatureConfig, log shared.QuietLogger) (api.SigningOutput, error) {
 	// SSV supports 3f+1 nodes up to f=4
 	numOfNodes := len(config.Operators)
 	if numOfNodes != 4 && numOfNodes != 7 && numOfNodes != 10 && numOfNodes != 13 {

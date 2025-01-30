@@ -15,8 +15,12 @@ type StoredState struct {
 	SigningOutput api.SigningOutput
 }
 
-func CreateFilename(stateDirectory string, output api.SigningOutput) string {
-	return path.Join(stateDirectory, fmt.Sprintf("%s.json", hex.EncodeToString(output.SessionID)))
+const StateFileName = "state.json"
+const DepositDataFileName = "signed_deposit_data.json"
+const KeyShareFileName = "keystore.json"
+
+func CreateFilename(stateDirectory string, output api.SigningOutput, filename string) string {
+	return path.Join(stateDirectory, fmt.Sprintf("%s/%s.json", hex.EncodeToString(output.SessionID), filename))
 }
 
 // StoreState stores the JSON encoded `StoredState` in a flat file.
@@ -31,11 +35,11 @@ func StoreState(filepath string, state StoredState) ([]byte, error) {
 // it will fail if a file with the given name already exists
 // it returns the json bytes on file write failure, so they can be printed to console
 // so users don't just lose their DKG state completely if e.g. they write somewhere without perms
-func StoreStateIfNotExists(filepath string, state StoredState) ([]byte, error) {
+func StoreStateIfNotExists(filepath string, state any) ([]byte, error) {
 	return storeWithFlags(filepath, state, os.O_WRONLY|os.O_CREATE|os.O_EXCL)
 }
 
-func storeWithFlags(filepath string, state StoredState, flag int) ([]byte, error) {
+func storeWithFlags(filepath string, state any, flag int) ([]byte, error) {
 	bytes, err := json.Marshal(state)
 	if err != nil {
 		return nil, err
