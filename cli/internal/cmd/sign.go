@@ -109,7 +109,10 @@ func Sign(cmd *cobra.Command, _ []string) {
 	keySharePath := files.CreateFilename(stateDirectoryFlag, signingOutput, files.KeyShareFileName)
 
 	nextState := files.StoredState{OwnerConfig: signingConfig.Owner, SigningOutput: signingOutput}
-	signedDepositData := files.CreateSignedDepositData(suite, signingConfig, signingOutput)
+	signedDepositData, err := files.CreateSignedDepositData(suite, signingConfig, signingOutput)
+	if err != nil {
+		log.Fatalf("couldn't create signed deposit data: %v", err)
+	}
 	keyShareFile, err := files.CreateKeyshareFile(nextState.OwnerConfig, nextState.SigningOutput, signingConfig.SsvClient)
 	if err != nil {
 		log.Fatalf("couldn't create keyshare file: %v", err)

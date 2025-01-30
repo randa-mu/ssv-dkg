@@ -14,8 +14,6 @@ var (
 	client      = NewSidecarClient(baseUrl)
 	depositData = UnsignedDepositData{
 		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
-		DepositDataRoot:       []byte("cafebabe"),
-		DepositMessageRoot:    []byte("b00b00b"),
 		Amount:                1,
 		ForkVersion:           "myfork123",
 		NetworkName:           "holesky",

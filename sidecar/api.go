@@ -44,7 +44,7 @@ func (d Daemon) Sign(request api.SignRequest) (api.SignResponse, error) {
 
 	// sign the deposit data using the key share
 	groupPublicKey := crypto.ExtractGroupPublicKey(d.thresholdScheme, result.GroupPublicPoly)
-	depositDataMessage, err := crypto.DepositDataMessage(request.DepositData.ExtractRequired(), request.DepositData.ForkVersion, shared.Clone(groupPublicKey))
+	depositDataMessage, err := crypto.DepositMessageRoot(request.DepositData.IntoMessage(shared.Clone(groupPublicKey)), request.DepositData.ForkVersion)
 	if err != nil {
 		return api.SignResponse{}, err
 	}

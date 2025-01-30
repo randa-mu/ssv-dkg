@@ -19,8 +19,6 @@ type OwnerConfig struct {
 
 type UnsignedDepositData struct {
 	WithdrawalCredentials encoding.HexBytes `json:"withdrawal_credentials"`
-	DepositDataRoot       encoding.HexBytes `json:"deposit_data_root"`
-	DepositMessageRoot    encoding.HexBytes `json:"deposit_message_root,omitempty"`
 	Amount                uint64            `json:"amount,omitempty"`
 	ForkVersion           string            `json:"fork_version,omitempty"`
 	NetworkName           string            `json:"network_name,omitempty"`
@@ -59,9 +57,10 @@ type OperatorResponse struct {
 	Response     SignResponse
 }
 
-func (u UnsignedDepositData) ExtractRequired() crypto.RequiredDepositFields {
-	return crypto.RequiredDepositFields{
+func (u UnsignedDepositData) IntoMessage(groupPublicKey []byte) crypto.DepositMessage {
+	return crypto.DepositMessage{
 		WithdrawalCredentials: u.WithdrawalCredentials,
 		Amount:                u.Amount,
+		PublicKey:             groupPublicKey,
 	}
 }

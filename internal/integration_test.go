@@ -281,12 +281,8 @@ func awaitSidecarHealthy(port uint) error {
 
 func createUnsignedDepositData() api.UnsignedDepositData {
 	withdrawal, _ := hex.DecodeString("000ccc1a6eee8f5a8faa0ae44a0010233f31213825527270336677c4c869dead")
-	ddr, _ := hex.DecodeString("f260af30ed9b5978676f7bc437fa2dc356c24bdd7deccf521bbc4ab6e21f5237")
-	dmr, _ := hex.DecodeString("64c7ef6d1a2a2eea6cb39969903d3b64d1079f97da5af6c311df9d497d5a313a")
 	return api.UnsignedDepositData{
-		WithdrawalCredentials: withdrawal, // must be 32 bytes
-		DepositDataRoot:       ddr,
-		DepositMessageRoot:    dmr,
+		WithdrawalCredentials: withdrawal,
 		Amount:                1,
 		ForkVersion:           "01017000",
 		NetworkName:           "holesky",

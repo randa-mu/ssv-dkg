@@ -171,8 +171,6 @@ func createdUnsignedDepositData(t *testing.T, filepath string) {
 
 		{
 			WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
-			DepositDataRoot:       []byte("hello world"),
-			DepositMessageRoot:    []byte("hello world"),
 			Amount:                1,
 			ForkVersion:           "somefork",
 			NetworkName:           "somenetwork",
