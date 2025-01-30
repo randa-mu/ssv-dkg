@@ -1,8 +1,6 @@
 package files
 
 import (
-	"encoding/hex"
-
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
 )
@@ -10,7 +8,7 @@ import (
 func CreateSignedDepositData(scheme crypto.ThresholdScheme, config api.SignatureConfig, output api.SigningOutput) api.SignedDepositData {
 	pk := crypto.ExtractGroupPublicKey(scheme, output.GroupPublicPolynomial)
 	var sig []byte
-	hex.Encode(sig, output.DepositDataSignature)
+	sig = output.DepositDataSignature
 	return api.SignedDepositData{
 		WithdrawalCredentials: config.DepositData.WithdrawalCredentials,
 		DepositDataRoot:       config.DepositData.DepositDataRoot,
