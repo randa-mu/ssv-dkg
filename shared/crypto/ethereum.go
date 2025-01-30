@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -43,18 +44,12 @@ func DepositMessageRoot(data DepositMessage) ([]byte, error) {
 	b := bytes.Buffer{}
 	b.Write(data.PublicKey)
 	b.Write(data.WithdrawalCredentials)
-	b.Write(encodeUint64(data.Amount))
-
+	err := binary.Write(&b, binary.LittleEndian, data.Amount)
+	if err != nil {
+		return nil, err
+	}
 	hashedRoot := sha256.Sum256(b.Bytes())
 	return hashedRoot[:], nil
-}
-
-func encodeUint64(i uint64) []byte {
-	b := make([]byte, 8)
-	for j := uint(0); j < 8; j++ {
-		b[j] = byte(i >> (8 * j))
-	}
-	return b
 }
 
 type DepositData struct {
@@ -85,7 +80,10 @@ func DepositDataRoot(data DepositData) ([]byte, error) {
 	b := bytes.Buffer{}
 	b.Write(data.PublicKey)
 	b.Write(data.WithdrawalCredentials)
-	b.Write(encodeUint64(data.Amount))
+	err := binary.Write(&b, binary.LittleEndian, data.Amount)
+	if err != nil {
+		return nil, err
+	}
 	b.Write(data.Signature)
 
 	hash := sha256.Sum256(b.Bytes())
