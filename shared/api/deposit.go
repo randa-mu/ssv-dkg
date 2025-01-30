@@ -26,15 +26,15 @@ type UnsignedDepositData struct {
 }
 
 type SignedDepositData struct {
+	PubKey                encoding.HexBytes `json:"pubkey"`
 	WithdrawalCredentials encoding.HexBytes `json:"withdrawal_credentials"`
-	DepositDataRoot       encoding.HexBytes `json:"deposit_data_root"`
-	DepositMessageRoot    encoding.HexBytes `json:"deposit_message_root,omitempty"`
 	Amount                uint64            `json:"amount,omitempty"`
+	Signature             encoding.HexBytes `json:"signature"`
+	DepositMessageRoot    encoding.HexBytes `json:"deposit_message_root,omitempty"`
+	DepositDataRoot       encoding.HexBytes `json:"deposit_data_root"`
 	ForkVersion           string            `json:"fork_version,omitempty"`
 	NetworkName           string            `json:"network_name,omitempty"`
 	DepositCLIVersion     string            `json:"deposit_cli_version,omitempty"`
-	PubKey                encoding.HexBytes `json:"pubkey"`
-	Signature             encoding.HexBytes `json:"signature"`
 }
 
 type SigningOutput struct {

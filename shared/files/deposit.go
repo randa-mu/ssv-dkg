@@ -7,10 +7,10 @@ import (
 
 func CreateSignedDepositData(scheme crypto.ThresholdScheme, config api.SignatureConfig, output api.SigningOutput) ([]api.SignedDepositData, error) {
 	groupPublicKey := crypto.ExtractGroupPublicKey(scheme, output.GroupPublicPolynomial)
+	// our wrapper types require jumping through this hoop
 	var sig []byte
 	sig = output.DepositDataSignature
 
-	forkVersion := config.DepositData.ForkVersion
 	depositMessage := config.DepositData.IntoMessage(groupPublicKey)
 	depositData := crypto.DepositData{
 		WithdrawalCredentials: depositMessage.WithdrawalCredentials,
@@ -18,12 +18,12 @@ func CreateSignedDepositData(scheme crypto.ThresholdScheme, config api.Signature
 		PublicKey:             depositMessage.PublicKey,
 		Signature:             sig,
 	}
-	depositMessageRoot, err := crypto.DepositMessageRoot(config.DepositData.IntoMessage(groupPublicKey), forkVersion)
+	depositMessageRoot, err := crypto.DepositMessageRoot(config.DepositData.IntoMessage(groupPublicKey))
 	if err != nil {
 		return nil, err
 	}
 
-	depositDataRoot, err := crypto.DepositDataRoot(depositData, forkVersion)
+	depositDataRoot, err := crypto.DepositDataRoot(depositData)
 	if err != nil {
 		return nil, err
 	}

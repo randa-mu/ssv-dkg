@@ -18,7 +18,17 @@ type DepositMessage struct {
 	PublicKey             []byte
 }
 
-func DepositMessageRoot(data DepositMessage, forkVersion string) ([]byte, error) {
+// DepositMessageSignatureMessage is the message with domain that actually gets signed
+func DepositMessageSignatureMessage(data DepositMessage, forkVersion string) ([]byte, error) {
+	m, err := DepositMessageRoot(data)
+	if err != nil {
+		return nil, err
+	}
+	return hashWithDomain(m, forkVersion)
+}
+
+// DepositMessageRoot is the merkle root included in the deposit data
+func DepositMessageRoot(data DepositMessage) ([]byte, error) {
 	if len(data.WithdrawalCredentials) != 32 {
 		return nil, errors.New("withdrawal credentials must be 32 bytes; actual length " + strconv.Itoa(len(data.WithdrawalCredentials)))
 	}
@@ -39,7 +49,7 @@ func DepositMessageRoot(data DepositMessage, forkVersion string) ([]byte, error)
 		return nil, err
 	}
 	hashedRoot := sha256.Sum256(treeRoot.Bytes())
-	return hashWithDomain(hashedRoot[:], forkVersion)
+	return hashedRoot[:], nil
 }
 
 type DepositData struct {
@@ -49,7 +59,8 @@ type DepositData struct {
 	Signature             []byte
 }
 
-func DepositDataRoot(data DepositData, forkVersion string) ([]byte, error) {
+// DepositDataRoot is the merkle root included in the deposit data
+func DepositDataRoot(data DepositData) ([]byte, error) {
 	if len(data.WithdrawalCredentials) != 32 {
 		return nil, errors.New("withdrawal credentials must be 32 bytes; actual length " + strconv.Itoa(len(data.WithdrawalCredentials)))
 	}
@@ -75,8 +86,8 @@ func DepositDataRoot(data DepositData, forkVersion string) ([]byte, error) {
 	}
 	b.Write(data.Signature)
 
-	hashedRoot := sha256.Sum256(b.Bytes())
-	return hashWithDomain(hashedRoot[:], forkVersion)
+	hash := sha256.Sum256(b.Bytes())
+	return hash[:], nil
 }
 
 func hashWithDomain(b []byte, forkVersion string) ([]byte, error) {
@@ -88,6 +99,7 @@ func hashWithDomain(b []byte, forkVersion string) ([]byte, error) {
 	hash := sha256.Sum256(append(b[:], domain...))
 	return hash[:], nil
 }
+
 func computeDomain(forkVersion string) ([]byte, error) {
 	domainDeposit := "03000000"
 	return hex.DecodeString(fmt.Sprintf("%s%s00000000", domainDeposit, forkVersion))
