@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -41,15 +40,21 @@ func DepositMessageRoot(data DepositMessage) ([]byte, error) {
 		return nil, errors.New("group public key must be 48 bytes long")
 	}
 
-	treeRoot := bytes.Buffer{}
-	treeRoot.Write(data.PublicKey)
-	treeRoot.Write(data.WithdrawalCredentials)
-	err := binary.Write(&treeRoot, binary.BigEndian, data.Amount)
-	if err != nil {
-		return nil, err
-	}
-	hashedRoot := sha256.Sum256(treeRoot.Bytes())
+	b := bytes.Buffer{}
+	b.Write(data.PublicKey)
+	b.Write(data.WithdrawalCredentials)
+	b.Write(encodeUint64(data.Amount))
+
+	hashedRoot := sha256.Sum256(b.Bytes())
 	return hashedRoot[:], nil
+}
+
+func encodeUint64(i uint64) []byte {
+	b := make([]byte, 8)
+	for j := uint(0); j < 8; j++ {
+		b[j] = byte(i >> (8 * j))
+	}
+	return b
 }
 
 type DepositData struct {
@@ -80,10 +85,7 @@ func DepositDataRoot(data DepositData) ([]byte, error) {
 	b := bytes.Buffer{}
 	b.Write(data.PublicKey)
 	b.Write(data.WithdrawalCredentials)
-	err := binary.Write(&b, binary.BigEndian, data.Amount)
-	if err != nil {
-		return nil, err
-	}
+	b.Write(encodeUint64(data.Amount))
 	b.Write(data.Signature)
 
 	hash := sha256.Sum256(b.Bytes())
