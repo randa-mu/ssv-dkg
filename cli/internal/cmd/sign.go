@@ -209,13 +209,13 @@ func parseUnsignedInputData(inputPathFlag string, stateDirectory string) (api.Un
 		return api.UnsignedDepositData{}, fmt.Errorf("error reading the deposit data file: %v", err)
 	}
 
-	var depositData api.UnsignedDepositData
+	var depositData []api.UnsignedDepositData
 	err = json.Unmarshal(depositBytes, &depositData)
 	if err != nil {
 		return api.UnsignedDepositData{}, err
 	}
 
-	return depositData, nil
+	return depositData[0], nil
 }
 
 func parseOwnerConfig(validatorNonce int32, ethAddress string) (api.OwnerConfig, error) {

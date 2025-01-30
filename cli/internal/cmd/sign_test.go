@@ -167,14 +167,17 @@ func TestSignCommand(t *testing.T) {
 }
 
 func createdUnsignedDepositData(t *testing.T, filepath string) {
-	data := api.UnsignedDepositData{
-		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
-		DepositDataRoot:       []byte("hello world"),
-		DepositMessageRoot:    []byte("hello world"),
-		Amount:                1,
-		ForkVersion:           "somefork",
-		NetworkName:           "somenetwork",
-		DepositCLIVersion:     "somecli",
+	data := []api.UnsignedDepositData{
+
+		{
+			WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
+			DepositDataRoot:       []byte("hello world"),
+			DepositMessageRoot:    []byte("hello world"),
+			Amount:                1,
+			ForkVersion:           "somefork",
+			NetworkName:           "somenetwork",
+			DepositCLIVersion:     "somecli",
+		},
 	}
 
 	bytes, err := json.Marshal(data)
