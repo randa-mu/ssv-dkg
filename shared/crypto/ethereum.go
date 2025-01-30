@@ -69,11 +69,11 @@ func DepositDataRoot(data DepositData, forkVersion string) ([]byte, error) {
 	b := bytes.Buffer{}
 	b.Write(data.PublicKey)
 	b.Write(data.WithdrawalCredentials)
-	b.Write(data.Signature)
 	err := binary.Write(&b, binary.BigEndian, data.Amount)
 	if err != nil {
 		return nil, err
 	}
+	b.Write(data.Signature)
 
 	hashedRoot := sha256.Sum256(b.Bytes())
 	return hashWithDomain(hashedRoot[:], forkVersion)
