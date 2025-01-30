@@ -47,6 +47,7 @@ func storeWithFlags(path string, state any, flag int) ([]byte, error) {
 	}
 
 	err = os.Mkdir(filepath.Dir(path), os.ModePerm)
+	fmt.Printf("creating dirs: %s\n", filepath.Dir(path))
 	if err != nil {
 		return nil, err
 	}
