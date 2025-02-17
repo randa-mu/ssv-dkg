@@ -51,26 +51,35 @@ func (b blsSuite) CreateKeypair() (Keypair, error) {
 }
 
 func (b blsSuite) Sign(keypair Keypair, message []byte) ([]byte, error) {
+	m := b.Digest(message)
+
+	return b.SignRaw(keypair, m)
+}
+
+func (b blsSuite) SignRaw(keypair Keypair, digest []byte) ([]byte, error) {
 	sk := b.KeyGroup().Scalar()
 	err := sk.UnmarshalBinary(keypair.Private)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal private key: %w", err)
 	}
 
-	m := b.Digest(message)
-	return b.scheme.Sign(sk, m)
+	return b.scheme.Sign(sk, digest)
 }
 
 func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) error {
+	m := b.Digest(message)
+
+	return b.VerifyRaw(m, publicKey, signature)
+}
+
+func (b blsSuite) VerifyRaw(messageRaw []byte, publicKey []byte, signature []byte) error {
 	pk := b.KeyGroup().Point().Base().Clone()
 	err := pk.UnmarshalBinary(publicKey)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal public key: %w", err)
 	}
 
-	m := b.Digest(message)
-
-	return b.scheme.Verify(pk, m, signature)
+	return b.scheme.Verify(pk, messageRaw, signature)
 }
 
 func (b blsSuite) KeyGroup() kyber.Group {
