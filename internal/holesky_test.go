@@ -97,7 +97,7 @@ func createHoleskyDaemon(t *testing.T, index int) sidecar.Daemon {
 
 func depositData(t *testing.T) api.UnsignedDepositData {
 	j := `{
-		"withdrawal_credentials":"0x01000000000000000000000017b3cab3cd7502c6b85ed2e11fd5988af76cdd32",
+		"withdrawal_credentials":"01000000000000000000000017b3cab3cd7502c6b85ed2e11fd5988af76cdd32",
 		"amount":32000000000,
 		"fork_version":"01017000",
 		"network_name":"holesky",

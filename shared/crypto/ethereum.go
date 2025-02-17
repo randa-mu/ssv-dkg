@@ -19,6 +19,18 @@ type DepositMessage struct {
 	PublicKey             []byte
 }
 
+func (d DepositMessage) AsETH() spectests.DepositMessage {
+	var pk [48]byte
+	var wc [32]byte
+	copy(pk[:], d.PublicKey)
+	copy(wc[:], d.WithdrawalCredentials)
+	return spectests.DepositMessage{
+		Pubkey:                d.PublicKey,
+		WithdrawalCredentials: d.WithdrawalCredentials,
+		Amount:                d.Amount,
+	}
+}
+
 // DepositMessageSigningRoot is the message with domain that actually gets signed
 func DepositMessageSigningRoot(data DepositMessage, forkVersion []byte) ([]byte, error) {
 	m, err := DepositMessageRoot(data)
@@ -55,16 +67,12 @@ func DepositMessageRoot(data DepositMessage) ([]byte, error) {
 		return nil, errors.New("group public key must be 48 bytes long")
 	}
 
-	var pk [48]byte
-	var wc [32]byte
-	copy(pk[:], data.PublicKey)
-	copy(wc[:], data.WithdrawalCredentials)
-	depositMessage := eth.DepositMessage{
-		Pubkey:                pk,
-		WithdrawalCredentials: wc,
-		Amount:                eth.Gwei(data.Amount),
+	m := data.AsETH()
+	b, err := m.HashTreeRoot()
+	if err != nil {
+		return nil, err
 	}
-	return hashToRoot(&depositMessage)
+	return b[:], nil
 }
 
 type DepositData struct {
@@ -72,6 +80,22 @@ type DepositData struct {
 	Amount                uint64
 	PublicKey             []byte
 	Signature             []byte
+}
+
+func (d DepositData) AsETH() spectests.DepositData {
+	var pk [48]byte
+	var wc [32]byte
+	//var sig [96]byte
+	copy(pk[:], d.PublicKey)
+	copy(wc[:], d.WithdrawalCredentials)
+	//copy(sig[:], d.Signature)
+	return spectests.DepositData{
+		Pubkey:                pk,
+		WithdrawalCredentials: wc,
+		Amount:                d.Amount,
+		Signature:             d.Signature,
+		//Root:  // not sure what this should be?
+	}
 }
 
 // DepositDataRoot is the merkle root included in the deposit data
@@ -92,20 +116,12 @@ func DepositDataRoot(data DepositData) ([]byte, error) {
 		return nil, errors.New("signature must be 96 bytes long")
 	}
 
-	var pk [48]byte
-	var wc [32]byte
-	var sig [96]byte
-	copy(pk[:], data.PublicKey)
-	copy(wc[:], data.WithdrawalCredentials)
-	copy(sig[:], data.Signature)
-	depositData := eth.DepositData{
-		Pubkey:                pk,
-		WithdrawalCredentials: wc,
-		Amount:                eth.Gwei(data.Amount),
-		Signature:             sig,
+	m := data.AsETH()
+	b, err := m.HashTreeRoot()
+	if err != nil {
+		return nil, err
 	}
-
-	return hashToRoot(&depositData)
+	return b[:], nil
 }
 
 func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error) {
