@@ -13,7 +13,7 @@ import (
 	"github.com/randa-mu/ssv-dkg/shared"
 	"github.com/randa-mu/ssv-dkg/shared/api"
 	"github.com/randa-mu/ssv-dkg/shared/crypto"
-	cli2 "github.com/randa-mu/ssv-dkg/shared/files"
+	"github.com/randa-mu/ssv-dkg/shared/files"
 	"github.com/randa-mu/ssv-dkg/sidecar"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +48,7 @@ func TestPrintHolesky(t *testing.T) {
 	res, err := cli.Sign(config, shared.QuietLogger{Quiet: false})
 	require.NoError(t, err)
 
-	file, err := cli2.CreateKeyshareFile(config.Owner, res, config.SsvClient)
+	file, err := files.CreateKeyshareFile(config.Owner, res, config.SsvClient)
 	require.NoError(t, err)
 
 	data, err := hex.DecodeString(file.Shares[0].Payload.SharesData[2:])

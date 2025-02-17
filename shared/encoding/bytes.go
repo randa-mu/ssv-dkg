@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"strings"
 )
 
 // UnpaddedBytes is a wrapper type that ensures bytes are marshalled to base64
@@ -34,7 +36,7 @@ func (b *UnpaddedBytes) UnmarshalJSON(data []byte) error {
 type HexBytes []byte
 
 func (b HexBytes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(hex.EncodeToString(b))
+	return json.Marshal(fmt.Sprintf("0x%s", hex.EncodeToString(b)))
 }
 
 func (b *HexBytes) UnmarshalJSON(data []byte) error {
@@ -43,7 +45,7 @@ func (b *HexBytes) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	decoded, err := hex.DecodeString(encoded)
+	decoded, err := hex.DecodeString(strings.TrimLeft(encoded, "0x"))
 	if err != nil {
 		return err
 	}
