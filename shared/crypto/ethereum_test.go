@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/stretchr/testify/require"
-	types "github.com/wealdtech/go-eth2-types/v2"
 )
 
 type DepositDataCLI struct {
@@ -55,55 +53,6 @@ func TestDepositDataRoot(t *testing.T) {
 
 }
 
-func TheirRoot(data DepositData, genesisForkVersion []byte) ([]byte, error) {
-	var pk [48]byte
-	var wc [32]byte
-	var sig [96]byte
-
-	copy(pk[:], data.PublicKey)
-	copy(wc[:], data.WithdrawalCredentials)
-	copy(sig[:], data.Signature)
-
-	// using phase0:
-	dd := &phase0.DepositMessage{
-		PublicKey:             pk,
-		Amount:                phase0.Gwei(data.Amount),
-		WithdrawalCredentials: wc[:],
-	}
-
-	// Compute DepositMessage root
-	depositMsgRoot, err := dd.HashTreeRoot()
-	if err != nil {
-		return nil, fmt.Errorf("depositMsgRoot error: %w", err)
-	}
-
-	fmt.Printf("their depositMsgRoot: %x\n", depositMsgRoot)
-	ourRoot, err := DepositDataRoot(data)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("our depositMsgRoot: %x\n", ourRoot)
-
-	domain, err := types.ComputeDomain(types.DomainDeposit, genesisForkVersion[:], types.ZeroGenesisValidatorsRoot)
-	if err != nil {
-		return nil, fmt.Errorf("ComputeDomain error: %w", err)
-	}
-
-	container := &phase0.SigningData{
-		ObjectRoot: depositMsgRoot,
-		Domain:     phase0.Domain(domain),
-	}
-	signingRoot, err := container.HashTreeRoot()
-	if err != nil {
-		return nil, fmt.Errorf("HashTreeRoot error: %w", err)
-	}
-
-	fmt.Printf("our buggy root: 0x%x\n", ourRoot)
-	fmt.Printf("phase0 ok root: 0x%x\n", signingRoot)
-
-	return signingRoot[:], nil
-}
-
 func verifyDepositRoots(t *testing.T, d *DepositDataCLI) error {
 	pubKey, err := hex.DecodeString(d.PubKey)
 	if err != nil {
@@ -129,26 +78,16 @@ func verifyDepositRoots(t *testing.T, d *DepositDataCLI) error {
 		return fmt.Errorf("fork version has wrong length")
 	}
 
-	depositData := &phase0.DepositData{
-		PublicKey:             phase0.BLSPubKey(pubKey),
+	signingRoot, err := DepositMessageSigningRoot(DepositMessage{
 		WithdrawalCredentials: withdrCreds,
-		Amount:                phase0.Gwei(d.Amount),
-		Signature:             phase0.BLSSignature(sig),
-	}
-
-	// HERE CHANGE TheirRoot to use your own code: it won't pass
-	signingRoot, err := TheirRoot(DepositData{
-		PublicKey:             depositData.PublicKey[:],
-		Amount:                uint64(depositData.Amount),
-		WithdrawalCredentials: depositData.WithdrawalCredentials,
-		Signature:             depositData.Signature[:],
+		Amount:                d.Amount,
+		PublicKey:             pubKey[:],
 	}, fork)
+	require.NoError(t, err)
 
-	if err != nil {
-		return fmt.Errorf("failed to compute signing root: %s", err)
-	}
+	t.Logf("signing root: %x", signingRoot)
 
 	suite := NewBLSSuite()
-	require.NoError(t, suite.VerifyRaw(signingRoot[:], depositData.PublicKey[:], depositData.Signature[:]))
+	require.NoError(t, suite.VerifyRaw(signingRoot[:], pubKey[:], sig[:]))
 	return nil
 }

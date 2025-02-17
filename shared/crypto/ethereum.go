@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	ssz "github.com/ferranbt/fastssz"
 	"github.com/ferranbt/fastssz/spectests"
 	eth "github.com/protolambda/zrnt/eth2/beacon/common"
 	"github.com/protolambda/ztyp/codec"
@@ -31,6 +32,78 @@ func (d DepositMessage) AsETH() spectests.DepositMessage {
 	}
 }
 
+type ForkData struct {
+	CurrentVersion        []byte `ssz-size:"4"`
+	GenesisValidatorsRoot []byte `ssz-size:"32"`
+}
+
+// HashTreeRootWith ssz hashes the ForkData object with a hasher
+func (f *ForkData) HashTreeRootWith(hh ssz.HashWalker) (err error) {
+	indx := hh.Index()
+
+	// Field (0) 'CurrentVersion'
+	if size := len(f.CurrentVersion); size != 4 {
+		err = ssz.ErrBytesLengthFn("ForkData.CurrentVersion", size, 4)
+		return
+	}
+	hh.PutBytes(f.CurrentVersion[:])
+
+	// Field (1) 'GenesisValidatorsRoot'
+	if size := len(f.GenesisValidatorsRoot); size != 32 {
+		err = ssz.ErrBytesLengthFn("ForkData.GenesisValidatorsRoot", size, 32)
+		return
+	}
+	hh.PutBytes(f.GenesisValidatorsRoot[:])
+
+	hh.Merkleize(indx)
+	return
+}
+
+// HashTreeRoot ssz hashes the DepositMessage object
+func (f *ForkData) HashTreeRoot() ([32]byte, error) {
+	return ssz.HashWithDefaultHasher(f)
+}
+
+func (f *ForkData) GetTree() (*ssz.Node, error) {
+	return ssz.ProofTree(f)
+}
+
+type SigningRoot struct {
+	ObjectRoot []byte `ssz-size:"32"`
+	DomainRoot []byte `ssz-size:"32"`
+}
+
+// HashTreeRootWith ssz hashes the ForkData object with a hasher
+func (s *SigningRoot) HashTreeRootWith(hh ssz.HashWalker) (err error) {
+	indx := hh.Index()
+
+	// Field (0) 'ObjectRoot'
+	if size := len(s.ObjectRoot); size != 32 {
+		err = ssz.ErrBytesLengthFn("SigningRoot.ObjectRoot", size, 32)
+		return
+	}
+	hh.PutBytes(s.ObjectRoot[:])
+
+	// Field (1) 'DomainRoot'
+	if size := len(s.DomainRoot); size != 32 {
+		err = ssz.ErrBytesLengthFn("SigningRoot.DomainRoot", size, 32)
+		return
+	}
+	hh.PutBytes(s.DomainRoot[:])
+
+	hh.Merkleize(indx)
+	return
+}
+
+// HashTreeRoot ssz hashes the DepositMessage object
+func (s *SigningRoot) HashTreeRoot() ([32]byte, error) {
+	return ssz.HashWithDefaultHasher(s)
+}
+
+func (s *SigningRoot) GetTree() (*ssz.Node, error) {
+	return ssz.ProofTree(s)
+}
+
 // DepositMessageSigningRoot is the message with domain that actually gets signed
 func DepositMessageSigningRoot(data DepositMessage, forkVersion []byte) ([]byte, error) {
 	m, err := DepositMessageRoot(data)
@@ -42,15 +115,27 @@ func DepositMessageSigningRoot(data DepositMessage, forkVersion []byte) ([]byte,
 		return nil, fmt.Errorf("genesis fork version must be 4 bytes; got %d", len(forkVersion))
 	}
 
-	var gfk [4]byte
-	copy(gfk[:], forkVersion)
-
-	domain := append(eth.DOMAIN_DEPOSIT[:], forkVersion...)
-	root := spectests.SigningRoot{
-		ObjectRoot: m,
-		Domain:     domain,
+	// seems the spectests was missing this one
+	forkData := &ForkData{
+		forkVersion,
+		make([]byte, 32),
 	}
-	return root.MarshalSSZ()
+
+	forkRoot, err := forkData.HashTreeRoot()
+	if err != nil {
+		panic(err)
+	}
+
+	domain := append(eth.DOMAIN_DEPOSIT[:], forkRoot[:28]...)
+
+	// the spectests implementation somehow expects a domain of size 8 instead of 32!
+	root := SigningRoot{
+		m,
+		domain,
+	}
+
+	rootHash, err := root.HashTreeRoot()
+	return rootHash[:], err
 }
 
 // DepositMessageRoot is the merkle root included in the deposit data
