@@ -96,8 +96,13 @@ func createHoleskyDaemon(t *testing.T, index int) sidecar.Daemon {
 }
 
 func depositData(t *testing.T) api.UnsignedDepositData {
-	j := `{ "withdrawal_credentials": "000ccc1a6eee8f5a8faa0ae44a0010233f31213825527270336677c4c869acaa", "amount": 32000000000, "deposit_message_root": "64c7ef6d1a2a2eea6cb39969903d3b64d1079f97da5af6c311df9d497d5a313a", "deposit_data_root": "f260af30ed9b5978676f7bc437fa2dc356c24bdd7deccf521bbc4ab6e21f5237", "fork_version": "01017000", "network_name": "holesky", "deposit_cli_version": "2.8.0" }`
-
+	j := `{
+		"withdrawal_credentials":"0x01000000000000000000000017b3cab3cd7502c6b85ed2e11fd5988af76cdd32",
+		"amount":32000000000,
+		"fork_version":"01017000",
+		"network_name":"holesky",
+		"deposit_cli_version": "2.8.0"
+	}`
 	var d api.UnsignedDepositData
 	if err := json.Unmarshal([]byte(j), &d); err != nil {
 		t.Fatal(err)

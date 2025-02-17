@@ -20,7 +20,7 @@ type OwnerConfig struct {
 type UnsignedDepositData struct {
 	WithdrawalCredentials encoding.HexBytes `json:"withdrawal_credentials"`
 	Amount                uint64            `json:"amount,omitempty"`
-	ForkVersion           string            `json:"fork_version,omitempty"`
+	ForkVersion           encoding.HexBytes `json:"fork_version,omitempty"`
 	NetworkName           string            `json:"network_name,omitempty"`
 	DepositCLIVersion     string            `json:"deposit_cli_version,omitempty"`
 }
@@ -32,7 +32,7 @@ type SignedDepositData struct {
 	Signature             encoding.HexBytes `json:"signature"`
 	DepositMessageRoot    encoding.HexBytes `json:"deposit_message_root,omitempty"`
 	DepositDataRoot       encoding.HexBytes `json:"deposit_data_root"`
-	ForkVersion           string            `json:"fork_version,omitempty"`
+	ForkVersion           encoding.HexBytes `json:"fork_version,omitempty"`
 	NetworkName           string            `json:"network_name,omitempty"`
 	DepositCLIVersion     string            `json:"deposit_cli_version,omitempty"`
 }

@@ -281,10 +281,11 @@ func awaitSidecarHealthy(port uint) error {
 
 func createUnsignedDepositData() api.UnsignedDepositData {
 	withdrawal, _ := hex.DecodeString("000ccc1a6eee8f5a8faa0ae44a0010233f31213825527270336677c4c869dead")
+	forkVersion, _ := hex.DecodeString("01017000")
 	return api.UnsignedDepositData{
 		WithdrawalCredentials: withdrawal,
 		Amount:                1,
-		ForkVersion:           "01017000",
+		ForkVersion:           forkVersion,
 		NetworkName:           "holesky",
 		DepositCLIVersion:     "2.8.0",
 	}

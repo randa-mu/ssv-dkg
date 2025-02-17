@@ -18,7 +18,7 @@ func CreateSignedDepositData(scheme crypto.ThresholdScheme, config api.Signature
 		PublicKey:             depositMessage.PublicKey,
 		Signature:             sig,
 	}
-	depositMessageRoot, err := crypto.DepositMessageRoot(config.DepositData.IntoMessage(groupPublicKey))
+	depositMessageRoot, err := crypto.DepositMessageRoot(depositMessage)
 	if err != nil {
 		return nil, err
 	}

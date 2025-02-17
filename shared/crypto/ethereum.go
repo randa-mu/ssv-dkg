@@ -1,7 +1,7 @@
 package crypto
 
 import (
-	"encoding/hex"
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ferranbt/fastssz/spectests"
 	eth "github.com/protolambda/zrnt/eth2/beacon/common"
+	"github.com/protolambda/ztyp/codec"
 	"github.com/protolambda/ztyp/tree"
 )
 
@@ -18,17 +19,21 @@ type DepositMessage struct {
 	PublicKey             []byte
 }
 
-// DepositMessageSignatureMessage is the message with domain that actually gets signed
-func DepositMessageSignatureMessage(data DepositMessage, forkVersion string) ([]byte, error) {
+// DepositMessageSigningRoot is the message with domain that actually gets signed
+func DepositMessageSigningRoot(data DepositMessage, forkVersion []byte) ([]byte, error) {
 	m, err := DepositMessageRoot(data)
 	if err != nil {
 		return nil, err
 	}
 
-	domain, err := hex.DecodeString(fmt.Sprintf("03000000%s", forkVersion))
-	if err != nil {
-		return nil, err
+	if len(forkVersion) != 4 {
+		return nil, fmt.Errorf("genesis fork version must be 4 bytes; got %d", len(forkVersion))
 	}
+
+	var gfk [4]byte
+	copy(gfk[:], forkVersion)
+
+	domain := append(eth.DOMAIN_DEPOSIT[:], forkVersion...)
 	root := spectests.SigningRoot{
 		ObjectRoot: m,
 		Domain:     domain,
@@ -52,18 +57,14 @@ func DepositMessageRoot(data DepositMessage) ([]byte, error) {
 
 	var pk [48]byte
 	var wc [32]byte
-
 	copy(pk[:], data.PublicKey)
 	copy(wc[:], data.WithdrawalCredentials)
-	d := eth.DepositMessage{
+	depositMessage := eth.DepositMessage{
 		Pubkey:                pk,
 		WithdrawalCredentials: wc,
 		Amount:                eth.Gwei(data.Amount),
 	}
-
-	root := d.HashTreeRoot(tree.Hash)
-
-	return root[:], nil
+	return hashToRoot(&depositMessage)
 }
 
 type DepositData struct {
@@ -94,19 +95,17 @@ func DepositDataRoot(data DepositData) ([]byte, error) {
 	var pk [48]byte
 	var wc [32]byte
 	var sig [96]byte
-
 	copy(pk[:], data.PublicKey)
 	copy(wc[:], data.WithdrawalCredentials)
 	copy(sig[:], data.Signature)
-	d := eth.DepositData{
+	depositData := eth.DepositData{
 		Pubkey:                pk,
 		WithdrawalCredentials: wc,
 		Amount:                eth.Gwei(data.Amount),
 		Signature:             sig,
 	}
 
-	root := d.HashTreeRoot(tree.Hash)
-	return root[:], nil
+	return hashToRoot(&depositData)
 }
 
 func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error) {
@@ -116,4 +115,18 @@ func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error
 
 func FormatAddress(address []byte) string {
 	return common.BytesToAddress(address).String()
+}
+
+type HashToRootable interface {
+	HashTreeRoot(hFn tree.HashFn) tree.Root
+}
+
+func hashToRoot(data HashToRootable) ([]byte, error) {
+	root := data.HashTreeRoot(tree.GetHashFn())
+	buf := bytes.Buffer{}
+	writer := codec.NewEncodingWriter(&buf)
+	if err := root.Serialize(writer); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

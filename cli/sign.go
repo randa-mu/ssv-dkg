@@ -61,7 +61,7 @@ func Sign(config api.SignatureConfig, log shared.QuietLogger) (api.SigningOutput
 	groupPublicKey := crypto.ExtractGroupPublicKey(suite, shared.Clone(publicPolynomial))
 
 	// then we aggregate and verify the deposit data signature
-	depositDataMessage, err := crypto.DepositMessageSignatureMessage(config.DepositData.IntoMessage(shared.Clone(groupPublicKey)), config.DepositData.ForkVersion)
+	depositDataMessage, err := crypto.DepositMessageSigningRoot(config.DepositData.IntoMessage(shared.Clone(groupPublicKey)), config.DepositData.ForkVersion)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("failed to create deposit data message: %v", err)
 	}
@@ -246,7 +246,7 @@ func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Ide
 
 	// verify that the signature over the deposit data verifies for the reported public key
 	groupPublicKey := crypto.ExtractGroupPublicKey(suite, response.PublicPolynomial)
-	message, err := crypto.DepositMessageSignatureMessage(depositData.IntoMessage(shared.Clone(groupPublicKey)), depositData.ForkVersion)
+	message, err := crypto.DepositMessageSigningRoot(depositData.IntoMessage(shared.Clone(groupPublicKey)), depositData.ForkVersion)
 	if err != nil {
 		return fmt.Errorf("error building final message: %w", err)
 	}
