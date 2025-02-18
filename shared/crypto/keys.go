@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 
 	"github.com/drand/kyber"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/randa-mu/ssv-dkg/shared/encoding"
 )
 
@@ -44,7 +45,9 @@ func (k Keypair) SelfSign(suite SigningScheme, address string, operatorID uint32
 		return Identity{}, err
 	}
 
-	signature, err := suite.Sign(k, message)
+	digest := crypto.Keccak256(message)
+
+	signature, err := suite.Sign(k, digest)
 	if err != nil {
 		return Identity{}, err
 	}
@@ -70,7 +73,10 @@ func (i Identity) Verify(suite SigningScheme) error {
 	if err != nil {
 		return err
 	}
-	return suite.Verify(m, i.Public, i.Signature)
+
+	d := crypto.Keccak256(m)
+
+	return suite.Verify(d, i.Public, i.Signature)
 }
 
 func digestFor(publicKey []byte, address string, operatorID uint32) ([]byte, error) {

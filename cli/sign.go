@@ -84,6 +84,7 @@ func Sign(config api.SignatureConfig, log shared.QuietLogger) (api.SigningOutput
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("your ethereum address wasn't correct: %v", err)
 	}
+
 	validatorNoncePartials, err := extractValidatorNoncePartials(responses)
 	if err != nil {
 		return api.SigningOutput{}, fmt.Errorf("error extracting partials for validator nonce signature: %v", err)
@@ -240,6 +241,8 @@ func signatureResponseVerifies(suite crypto.ThresholdScheme, identity crypto.Ide
 	if err != nil {
 		return fmt.Errorf("your ETH address was not correct")
 	}
+	// we need to keccak first the validator nonce message
+	//
 	if err := suite.VerifyPartial(response.PublicPolynomial, validatorNonceMessage, response.ValidatorNoncePartialSignature); err != nil {
 		return fmt.Errorf("signature did not verify for the signed validator nonce for node %s: %w", identity.Address, err)
 	}

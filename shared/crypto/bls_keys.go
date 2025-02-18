@@ -50,29 +50,19 @@ func (b blsSuite) CreateKeypair() (Keypair, error) {
 	}, nil
 }
 
-func (b blsSuite) Sign(keypair Keypair, message []byte) ([]byte, error) {
-	m := b.Digest(message)
-
-	return b.SignRaw(keypair, m)
-}
-
-func (b blsSuite) SignRaw(keypair Keypair, digest []byte) ([]byte, error) {
+// Sign works with the raw message, make sure to use Digest first if you need it
+func (b blsSuite) Sign(keypair Keypair, messageRaw []byte) ([]byte, error) {
 	sk := b.KeyGroup().Scalar()
 	err := sk.UnmarshalBinary(keypair.Private)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal private key: %w", err)
 	}
 
-	return b.scheme.Sign(sk, digest)
+	return b.scheme.Sign(sk, messageRaw)
 }
 
-func (b blsSuite) Verify(message []byte, publicKey []byte, signature []byte) error {
-	m := b.Digest(message)
-
-	return b.VerifyRaw(m, publicKey, signature)
-}
-
-func (b blsSuite) VerifyRaw(messageRaw []byte, publicKey []byte, signature []byte) error {
+// Verify works with the raw message, make sure to use Digest first if you need it
+func (b blsSuite) Verify(messageRaw []byte, publicKey []byte, signature []byte) error {
 	pk := b.KeyGroup().Point().Base().Clone()
 	err := pk.UnmarshalBinary(publicKey)
 	if err != nil {
@@ -86,15 +76,12 @@ func (b blsSuite) KeyGroup() kyber.Group {
 	return b.suite.G1()
 }
 
-func (b blsSuite) SignWithPartial(private []byte, message []byte) ([]byte, error) {
+func (b blsSuite) SignWithPartial(private []byte, messageRaw []byte) ([]byte, error) {
 	distKey, err := UnmarshalDistKey(b, private)
 	if err != nil {
 		return nil, err
 	}
-
-	m := b.Digest(message)
-
-	return b.thresholdScheme.Sign(&distKey, m)
+	return b.thresholdScheme.Sign(&distKey, messageRaw)
 }
 
 func (b blsSuite) VerifyPartial(publicCoefficients []byte, msg, sig []byte) error {
@@ -111,7 +98,7 @@ func (b blsSuite) VerifyPartial(publicCoefficients []byte, msg, sig []byte) erro
 	if err != nil {
 		return err
 	}
-	// `b.Verify` hashes the message, so we don't need to do it here
+
 	return b.Verify(msg, V, sh.Value())
 }
 
@@ -121,8 +108,8 @@ func (b blsSuite) RecoverSignature(message []byte, pubPoly []byte, sigs [][]byte
 	if err != nil {
 		return nil, err
 	}
-	m := b.Digest(message)
-	return b.thresholdScheme.Recover(&p, m, sigs, threshold, nodeCount)
+
+	return b.thresholdScheme.Recover(&p, message, sigs, threshold, nodeCount)
 }
 
 func (b blsSuite) VerifyRecovered(message []byte, publicCoefficients []byte, signature []byte) error {
@@ -130,8 +117,8 @@ func (b blsSuite) VerifyRecovered(message []byte, publicCoefficients []byte, sig
 	if err != nil {
 		return err
 	}
-	m := b.Digest(message)
-	return b.thresholdScheme.VerifyRecovered(p.Commit(), m, signature)
+
+	return b.thresholdScheme.VerifyRecovered(p.Commit(), message, signature)
 }
 
 func (b blsSuite) Digest(msg []byte) []byte {

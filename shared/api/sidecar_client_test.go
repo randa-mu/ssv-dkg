@@ -15,7 +15,7 @@ var (
 	depositData = UnsignedDepositData{
 		WithdrawalCredentials: []byte("hello worldhello worldhello worl"), // must be 32 bytes
 		Amount:                1,
-		ForkVersion:           "myfork123",
+		ForkVersion:           []byte{0x01, 0x02, 0x03, 0x04},
 		NetworkName:           "holesky",
 		DepositCLIVersion:     "1.2.3",
 	}
