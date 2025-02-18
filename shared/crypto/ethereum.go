@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	ssz "github.com/ferranbt/fastssz"
 	"github.com/ferranbt/fastssz/spectests"
 	eth "github.com/protolambda/zrnt/eth2/beacon/common"
@@ -211,7 +212,9 @@ func DepositDataRoot(data DepositData) ([]byte, error) {
 
 func ValidatorNonceMessage(address []byte, validatorNonce uint32) ([]byte, error) {
 	addr := FormatAddress(address)
-	return []byte(fmt.Sprintf("%s:%d", addr, validatorNonce)), nil
+	msg := []byte(fmt.Sprintf("%s:%d", addr, validatorNonce))
+
+	return crypto.Keccak256(msg), nil
 }
 
 func FormatAddress(address []byte) string {

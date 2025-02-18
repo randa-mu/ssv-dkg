@@ -88,6 +88,6 @@ func verifyDepositRoots(t *testing.T, d *DepositDataCLI) error {
 	t.Logf("signing root: %x", signingRoot)
 
 	suite := NewBLSSuite()
-	require.NoError(t, suite.VerifyRaw(signingRoot[:], pubKey[:], sig[:]))
+	require.NoError(t, suite.Verify(signingRoot[:], pubKey[:], sig[:]))
 	return nil
 }
