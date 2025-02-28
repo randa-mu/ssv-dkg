@@ -208,7 +208,8 @@ func prepareIdentities(scheme crypto.ThresholdScheme, identities []crypto.Identi
 			return nil, err
 		}
 		nodes[i] = dkg.Node{
-			Index:  uint32(i + 1),
+			// we need OperatorID-1 because Kyber evaluates it in xi=x+1
+			Index:  identity.OperatorID - 1,
 			Public: p,
 		}
 	}
@@ -267,7 +268,7 @@ func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Resul
 		return Output{}, fmt.Errorf("expected %d nodes to complete the DKG, but only %d completed it", countOfNodes, len(result.QUAL))
 	}
 
-	distKey, err := crypto.MarshalDistKey(result.Key.Share)
+	secretShare, err := crypto.MarshalDistKey(result.Key.Share)
 	if err != nil {
 		return Output{}, err
 	}
@@ -302,7 +303,7 @@ func AsResult(scheme crypto.ThresholdScheme, countOfNodes int, result *dkg.Resul
 	}
 
 	return Output{
-		KeyShare:        distKey,
+		KeyShare:        secretShare,
 		PublicKeyShare:  distPublicKey,
 		GroupPublicKey:  groupPublicKey,
 		GroupPublicPoly: pubPoly,
