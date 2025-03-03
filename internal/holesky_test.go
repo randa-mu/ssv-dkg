@@ -69,6 +69,43 @@ func TestPrintHolesky(t *testing.T) {
 	fmt.Println(string(bytes))
 }
 
+func TestPrintSignedDepositData(t *testing.T) {
+	ownerAddress, err := hex.DecodeString("17B3cAb3cD7502C6b85ed2E11Fd5988AF76Cdd32")
+	validatorNonce := uint32(7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 4; i++ {
+		d := createHoleskyDaemon(t, i+1)
+		d.Start()
+	}
+	time.Sleep(2 * time.Second)
+
+	config := api.SignatureConfig{
+		Operators: []string{
+			"http://127.0.0.1:8881",
+			"http://127.0.0.1:8882",
+			"http://127.0.0.1:8883",
+			"http://127.0.0.1:8884",
+		},
+		DepositData: depositData(t),
+		Owner: api.OwnerConfig{
+			Address:        ownerAddress,
+			ValidatorNonce: validatorNonce,
+		},
+		SsvClient: api.HoleskySsvClient(),
+	}
+	output, err := cli.Sign(config, shared.QuietLogger{Quiet: false})
+	require.NoError(t, err)
+
+	signedDepositData, err := files.CreateSignedDepositData(crypto.NewBLSSuite(), config, output)
+	require.NoError(t, err)
+
+	j, err := json.Marshal(signedDepositData)
+	require.NoError(t, err)
+	fmt.Println(string(j))
+}
+
 func createHoleskyDaemon(t *testing.T, index int) sidecar.Daemon {
 	port, err := strconv.Atoi(fmt.Sprintf("888%d", index))
 	if err != nil {
