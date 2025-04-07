@@ -86,7 +86,7 @@ func init() {
 		"network",
 		"N",
 		"mainnet",
-		"mainnet or holesky",
+		"mainnet, hoodi or holesky",
 	)
 }
 
