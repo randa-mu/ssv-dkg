@@ -166,8 +166,10 @@ func parseArgs(cmd *cobra.Command) (api.SignatureConfig, error) {
 		ssvClient = api.MainnetSsvClient()
 	} else if networkFlag == "holesky" {
 		ssvClient = api.HoleskySsvClient()
+	} else if networkFlag == "hoodi" {
+		ssvClient = api.HoodiSsvClient()
 	} else {
-		return api.SignatureConfig{}, fmt.Errorf("network must be either mainnet or holesky")
+		return api.SignatureConfig{}, fmt.Errorf("network must be either mainnet, hoodi or holesky")
 	}
 
 	return api.SignatureConfig{
