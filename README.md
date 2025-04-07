@@ -1,6 +1,7 @@
 # ssv-dkg
 
-This project contains all the software required for creating or participating in a distributed validator cluster for Ethereum using the [SSV project](https://github.com/bloxapp/ssv)
+This project contains all the software required for creating or participating in a distributed validator cluster for Ethereum using the [SSV project](https://github.com/bloxapp/ssv).
+It currently supports mainnet, holesky and hoodi - though holesky no longer supports the full validator registration lifecycle since got rekt.
 
 ## cli
 For users with ETH to stake who wish to create a validator cluster, [read the CLI readme](./cli/README.md)

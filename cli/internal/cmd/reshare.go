@@ -62,8 +62,10 @@ func Reshare(cmd *cobra.Command, _ []string) {
 		ssvClient = api.MainnetSsvClient()
 	} else if networkFlag == "holesky" {
 		ssvClient = api.HoleskySsvClient()
+	} else if networkFlag == "hoodi" {
+		ssvClient = api.HoodiSsvClient()
 	} else {
-		golog.Fatal("network must be either mainnet or holesky")
+		golog.Fatal("network must be either mainnet, holesky or hoodi")
 	}
 
 	// if the operator flag isn't passed, we consume operator addresses from stdin

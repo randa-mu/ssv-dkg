@@ -23,6 +23,12 @@ func HoleskySsvClient() SsvClient {
 	}
 }
 
+func HoodiSsvClient() SsvClient {
+	return SsvClient{
+		baseUrl: "https://api.ssv.network/api/v4/hoodi",
+	}
+}
+
 type SsvApiResponse struct {
 	PublicKey []byte `json:"public_key"`
 }
