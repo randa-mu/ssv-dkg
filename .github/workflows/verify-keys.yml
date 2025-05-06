@@ -23,5 +23,11 @@ jobs:
       - name: 🛠️ Build verifier tool
         run: go build -o key-verifier ./tools/key_verifier/cmd/main.go
 
-      - name: 🔍 Verify operator keys
-        run: ./key-verifier ./nodes/operators.json
+      - name: 🔍 Verify mainnet operator keys
+        run: ./key-verifier ./nodes/operators-mainnet.json
+
+      - name: 🔍 Verify hoodi operator keys
+        run: ./key-verifier ./nodes/operators-hoodi.json
+
+      - name: 🔍 Verify holesky operator keys
+        run: ./key-verifier ./nodes/operators-holesky.json

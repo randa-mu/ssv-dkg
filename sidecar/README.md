@@ -6,7 +6,7 @@ This module contains an implementation of the distributed key generation sidecar
 ## steps
 - [set up an SSV node](https://docs.ssv.network/operator-user-guides/operator-node/installation) and start it, noting the path to the `encrypted_private_key.json`
 - [register your SSV node](https://docs.ssv.network/operator-user-guides/operator-management/registration) and note the final `operatorID`
-- [sign public key](#sign-your-key-for-uploading-to-GitHub) and add it to the [operators JSON file](../nodes/operators.json). Raise a pull request once complete.
+- [sign public key](#sign-your-key-for-uploading-to-GitHub) and add it to the [operators JSON file for your chosen network](../nodes/operators-hoodi.json). Raise a pull request once complete.
 - [start your sidecar](#start-your-sidecar)
   - pass the [encrypted key file path](https://docs.ssv.network/operator-user-guides/operator-node/installation#generate-operator-keys-encrypted) of your SSV node using the `--ssv-key` flag 
   - pass the operator ID you noted down during the registration process using the `--operator-id` flag
@@ -20,8 +20,9 @@ $ ssv-sidecar key create ~/.ssv
 
 ### sign your key for uploading to GitHub
 ```shell
-$ ssv-sidecar key sign --directory ~/.ssv --url https://example.org | jq
+$ ssv-sidecar key sign --directory ~/.ssv --url https://example.org --operator-id 1234 | jq
 {
+  "operator_id": 1234,
   "address": "https://example.org",
   "public": "Som3bas364stRing==",
   "signature": "Som3bas364stRing==",

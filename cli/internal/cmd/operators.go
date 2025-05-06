@@ -19,7 +19,7 @@ func init() {
 		&sourceUrlFlag,
 		"source-url",
 		"u",
-		"https://raw.githubusercontent.com/randa-mu/ssv-dkg/master/nodes/operators.json",
+		"https://raw.githubusercontent.com/randa-mu/ssv-dkg/master/nodes/operators-mainnet.json",
 		"The location of a toml file listing operators and their signed public keys",
 	)
 	operatorsCmd.PersistentFlags().StringVarP(

@@ -1,0 +1,26 @@
+[
+  {
+    "operator_id": 94,
+    "address": "http://34.140.212.211:8081",
+    "public": "oIQsADpFNfIt1k3NkXLSzb4jIjAHVpGwp0n6mbbPapQEflkd4WUVuZNG79d1ECFY",
+    "signature": "hOUGPhirygbKss7BpsgDvuMicp9N53AH9ivzKINP/T6J5xpfoNYSlhCQ+EMyMZF2EXe2vOB9VvHj1/gA2nK0pIzYJAq3ZgIqdq0YbxxseQn+yuBDrgMdEoolBvGeteDz"
+  },
+  {
+    "operator_id": 95,
+    "address": "http://34.140.212.211:8082",
+    "public": "lUkifP8qnlDoy+kVJs8n9Iro/TeulWEutVKIAnwvfZzX7sMVUwoZsLImS/qdJnOG",
+    "signature": "gdFP1HH0OfMAH5/K17cjd/+4dfRlqenpcoBwNbaL4M4ley2nG8aed2sI6LHnRgsDCvwlAicv8lBXoN4z1zt1ldFMj0ehXSenWiini6u1K5ZZ3f3GaYSHlJ+S317Qj6mt"
+  },
+  {
+    "operator_id": 96,
+    "address": "http://34.140.212.211:8083",
+    "public": "sQCUkJmLit3HtpKeVGF0RyBcdSOO8HehqKBi+UwngnBn3HAljpNYaGyFjfo9tUhw",
+    "signature": "sI5uQrqXqAMu731dTX3XDrKlS0xW69tsEeHSASouDdB1PJtKNRBX5Zbv+lUOmh5+Cnr603L6qb/N6C/Hfc9fYlqnCfOALzeqbt/dn0tDxgrGvuVjYecevqjhimp3mV2F"
+  },
+  {
+    "operator_id": 97,
+    "address": "http://34.140.212.211:8084",
+    "public": "gy/5HcwScI3wXicpxzezX3cScXH2Y7fZtRvJTBSMPi1FjVdYdH/D71BAWbRD1viJ",
+    "signature": "k57mAa5tbGu9BGFoFi88jqj/WrAD6w4Pt7tMwzo8frjI2rx/cuUbqvuLaW8UoIOEAyYPPbPlB/xJV7kmkBVJcPnyTDxZw7IAHlFcEjVNsnne5/76M5u8DYEbK8LCNKHT"
+  }
+]
