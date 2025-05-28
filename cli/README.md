@@ -2,7 +2,6 @@
 
 This module contains the CLI for creating distributed validator clusters of SSV nodes for users who wish to stake ETH to create a validator, but don't want to run their own hardware (or do want to run their hardware, but want multiple nodes running for higher resilience!).
 
-
 ## Steps
 - list all the operators
 - select the ones you wish to use for your validator (and health check them)
@@ -79,3 +78,9 @@ $ ssv-dkg reshare --state ~/.ssv/deadbeefcafebabe.json \
 ✅ distributed key reshared successfully!
 ```
 Note: you will have to maintain a majority of operators from one cluster to the next.
+
+
+## Troubleshooting
+
+- "Error fetching operator public key"
+You probably omitted or passed the wrong `--network` flag, and the operator ID doesn't exist on that network
