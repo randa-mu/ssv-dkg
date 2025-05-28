@@ -6,6 +6,7 @@ This module contains an implementation of the distributed key generation sidecar
 ## steps
 - [set up an SSV node](https://docs.ssv.network/operator-user-guides/operator-node/installation) and start it, noting the path to the `encrypted_private_key.json`
 - [register your SSV node](https://docs.ssv.network/operator-user-guides/operator-management/registration) and note the final `operatorID`
+- [generate a BLS key](#generate-a-bls12-381-keypair)
 - [sign public key](#sign-your-key-for-uploading-to-GitHub) and add it to the [operators JSON file for your chosen network](../nodes/operators-hoodi.json). Raise a pull request once complete.
 - [start your sidecar](#start-your-sidecar)
   - pass the [encrypted key file path](https://docs.ssv.network/operator-user-guides/operator-node/installation#generate-operator-keys-encrypted) of your SSV node using the `--ssv-key` flag 
